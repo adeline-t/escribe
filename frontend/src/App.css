@@ -110,6 +110,31 @@ h2 {
   border-color: var(--ink);
 }
 
+.site-header {
+  display: grid;
+  gap: 8px;
+}
+
+.home-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.home-card {
+  background: #fffaf3;
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid #eadfce;
+  display: grid;
+  gap: 8px;
+}
+
+.home-card h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
 .form-section {
   display: grid;
   gap: 16px;
@@ -374,6 +399,18 @@ button {
   background: var(--attack);
   transform: translateY(-50%);
   opacity: 0.6;
+}
+
+.arrow::before {
+  content: "";
+  position: absolute;
+  left: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--attack);
 }
 
 .arrow::after {

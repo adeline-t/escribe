@@ -63,8 +63,8 @@ function normalizeEmail(email) {
 }
 
 async function ensureAuthSchema(env) {
-  await env.DB.exec(`
-    CREATE TABLE IF NOT EXISTS users (
+  const statements = [
+    `CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       email TEXT NOT NULL UNIQUE,
       password_hash TEXT NOT NULL,
@@ -74,15 +74,16 @@ async function ensureAuthSchema(env) {
       last_name TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS sessions (
+    );`,
+    `CREATE TABLE IF NOT EXISTS sessions (
       id TEXT PRIMARY KEY,
       user_id INTEGER NOT NULL,
       token TEXT NOT NULL UNIQUE,
       expires_at TEXT NOT NULL,
       created_at TEXT NOT NULL
-    );
-  `);
+    );`
+  ];
+  await env.DB.batch(statements.map((sql) => env.DB.prepare(sql)));
 
   const columns = await env.DB.prepare("PRAGMA table_info(users)").all();
   const names = new Set((columns?.results ?? []).map((row) => row.name));

@@ -1,14 +1,15 @@
 async function ensureAuditSchema(env) {
-  await env.DB.exec(`
-    CREATE TABLE IF NOT EXISTS audit_logs (
+  const statements = [
+    `CREATE TABLE IF NOT EXISTS audit_logs (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       actor_id INTEGER,
       action TEXT NOT NULL,
       target_id INTEGER,
       meta TEXT,
       created_at TEXT NOT NULL
-    );
-  `);
+    );`
+  ];
+  await env.DB.batch(statements.map((sql) => env.DB.prepare(sql)));
 }
 
 export async function logAudit(env, action, actorId, targetId = null, meta = null) {
