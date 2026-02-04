@@ -24,3 +24,4 @@ dist-ssr
 *.sw?
 db/ca.pem
 .env
+backend/worker/.wrangler

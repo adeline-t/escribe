@@ -6,10 +6,6 @@ compatibility_flags = ["nodejs_compat"]
 workers_dev = true
 preview_urls = true
 
-[vars]
-ENVIRONMENT = "development"
-CORS_ORIGIN = "http://localhost:5173"
-
 [observability]
 [observability.logs]
 enabled = true
@@ -22,10 +18,20 @@ enabled = false
 head_sampling_rate = 1
 persist = true
 
+[vars]
+ENVIRONMENT = "development"
+CORS_ORIGIN = "http://localhost:5173"
+
 [env.dev]
 name = "escribe-backend-dev"
 vars = { ENVIRONMENT = "development", LOG_LEVEL = "debug", CORS_ORIGIN = "http://localhost:5173" }
 
-[[hyperdrive]]
-binding = "HYPERDRIVE"
-id = "91f601c11ad94b1da3a189dcdc0012fd"
+[[d1_databases]]
+binding = "DB"
+database_name = "escribe"
+database_id = "28ea8b49-1888-4750-9a0c-2f37b54a6374"
+
+[[env.dev.d1_databases]]
+binding = "DB"
+database_name = "escribe-dev"
+database_id = "2f3d7f1d-30c6-47c6-bb3f-52f91d7738f5"

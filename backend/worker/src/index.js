@@ -1,6 +1,7 @@
 import { buildCorsHeaders, jsonResponse } from "./db.js";
 import { handleState } from "./handlers/state.js";
 import { handleHealth } from "./handlers/health.js";
+import { handleLexicon, handleLexiconType } from "./handlers/lexicon.js";
 import { createRouter } from "./router.js";
 
 const router = createRouter();
@@ -9,6 +10,10 @@ router.add("POST", "/api/state", handleState);
 router.add("GET", "/api", handleHealth);
 router.add("GET", "/api/", handleHealth);
 router.add("GET", "/api/health", handleHealth);
+router.add("GET", "/api/lexicon", handleLexicon);
+router.add("GET", "/api/lexicon/:type", handleLexiconType);
+router.add("POST", "/api/lexicon/:type", handleLexiconType);
+router.add("DELETE", "/api/lexicon/:type", handleLexiconType);
 
 export default {
   async fetch(request, env) {
@@ -28,7 +33,7 @@ export default {
     try {
       const route = router.match(method, path);
       if (route) {
-        return route.handler(request, env);
+        return route.handler(request, env, route.params?.type);
       }
 
       return jsonResponse({ error: "Route non trouvée" }, 404, buildCorsHeaders(request, env));
