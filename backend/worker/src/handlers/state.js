@@ -1,7 +1,13 @@
 import { getState, saveState, jsonResponse, buildCorsHeaders } from "../db.js";
+import { requireAuth } from "../auth.js";
+import { logAudit } from "../audit.js";
 
 export async function handleState(request, env) {
   const corsHeaders = buildCorsHeaders(request, env);
+  const session = await requireAuth(request, env);
+  if (!session) {
+    return jsonResponse({ error: "unauthorized" }, 401, corsHeaders);
+  }
   if (request.method === "GET") {
     const state = await getState(env);
     return jsonResponse({ state }, 200, corsHeaders);
@@ -14,6 +20,7 @@ export async function handleState(request, env) {
       return jsonResponse({ error: "invalid_state" }, 400, corsHeaders);
     }
     await saveState(env, state);
+    await logAudit(env, "state.save", session.user.id, null, {});
     return jsonResponse({ ok: true }, 200, corsHeaders);
   }
 

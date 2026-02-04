@@ -12,7 +12,7 @@ export function jsonResponse(data, status = 200, headers = {}) {
     "Content-Type": "application/json",
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Max-Age": "86400",
     ...getSecurityHeaders()
   };
@@ -37,7 +37,7 @@ export function buildCorsHeaders(request, env) {
   return {
     "Access-Control-Allow-Origin": allowOrigin,
     "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Max-Age": "86400",
     ...getSecurityHeaders()
   };
@@ -73,6 +73,15 @@ export async function ensureLexiconSchema(env) {
     CREATE TABLE IF NOT EXISTS parade_numero (id INTEGER PRIMARY KEY AUTOINCREMENT, label TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS parade_attribut (id INTEGER PRIMARY KEY AUTOINCREMENT, label TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS attaque_attribut (id INTEGER PRIMARY KEY AUTOINCREMENT, label TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS user_offensive (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, label TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS user_action (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, label TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS user_defensive (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, label TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS user_cible (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, label TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS user_deplacement_attaque (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, label TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS user_deplacement_defense (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, label TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS user_parade_numero (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, label TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS user_parade_attribut (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, label TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS user_attaque_attribut (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, label TEXT NOT NULL);
   `);
   lexiconReady = true;
 }
@@ -125,10 +134,28 @@ export async function getLexiconItems(env, table) {
   return rows?.results ?? [];
 }
 
+export async function getUserLexiconItems(env, table, userId) {
+  await ensureLexiconSeeded(env);
+  const rows = await env.DB
+    .prepare(`SELECT id, label FROM ${table} WHERE user_id = ?1 ORDER BY id`)
+    .bind(userId)
+    .all();
+  return rows?.results ?? [];
+}
+
 export async function addLexiconItem(env, table, label) {
   await ensureLexiconSeeded(env);
   const result = await env.DB.prepare(`INSERT INTO ${table} (label) VALUES (?1) RETURNING id, label`)
     .bind(label)
+    .first();
+  return result ?? null;
+}
+
+export async function addUserLexiconItem(env, table, userId, label) {
+  await ensureLexiconSeeded(env);
+  const result = await env.DB
+    .prepare(`INSERT INTO ${table} (user_id, label) VALUES (?1, ?2) RETURNING id, label`)
+    .bind(userId, label)
     .first();
   return result ?? null;
 }
@@ -138,11 +165,28 @@ export async function deleteLexiconItem(env, table, id) {
   await env.DB.prepare(`DELETE FROM ${table} WHERE id = ?1`).bind(id).run();
 }
 
+export async function deleteUserLexiconItem(env, table, userId, id) {
+  await ensureLexiconSeeded(env);
+  await env.DB
+    .prepare(`DELETE FROM ${table} WHERE id = ?1 AND user_id = ?2`)
+    .bind(id, userId)
+    .run();
+}
+
 export async function hasLexiconLabel(env, table, label) {
   await ensureLexiconSeeded(env);
   const row = await env.DB
     .prepare(`SELECT id FROM ${table} WHERE lower(label) = lower(?1) LIMIT 1`)
     .bind(label)
+    .first();
+  return Boolean(row?.id);
+}
+
+export async function hasUserLexiconLabel(env, table, userId, label) {
+  await ensureLexiconSeeded(env);
+  const row = await env.DB
+    .prepare(`SELECT id FROM ${table} WHERE user_id = ?1 AND lower(label) = lower(?2) LIMIT 1`)
+    .bind(userId, label)
     .first();
   return Boolean(row?.id);
 }

@@ -21,17 +21,20 @@ persist = true
 [vars]
 ENVIRONMENT = "development"
 CORS_ORIGIN = "http://localhost:5173"
+SUPERADMIN_EMAIL = "admin@escribe.local"
 
 [env.dev]
 name = "escribe-backend-dev"
-vars = { ENVIRONMENT = "development", LOG_LEVEL = "debug", CORS_ORIGIN = "http://localhost:5173" }
+vars = { ENVIRONMENT = "development", LOG_LEVEL = "debug", CORS_ORIGIN = "http://localhost:5173", SUPERADMIN_EMAIL = "admin@escribe.local" }
 
 [[d1_databases]]
 binding = "DB"
 database_name = "escribe"
 database_id = "28ea8b49-1888-4750-9a0c-2f37b54a6374"
+migrations_dir = "../../db/migrations"
 
 [[env.dev.d1_databases]]
 binding = "DB"
 database_name = "escribe-dev"
 database_id = "2f3d7f1d-30c6-47c6-bb3f-52f91d7738f5"
+migrations_dir = "../../db/migrations"

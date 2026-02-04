@@ -1,8 +1,10 @@
 import { buildCorsHeaders, jsonResponse } from "./db.js";
 import { handleState } from "./handlers/state.js";
 import { handleHealth } from "./handlers/health.js";
-import { handleLexicon, handleLexiconType } from "./handlers/lexicon.js";
+import { handleLexicon, handleLexiconType, handleLexiconPersonal } from "./handlers/lexicon.js";
 import { createRouter } from "./router.js";
+import { handleRegister, handleLogin, handleMe, handleProfile, handleChangePassword, handleLogout } from "./handlers/auth.js";
+import { handleUsersList, handleUserRole, handleAudit } from "./handlers/users.js";
 
 const router = createRouter();
 router.add("GET", "/api/state", handleState);
@@ -14,6 +16,18 @@ router.add("GET", "/api/lexicon", handleLexicon);
 router.add("GET", "/api/lexicon/:type", handleLexiconType);
 router.add("POST", "/api/lexicon/:type", handleLexiconType);
 router.add("DELETE", "/api/lexicon/:type", handleLexiconType);
+router.add("GET", "/api/lexicon/personal/:type", handleLexiconPersonal);
+router.add("POST", "/api/lexicon/personal/:type", handleLexiconPersonal);
+router.add("DELETE", "/api/lexicon/personal/:type", handleLexiconPersonal);
+router.add("POST", "/api/auth/register", handleRegister);
+router.add("POST", "/api/auth/login", handleLogin);
+router.add("GET", "/api/auth/me", handleMe);
+router.add("POST", "/api/auth/profile", handleProfile);
+router.add("POST", "/api/auth/change-password", handleChangePassword);
+router.add("POST", "/api/auth/logout", handleLogout);
+router.add("GET", "/api/admin/users", handleUsersList);
+router.add("POST", "/api/admin/users/role", handleUserRole);
+router.add("GET", "/api/admin/audit", handleAudit);
 
 export default {
   async fetch(request, env) {

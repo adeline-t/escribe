@@ -50,7 +50,19 @@ npx wrangler d1 create escribe
 
 2. Renseigner l'id dans `backend/worker/wrangler.toml`.
 3. Adapter `CORS_ORIGIN` si besoin.
-4. Alimenter le lexique (1 table par type):
+4. Appliquer les migrations:
+
+```bash
+npm run db:migrate:dev
+```
+
+Vérifier le statut:
+
+```bash
+npm run db:migrate:status:dev
+```
+
+5. Alimenter le lexique (1 table par type):
 
 ```bash
 npm run db:seed:dev
