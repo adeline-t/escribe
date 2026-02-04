@@ -111,3 +111,41 @@ export function buildSummaryLine(item, name) {
 
   return `${name} sans rôle`;
 }
+
+export function buildSummaryLines(item, name) {
+  if (item.role === "attack") {
+    if (item.noteOverrides) {
+      return [item.note ? `${name} attaque: ${item.note}` : `${name} attaque (note à compléter)`];
+    }
+    const line1 = [
+      `${name} attaque`,
+      item.offensive,
+      item.action,
+      item.attackAttribute?.length ? `(${item.attackAttribute.join(", ")})` : ""
+    ]
+      .filter(Boolean)
+      .join(" ");
+    return [line1].filter(Boolean);
+  }
+
+  if (item.role === "defense") {
+    if (item.noteOverrides) {
+      return [item.note ? `${name} défend: ${item.note}` : `${name} défend (note à compléter)`];
+    }
+    const paradeBits = [item.paradeNumber, item.paradeAttribute].filter(Boolean).join(" ");
+    const line1 = [
+      `${name} défend en`,
+      item.defense,
+      paradeBits ? `parade ${paradeBits}` : ""
+    ]
+      .filter(Boolean)
+      .join(" ");
+    return [line1].filter(Boolean);
+  }
+
+  if (item.note) {
+    return [`${name} note: ${item.note}`];
+  }
+
+  return [`${name} sans rôle`];
+}

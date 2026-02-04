@@ -6,23 +6,12 @@ export default function StepCard({ type, title, lines, accent, tags }) {
         {title}
       </div>
       <div className="card-mini__lines">
-        {lines.filter(Boolean).map((line) => (
-          <div key={line} className="card-mini__line">
+        {lines.filter(Boolean).map((line, index) => (
+          <div key={index} className="card-mini__line">
             {line}
           </div>
         ))}
       </div>
-      {tags?.length ? (
-        <div className="card-mini__tags">
-          {tags
-            .filter((tag) => tag && tag.label)
-            .map((tag) => (
-              <span key={tag.label} className={`tag tag--${tag.variant || "neutral"}`}>
-                {tag.label}
-              </span>
-            ))}
-        </div>
-      ) : null}
     </div>
   );
 }

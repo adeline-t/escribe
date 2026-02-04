@@ -14,7 +14,9 @@ import {
   FaLayerGroup,
   FaPenNib,
   FaUser,
-  FaUsers
+  FaUsers,
+  FaBars,
+  FaAngleLeft
 } from "react-icons/fa6";
 import {
   DEFAULT_LEXICON,
@@ -27,7 +29,8 @@ import {
   emptyParticipantState,
   normalizeState,
   toggleAttribute,
-  buildSummaryLine
+  buildSummaryLine,
+  buildSummaryLines
 } from "./lib/participants.js";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:4000";
@@ -50,7 +53,9 @@ export default function App() {
   const [combatDescription, setCombatDescription] = useState("");
   const [isHydrated, setIsHydrated] = useState(false);
   const [lexiconData, setLexiconData] = useState(() => normalizeLexicon(DEFAULT_LEXICON));
+  const [favorites, setFavorites] = useState({});
   const saveTimerRef = useRef(null);
+  const [isMenuCollapsed, setIsMenuCollapsed] = useState(false);
 
   const participantLabels = useMemo(
     () => participants.map((name, index) => labelForParticipant(name, index)),
@@ -111,6 +116,16 @@ export default function App() {
           const lexiconPayload = await lexiconResponse.json();
           if (lexiconPayload?.lexicon) {
             setLexiconData(lexiconPayload.lexicon);
+          }
+        }
+
+        if (authUser) {
+          const favoritesResponse = await apiFetch("/api/lexicon/favorites");
+          if (favoritesResponse.ok) {
+            const favoritesPayload = await favoritesResponse.json();
+            if (favoritesPayload?.favorites) {
+              setFavorites(favoritesPayload.favorites);
+            }
           }
         }
 
@@ -460,18 +475,37 @@ export default function App() {
     );
   }
 
-  const [isMenuCollapsed, setIsMenuCollapsed] = useState(false);
-
   return (
-    <div className={`page layout ${isMenuCollapsed ? "layout--collapsed" : ""}`}>
-      <aside className="sidebar">
+    <div className={`page layout ${isMenuCollapsed ? "layout--collapsed" : "layout--expanded"}`}>
+      {isMenuCollapsed ? (
+        <button
+          type="button"
+          className="menu-fab"
+          onClick={() => setIsMenuCollapsed(false)}
+          aria-label="Ouvrir le menu"
+          title="Ouvrir le menu"
+        >
+          <FaBars />
+        </button>
+      ) : null}
+      {!isMenuCollapsed ? (
+        <div className="menu-overlay" onClick={() => setIsMenuCollapsed(true)} />
+      ) : null}
+      <aside className={`sidebar ${isMenuCollapsed ? "is-collapsed" : ""}`}>
+        <button
+          type="button"
+          className="menu-toggle"
+          onClick={() => setIsMenuCollapsed((prev) => !prev)}
+          aria-label={isMenuCollapsed ? "Afficher le menu" : "Réduire le menu"}
+          title={isMenuCollapsed ? "Afficher le menu" : "Réduire le menu"}
+        >
+          {isMenuCollapsed ? <FaBars /> : <FaAngleLeft />}
+        </button>
+
         <div className="brand">
           <p className="kicker">Escribe</p>
           <h1>Archive vivante</h1>
           <p className="lead">Une page par usage pour garder l’édition lisible.</p>
-          <button type="button" className="chip chip--ghost" onClick={() => setIsMenuCollapsed((prev) => !prev)}>
-            {isMenuCollapsed ? "Afficher le menu" : "Réduire le menu"}
-          </button>
         </div>
 
         <nav className="menu">
@@ -501,12 +535,12 @@ export default function App() {
             type="button"
             className={`menu__item ${page === "phrases" ? "is-active" : ""}`}
             onClick={() => {
-              setPage("phrases");
+              setPage("combats");
               setIsMenuCollapsed(true);
             }}
           >
             <span className="menu__icon" aria-hidden="true"><FaBookOpen /></span>
-            <span className="menu__label">Phrases créées</span>
+            <span className="menu__label">Mes combats</span>
           </button>
           <button
             type="button"
@@ -586,6 +620,7 @@ export default function App() {
             stepsCount={activePhrase?.steps?.length ?? 0}
             participantLabels={participantLabels}
             normalizedLexicon={normalizedLexicon}
+            favorites={favorites}
             onParticipantCountChange={updateParticipantCount}
             onParticipantNameChange={updateParticipantName}
             onFormChange={updateForm}
@@ -604,6 +639,7 @@ export default function App() {
             editingStepId={editingStepId}
             buildParticipantLabel={buildParticipantLabel}
             buildSummaryLine={buildSummaryLine}
+            buildSummaryLines={buildSummaryLines}
             toggleAttribute={toggleAttribute}
           />
         ) : null}
@@ -619,7 +655,13 @@ export default function App() {
         ) : null}
 
         {page === "lexicon" ? (
-          <LexiconPage apiBase={API_BASE} authToken={authToken} authUser={authUser} />
+          <LexiconPage
+            apiBase={API_BASE}
+            authToken={authToken}
+            authUser={authUser}
+            favorites={favorites}
+            setFavorites={setFavorites}
+          />
         ) : null}
 
         {page === "users" ? (

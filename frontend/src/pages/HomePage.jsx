@@ -25,18 +25,18 @@ export default function HomePage({
         </div>
       </div>
       <div className="home-grid">
-        <div className="home-card">
-          <h3>Créer un combat</h3>
-          <p className="muted">Commencez un nouveau combat pour y ajouter vos phrases d'armes.</p>
-          <button type="button" onClick={() => onNavigate("combats")}>Créer un combat</button>
-        </div>
-        <div className="home-card">
+        <div className="home-card home-card--highlight">
           <h3>Dernier combat</h3>
           <p className="muted">{combatName || "Combat sans nom"}</p>
           {combatDescription ? <p className="muted">{combatDescription}</p> : null}
           <button type="button" onClick={() => onOpenCombat?.(combatId)} disabled={!combatId}>
             Ouvrir le dernier combat
           </button>
+        </div>
+        <div className="home-card">
+          <h3>Créer un combat</h3>
+          <p className="muted">Commencez un nouveau combat pour y ajouter vos phrases d'armes.</p>
+          <button type="button" onClick={() => onNavigate("combats")}>Créer un combat</button>
         </div>
         <div className="home-card">
           <h3>Mes combats</h3>
