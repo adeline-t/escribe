@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS user_lexicon_favorites (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  type TEXT NOT NULL,
+  label TEXT NOT NULL
+);
