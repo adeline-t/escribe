@@ -8,6 +8,14 @@ import UsersPage from "./pages/UsersPage.jsx";
 import PhraseCreatePage from "./pages/PhraseCreatePage.jsx";
 import PhraseListPage from "./pages/PhraseListPage.jsx";
 import {
+  FaBookOpen,
+  FaHouse,
+  FaLayerGroup,
+  FaPenNib,
+  FaUser,
+  FaUsers
+} from "react-icons/fa6";
+import {
   DEFAULT_LEXICON,
   DEFAULT_PARTICIPANTS,
   normalizeLexicon
@@ -289,112 +297,120 @@ export default function App() {
   }
 
   return (
-    <div className="page">
-      <header className="site-header">
-        <p className="kicker">Escribe</p>
-        <h1>Archive vivante des phrases d'armes</h1>
-        <p className="lead">
-          Chaque page se concentre sur un usage précis pour garder l'édition claire et fluide.
-        </p>
-      </header>
+    <div className="page layout">
+      <aside className="sidebar">
+        <div className="brand">
+          <p className="kicker">Escribe</p>
+          <h1>Archive vivante</h1>
+          <p className="lead">Une page par usage pour garder l’édition lisible.</p>
+        </div>
 
-      <nav className="menu">
-        <button
-          type="button"
-          className={`menu__item ${page === "home" ? "is-active" : ""}`}
-          onClick={() => setPage("home")}
-        >
-          Accueil
-        </button>
-        <button
-          type="button"
-          className={`menu__item ${page === "create" ? "is-active" : ""}`}
-          onClick={() => setPage("create")}
-        >
-          Créer une phrase
-        </button>
-        <button
-          type="button"
-          className={`menu__item ${page === "phrases" ? "is-active" : ""}`}
-          onClick={() => setPage("phrases")}
-        >
-          Phrases créées
-        </button>
-        <button
-          type="button"
-          className={`menu__item ${page === "lexicon" ? "is-active" : ""}`}
-          onClick={() => setPage("lexicon")}
-        >
-          Lexique
-        </button>
-        <button
-          type="button"
-          className={`menu__item ${page === "account" ? "is-active" : ""}`}
-          onClick={() => setPage("account")}
-        >
-          Mon compte
-        </button>
-        {authUser && ["admin", "superadmin"].includes(authUser.role) ? (
+        <nav className="menu">
           <button
             type="button"
-            className={`menu__item ${page === "users" ? "is-active" : ""}`}
-            onClick={() => setPage("users")}
+            className={`menu__item ${page === "home" ? "is-active" : ""}`}
+            onClick={() => setPage("home")}
           >
-            Utilisateurs
+            <span className="menu__icon" aria-hidden="true"><FaHouse /></span>
+            Accueil
           </button>
+          <button
+            type="button"
+            className={`menu__item ${page === "create" ? "is-active" : ""}`}
+            onClick={() => setPage("create")}
+          >
+            <span className="menu__icon" aria-hidden="true"><FaPenNib /></span>
+            Créer une phrase
+          </button>
+          <button
+            type="button"
+            className={`menu__item ${page === "phrases" ? "is-active" : ""}`}
+            onClick={() => setPage("phrases")}
+          >
+            <span className="menu__icon" aria-hidden="true"><FaBookOpen /></span>
+            Phrases créées
+          </button>
+          <button
+            type="button"
+            className={`menu__item ${page === "lexicon" ? "is-active" : ""}`}
+            onClick={() => setPage("lexicon")}
+          >
+            <span className="menu__icon" aria-hidden="true"><FaLayerGroup /></span>
+            Lexique
+          </button>
+          <button
+            type="button"
+            className={`menu__item ${page === "account" ? "is-active" : ""}`}
+            onClick={() => setPage("account")}
+          >
+            <span className="menu__icon" aria-hidden="true"><FaUser /></span>
+            Mon compte
+          </button>
+          {authUser && ["admin", "superadmin"].includes(authUser.role) ? (
+            <button
+              type="button"
+              className={`menu__item ${page === "users" ? "is-active" : ""}`}
+              onClick={() => setPage("users")}
+            >
+              <span className="menu__icon" aria-hidden="true"><FaUsers /></span>
+              Utilisateurs
+            </button>
+          ) : null}
+        </nav>
+      </aside>
+
+      <main className="content">
+        {page === "home" ? (
+          <HomePage
+            authUser={authUser}
+            stepsCount={steps.length}
+            participantsCount={participants.length}
+            onNavigate={setPage}
+          />
         ) : null}
-      </nav>
 
-      {page === "home" ? (
-        <HomePage
-          authUser={authUser}
-          stepsCount={steps.length}
-          participantsCount={participants.length}
-          onNavigate={setPage}
-        />
-      ) : null}
+        {page === "create" ? (
+          <PhraseCreatePage
+            participants={participants}
+            form={form}
+            participantLabels={participantLabels}
+            normalizedLexicon={normalizedLexicon}
+            onParticipantCountChange={updateParticipantCount}
+            onParticipantNameChange={updateParticipantName}
+            onFormChange={updateForm}
+            onAddStep={addStep}
+            buildParticipantLabel={buildParticipantLabel}
+            buildSummaryLine={buildSummaryLine}
+            toggleAttribute={toggleAttribute}
+          />
+        ) : null}
 
-      {page === "create" ? (
-        <PhraseCreatePage
-          participants={participants}
-          form={form}
-          participantLabels={participantLabels}
-          normalizedLexicon={normalizedLexicon}
-          onParticipantCountChange={updateParticipantCount}
-          onParticipantNameChange={updateParticipantName}
-          onFormChange={updateForm}
-          onAddStep={addStep}
-          buildParticipantLabel={buildParticipantLabel}
-          buildSummaryLine={buildSummaryLine}
-          toggleAttribute={toggleAttribute}
-        />
-      ) : null}
+        {page === "phrases" ? (
+          <PhraseListPage
+            participants={participants}
+            steps={steps}
+            onRemoveStep={removeStep}
+          />
+        ) : null}
 
-      {page === "phrases" ? (
-        <PhraseListPage
-          participants={participants}
-          steps={steps}
-          onRemoveStep={removeStep}
-        />
-      ) : null}
+        {page === "lexicon" ? (
+          <LexiconPage apiBase={API_BASE} authToken={authToken} authUser={authUser} />
+        ) : null}
 
-      {page === "lexicon" ? (
-        <LexiconPage apiBase={API_BASE} authToken={authToken} authUser={authUser} />
-      ) : null}
+        {page === "users" ? (
+          <UsersPage apiBase={API_BASE} authToken={authToken} />
+        ) : null}
 
-      {page === "users" ? (
-        <UsersPage apiBase={API_BASE} authToken={authToken} />
-      ) : null}
-
-      {page === "account" ? (
-        <ProfilePage
-          apiBase={API_BASE}
-          authToken={authToken}
-          authUser={authUser}
-          setAuthUser={setAuthUser}
-          onLogout={handleLogout}
-        />
-      ) : null}
+        {page === "account" ? (
+          <ProfilePage
+            apiBase={API_BASE}
+            authToken={authToken}
+            authUser={authUser}
+            setAuthUser={setAuthUser}
+            onLogout={handleLogout}
+          />
+        ) : null}
+      </main>
     </div>
   );
 }

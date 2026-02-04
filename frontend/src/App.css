@@ -16,9 +16,36 @@
 .page {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 48px 24px 64px;
+  padding: 32px 20px 64px;
+}
+
+.layout {
   display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
   gap: 28px;
+  align-items: start;
+}
+
+.sidebar {
+  position: sticky;
+  top: 20px;
+  display: grid;
+  gap: 18px;
+  background: var(--panel);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.brand h1 {
+  font-family: "Fraunces", serif;
+  font-size: 28px;
+  margin: 0 0 8px;
+}
+
+.content {
+  display: grid;
+  gap: 24px;
 }
 
 .hero {
@@ -89,25 +116,76 @@ h2 {
 }
 
 .menu {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+  display: grid;
+  gap: 10px;
 }
 
 .menu__item {
   background: #fff;
   color: var(--ink);
   border: 1px solid #e0d7c8;
-  padding: 8px 14px;
-  border-radius: 999px;
+  padding: 10px 14px;
+  border-radius: 14px;
   cursor: pointer;
   font-weight: 600;
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
 }
 
 .menu__item.is-active {
   background: var(--ink);
   color: #fff;
   border-color: var(--ink);
+}
+
+.menu__icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  background: #f0e6d9;
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.menu__item.is-active .menu__icon {
+  background: #fff;
+  color: var(--ink);
+}
+
+.menu__item.is-active:nth-child(1) .menu__icon {
+  background: #fff2d8;
+  color: #c77a1d;
+}
+
+.menu__item.is-active:nth-child(2) .menu__icon {
+  background: #ffe5ec;
+  color: #b43455;
+}
+
+.menu__item.is-active:nth-child(3) .menu__icon {
+  background: #e7f0ff;
+  color: #2f5fb4;
+}
+
+.menu__item.is-active:nth-child(4) .menu__icon {
+  background: #e9f7ef;
+  color: #2b7a4a;
+}
+
+.menu__item.is-active:nth-child(5) .menu__icon {
+  background: #f4ecff;
+  color: #6a3bc2;
+}
+
+.menu__item.is-active:nth-child(6) .menu__icon {
+  background: #fdebd0;
+  color: #b05a06;
 }
 
 .site-header {
@@ -133,6 +211,40 @@ h2 {
 .home-card h3 {
   margin: 0;
   font-size: 16px;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+  }
+
+  .menu {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 24px 16px 48px;
+  }
+
+  .menu {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .menu__item {
+    grid-template-columns: 24px 1fr;
+    padding: 10px 12px;
+  }
+
+  .menu__icon {
+    width: 24px;
+    height: 24px;
+  }
 }
 
 .form-section {

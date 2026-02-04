@@ -79,7 +79,6 @@ export default function LexiconPage({ apiBase, authToken, authUser }) {
     const label = draft.trim();
     if (!label) return;
     if (!canEdit) {
-      setError("Seuls les administrateurs peuvent modifier le lexique global.");
       return;
     }
     setError("");
@@ -107,7 +106,6 @@ export default function LexiconPage({ apiBase, authToken, authUser }) {
 
   async function deleteItem(id) {
     if (!canEdit) {
-      setError("Seuls les administrateurs peuvent modifier le lexique global.");
       return;
     }
     const path =
@@ -190,22 +188,18 @@ export default function LexiconPage({ apiBase, authToken, authUser }) {
             </div>
           </div>
 
-          {!canEdit && isGlobalScope ? (
-            <div className="lexicon-error">
-              Lecture seule sur le lexique global. Passe sur “Personnel” pour ajouter tes entrées.
+          {canEdit ? (
+            <div className="lexicon-add">
+              <input
+                value={draft}
+                placeholder={`Ajouter ${activeLabel.toLowerCase()}`}
+                onChange={(event) => setDraft(event.target.value)}
+              />
+              <button type="button" onClick={addItem}>
+                Ajouter
+              </button>
             </div>
           ) : null}
-
-          <div className="lexicon-add">
-            <input
-              value={draft}
-              placeholder={`Ajouter ${activeLabel.toLowerCase()}`}
-              onChange={(event) => setDraft(event.target.value)}
-            />
-            <button type="button" onClick={addItem} disabled={!canEdit}>
-              Ajouter
-            </button>
-          </div>
           {error ? <div className="lexicon-error">{error}</div> : null}
 
           <div className="lexicon-table">
@@ -213,9 +207,11 @@ export default function LexiconPage({ apiBase, authToken, authUser }) {
               <div key={item.id} className="lexicon-row">
                 <div className="lexicon-row__label">{item.label}</div>
                 <div className="lexicon-row__meta">#{item.id}</div>
-                <button type="button" className="chip chip--danger" onClick={() => deleteItem(item.id)}>
-                  Supprimer
-                </button>
+                {canEdit ? (
+                  <button type="button" className="chip chip--danger" onClick={() => deleteItem(item.id)}>
+                    Supprimer
+                  </button>
+                ) : null}
               </div>
             ))}
             {filteredItems.length === 0 ? (
