@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { LEXICON_TYPES } from "../lib/lexicon.js";
 
-export default function LexiconPage({ apiBase, authToken, authUser }) {
+export default function LexiconPage({ apiBase, authToken, authUser, favorites, setFavorites }) {
   const [activeType, setActiveType] = useState(LEXICON_TYPES[0]?.key ?? "");
   const [scope, setScope] = useState("global");
   const [items, setItems] = useState([]);
@@ -9,6 +9,7 @@ export default function LexiconPage({ apiBase, authToken, authUser }) {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("az");
+  const [view, setView] = useState("all");
   const [error, setError] = useState("");
 
   const activeLabel = useMemo(
@@ -27,6 +28,10 @@ export default function LexiconPage({ apiBase, authToken, authUser }) {
   const canEditGlobal = authUser && ["admin", "superadmin"].includes(authUser.role);
   const isGlobalScope = scope === "global";
   const canEdit = isGlobalScope ? canEditGlobal : true;
+  const favoriteSet = useMemo(
+    () => new Set(favorites?.[activeType] ?? []),
+    [favorites, activeType]
+  );
 
   async function loadType(signal) {
     if (!activeType) return;
@@ -59,9 +64,12 @@ export default function LexiconPage({ apiBase, authToken, authUser }) {
 
   const filteredItems = useMemo(() => {
     const query = search.trim().toLowerCase();
-    const list = query
+    let list = query
       ? items.filter((item) => item.label.toLowerCase().includes(query))
       : items;
+    if (view === "favorites") {
+      list = list.filter((item) => favoriteSet.has(item.label));
+    }
     const sorted = [...list];
     if (sort === "az") {
       sorted.sort((a, b) => a.label.localeCompare(b.label, "fr"));
@@ -121,6 +129,28 @@ export default function LexiconPage({ apiBase, authToken, authUser }) {
     setItems((prev) => prev.filter((item) => item.id !== id));
   }
 
+  async function toggleFavorite(label) {
+    if (!authUser) return;
+    const next = !favoriteSet.has(label);
+    const response = await authFetch("/api/lexicon/favorites", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: activeType, label, favorite: next })
+    });
+    if (!response.ok) return;
+    setFavorites((prev) => {
+      const copy = { ...(prev || {}) };
+      const list = new Set(copy[activeType] ?? []);
+      if (next) {
+        list.add(label);
+      } else {
+        list.delete(label);
+      }
+      copy[activeType] = Array.from(list);
+      return copy;
+    });
+  }
+
   return (
     <section className="panel">
       <div className="panel-header">
@@ -174,6 +204,22 @@ export default function LexiconPage({ apiBase, authToken, authUser }) {
                   Personnel
                 </button>
               </div>
+              <div className="segmented segmented--small">
+                <button
+                  type="button"
+                  className={`segmented__item ${view === "all" ? "is-active" : ""}`}
+                  onClick={() => setView("all")}
+                >
+                  Tout
+                </button>
+                <button
+                  type="button"
+                  className={`segmented__item ${view === "favorites" ? "is-active" : ""}`}
+                  onClick={() => setView("favorites")}
+                >
+                  Favoris
+                </button>
+              </div>
               <input
                 value={search}
                 placeholder="Filtrer une entrée..."
@@ -207,6 +253,13 @@ export default function LexiconPage({ apiBase, authToken, authUser }) {
               <div key={item.id} className="lexicon-row">
                 <div className="lexicon-row__label">{item.label}</div>
                 <div className="lexicon-row__meta">#{item.id}</div>
+                <button
+                  type="button"
+                  className={`chip ${favoriteSet.has(item.label) ? "chip--active" : ""}`}
+                  onClick={() => toggleFavorite(item.label)}
+                >
+                  {favoriteSet.has(item.label) ? "★ Favori" : "☆ Favori"}
+                </button>
                 {canEdit ? (
                   <button type="button" className="chip chip--danger" onClick={() => deleteItem(item.id)}>
                     Supprimer

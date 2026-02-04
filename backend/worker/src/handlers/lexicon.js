@@ -9,6 +9,10 @@ import {
   hasLexiconLabel,
   hasUserLexiconLabel,
   replaceLexicon,
+  getFavorites,
+  addFavorite,
+  removeFavorite,
+  isFavorite,
   jsonResponse,
   buildCorsHeaders
 } from "../db.js";
@@ -38,6 +42,8 @@ const USER_TYPE_MAP = {
   "parade-attribut": "user_parade_attribut",
   "attaque-attribut": "user_attaque_attribut"
 };
+
+const FAVORITE_TYPES = new Set(Object.keys(TYPE_MAP));
 
 export async function handleLexicon(request, env) {
   const corsHeaders = buildCorsHeaders(request, env);
@@ -153,6 +159,43 @@ export async function handleLexiconPersonal(request, env, params) {
     }
     await deleteUserLexiconItem(env, table, session.user.id, id);
     await logAudit(env, "lexicon.personal.delete", session.user.id, null, { type, id });
+    return jsonResponse({ ok: true }, 200, corsHeaders);
+  }
+
+  return jsonResponse({ error: "method_not_allowed" }, 405, corsHeaders);
+}
+
+export async function handleLexiconFavorites(request, env) {
+  const corsHeaders = buildCorsHeaders(request, env);
+  const session = await requireAuth(request, env);
+  if (!session) return jsonResponse({ error: "unauthorized" }, 401, corsHeaders);
+
+  if (request.method === "GET") {
+    const rows = await getFavorites(env, session.user.id);
+    const favorites = rows.reduce((acc, row) => {
+      if (!acc[row.type]) acc[row.type] = [];
+      acc[row.type].push(row.label);
+      return acc;
+    }, {});
+    return jsonResponse({ favorites }, 200, corsHeaders);
+  }
+
+  if (request.method === "POST") {
+    const body = await request.json().catch(() => null);
+    const type = body?.type;
+    const label = typeof body?.label === "string" ? body.label.trim() : "";
+    const favorite = Boolean(body?.favorite);
+    if (!FAVORITE_TYPES.has(type) || !label) {
+      return jsonResponse({ error: "invalid_favorite" }, 400, corsHeaders);
+    }
+    const exists = await isFavorite(env, session.user.id, type, label);
+    if (favorite && !exists) {
+      await addFavorite(env, session.user.id, type, label);
+      await logAudit(env, "lexicon.favorite.add", session.user.id, null, { type, label });
+    } else if (!favorite && exists) {
+      await removeFavorite(env, session.user.id, type, label);
+      await logAudit(env, "lexicon.favorite.remove", session.user.id, null, { type, label });
+    }
     return jsonResponse({ ok: true }, 200, corsHeaders);
   }
 

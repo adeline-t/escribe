@@ -95,7 +95,13 @@ export async function ensureLexiconSchema(env) {
     `CREATE TABLE IF NOT EXISTS user_deplacement_defense (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, label TEXT NOT NULL);`,
     `CREATE TABLE IF NOT EXISTS user_parade_numero (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, label TEXT NOT NULL);`,
     `CREATE TABLE IF NOT EXISTS user_parade_attribut (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, label TEXT NOT NULL);`,
-    `CREATE TABLE IF NOT EXISTS user_attaque_attribut (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, label TEXT NOT NULL);`
+    `CREATE TABLE IF NOT EXISTS user_attaque_attribut (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, label TEXT NOT NULL);`,
+    `CREATE TABLE IF NOT EXISTS user_lexicon_favorites (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      type TEXT NOT NULL,
+      label TEXT NOT NULL
+    );`
   ];
   await env.DB.batch(statements.map((sql) => env.DB.prepare(sql)));
   lexiconReady = true;
@@ -422,6 +428,47 @@ export async function hasUserLexiconLabel(env, table, userId, label) {
   const row = await env.DB
     .prepare(`SELECT id FROM ${table} WHERE user_id = ?1 AND lower(label) = lower(?2) LIMIT 1`)
     .bind(userId, label)
+    .first();
+  return Boolean(row?.id);
+}
+
+export async function getFavorites(env, userId) {
+  await ensureLexiconSeeded(env);
+  const rows = await env.DB
+    .prepare(`SELECT type, label FROM user_lexicon_favorites WHERE user_id = ?1 ORDER BY id`)
+    .bind(userId)
+    .all();
+  return rows?.results ?? [];
+}
+
+export async function addFavorite(env, userId, type, label) {
+  await ensureLexiconSeeded(env);
+  await env.DB
+    .prepare(
+      `INSERT INTO user_lexicon_favorites (user_id, type, label)
+       VALUES (?1, ?2, ?3)`
+    )
+    .bind(userId, type, label)
+    .run();
+}
+
+export async function removeFavorite(env, userId, type, label) {
+  await ensureLexiconSeeded(env);
+  await env.DB
+    .prepare(
+      `DELETE FROM user_lexicon_favorites WHERE user_id = ?1 AND type = ?2 AND lower(label) = lower(?3)`
+    )
+    .bind(userId, type, label)
+    .run();
+}
+
+export async function isFavorite(env, userId, type, label) {
+  await ensureLexiconSeeded(env);
+  const row = await env.DB
+    .prepare(
+      `SELECT id FROM user_lexicon_favorites WHERE user_id = ?1 AND type = ?2 AND lower(label) = lower(?3) LIMIT 1`
+    )
+    .bind(userId, type, label)
     .first();
   return Boolean(row?.id);
 }
