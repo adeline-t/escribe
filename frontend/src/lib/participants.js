@@ -37,20 +37,33 @@ export function normalizeParticipant(item) {
 
 export function normalizeState(raw, defaultParticipants) {
   if (!raw || typeof raw !== "object") return null;
+  const combatId = Number.isFinite(Number(raw.combatId)) ? Number(raw.combatId) : null;
+  const combatName = typeof raw.combatName === "string" ? raw.combatName : "Combat sans nom";
+  const combatDescription = typeof raw.combatDescription === "string" ? raw.combatDescription : "";
   const participants = Array.isArray(raw.participants) && raw.participants.length
     ? raw.participants
     : defaultParticipants;
   const formRaw = Array.isArray(raw.form) ? raw.form : [];
   const form = participants.map((_, index) => normalizeParticipant(formRaw[index] ?? {}));
-  const stepsRaw = Array.isArray(raw.steps) ? raw.steps : [];
-  const steps = stepsRaw.map((step) => {
-    const participantsRaw = Array.isArray(step?.participants) ? step.participants : [];
+  const phrasesRaw = Array.isArray(raw.phrases) ? raw.phrases : [];
+  const phrases = phrasesRaw.map((phrase, phraseIndex) => {
+    const stepsRaw = Array.isArray(phrase?.steps) ? phrase.steps : [];
+    const steps = stepsRaw.map((step) => {
+      const participantsRaw = Array.isArray(step?.participants) ? step.participants : [];
+      return {
+        ...step,
+        participants: participants.map((_, index) => normalizeParticipant(participantsRaw[index] ?? {}))
+      };
+    });
     return {
-      ...step,
-      participants: participants.map((_, index) => normalizeParticipant(participantsRaw[index] ?? {}))
+      id: phrase?.id ?? crypto.randomUUID(),
+      name: typeof phrase?.name === "string" && phrase.name.trim()
+        ? phrase.name
+        : `Phrase ${phraseIndex + 1}`,
+      steps
     };
   });
-  return { participants, form, steps };
+  return { combatId, combatName, combatDescription, participants, form, phrases };
 }
 
 export function toggleAttribute(current, value) {

@@ -7,6 +7,7 @@ import ProfilePage from "./pages/ProfilePage.jsx";
 import UsersPage from "./pages/UsersPage.jsx";
 import PhraseCreatePage from "./pages/PhraseCreatePage.jsx";
 import PhraseListPage from "./pages/PhraseListPage.jsx";
+import CombatListPage from "./pages/CombatListPage.jsx";
 import {
   FaBookOpen,
   FaHouse,
@@ -40,8 +41,13 @@ export default function App() {
   const [page, setPage] = useState("home");
 
   const [participants, setParticipants] = useState(DEFAULT_PARTICIPANTS);
-  const [steps, setSteps] = useState([]);
+  const [phrases, setPhrases] = useState([]);
+  const [activePhraseId, setActivePhraseId] = useState(null);
   const [form, setForm] = useState(DEFAULT_PARTICIPANTS.map(() => emptyParticipantState()));
+  const [editingStepId, setEditingStepId] = useState(null);
+  const [combatId, setCombatId] = useState(null);
+  const [combatName, setCombatName] = useState("Combat sans nom");
+  const [combatDescription, setCombatDescription] = useState("");
   const [isHydrated, setIsHydrated] = useState(false);
   const [lexiconData, setLexiconData] = useState(() => normalizeLexicon(DEFAULT_LEXICON));
   const saveTimerRef = useRef(null);
@@ -49,6 +55,11 @@ export default function App() {
   const participantLabels = useMemo(
     () => participants.map((name, index) => labelForParticipant(name, index)),
     [participants]
+  );
+
+  const activePhrase = useMemo(
+    () => phrases.find((phrase) => phrase.id === activePhraseId) ?? null,
+    [phrases, activePhraseId]
   );
 
   const normalizedLexicon = useMemo(() => normalizeLexicon(lexiconData), [lexiconData]);
@@ -110,8 +121,16 @@ export default function App() {
         const normalized = normalizeState(data?.state, DEFAULT_PARTICIPANTS);
         if (isMounted && normalized) {
           setParticipants(normalized.participants);
-          setSteps(normalized.steps);
+          setPhrases(normalized.phrases ?? []);
           setForm(normalized.form);
+          setCombatId(normalized.combatId ?? null);
+          setCombatName(normalized.combatName ?? "Combat sans nom");
+          setCombatDescription(normalized.combatDescription ?? "");
+          if (normalized.phrases?.length) {
+            setActivePhraseId(normalized.phrases[0].id);
+          } else {
+            setActivePhraseId(null);
+          }
         }
       } catch (error) {
         console.warn("State load skipped:", error);
@@ -130,13 +149,20 @@ export default function App() {
     if (saveTimerRef.current) {
       clearTimeout(saveTimerRef.current);
     }
-    const payload = { participants, steps, form };
+    const payload = { combatId, combatName, combatDescription, participants, phrases, form };
     saveTimerRef.current = setTimeout(() => {
       apiFetch("/api/state", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ state: payload })
-      }).catch((error) => {
+      })
+        .then((response) => response?.json?.())
+        .then((data) => {
+          if (data?.combatId && !combatId) {
+            setCombatId(data.combatId);
+          }
+        })
+        .catch((error) => {
         console.warn("State save skipped:", error);
       });
     }, 400);
@@ -145,7 +171,53 @@ export default function App() {
         clearTimeout(saveTimerRef.current);
       }
     };
-  }, [participants, steps, form, isHydrated, authUser]);
+  }, [participants, phrases, form, combatName, combatDescription, combatId, isHydrated, authUser]);
+
+  async function loadCombatById(id) {
+    if (!id) return;
+    const response = await apiFetch(`/api/state?combatId=${id}`);
+    if (!response.ok) return;
+    const data = await response.json();
+    const normalized = normalizeState(data?.state, DEFAULT_PARTICIPANTS);
+    if (normalized) {
+      setParticipants(normalized.participants);
+      setPhrases(normalized.phrases ?? []);
+      setForm(normalized.form);
+      setCombatId(normalized.combatId ?? id);
+      setCombatName(normalized.combatName ?? "Combat sans nom");
+      setCombatDescription(normalized.combatDescription ?? "");
+      if (normalized.phrases?.length) {
+        setActivePhraseId(normalized.phrases[0].id);
+      } else {
+        setActivePhraseId(null);
+      }
+      return true;
+    }
+    return false;
+  }
+
+  async function handleCreateCombat(payload) {
+    const response = await apiFetch("/api/combats", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: payload?.name,
+        description: payload?.description,
+        participants: DEFAULT_PARTICIPANTS
+      })
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data?.combat?.id) return;
+    const newId = data.combat.id;
+    setCombatId(newId);
+    setCombatName(data.combat.name ?? "Combat sans nom");
+    setCombatDescription(data.combat.description ?? "");
+    setParticipants(DEFAULT_PARTICIPANTS);
+    setPhrases([]);
+    setActivePhraseId(null);
+    setForm(DEFAULT_PARTICIPANTS.map(() => emptyParticipantState()));
+    setPage("create");
+  }
 
   async function handleLogin(event) {
     event.preventDefault();
@@ -262,7 +334,20 @@ export default function App() {
       participants: form.map((item) => ({ ...item }))
     };
 
-    setSteps((prev) => [...prev, step]);
+    if (!activePhraseId) return;
+    setPhrases((prev) =>
+      prev.map((phrase) =>
+        phrase.id === activePhraseId
+          ? editingStepId
+            ? {
+                ...phrase,
+                steps: phrase.steps.map((item) => (item.id === editingStepId ? { ...step, id: editingStepId } : item))
+              }
+            : { ...phrase, steps: [...phrase.steps, step] }
+          : phrase
+      )
+    );
+    setEditingStepId(null);
     setForm((prev) =>
       prev.map((item) => ({
         ...item,
@@ -282,7 +367,86 @@ export default function App() {
   }
 
   function removeStep(id) {
-    setSteps((prev) => prev.filter((step) => step.id !== id));
+    if (!activePhraseId) return;
+    setPhrases((prev) =>
+      prev.map((phrase) =>
+        phrase.id === activePhraseId
+          ? { ...phrase, steps: phrase.steps.filter((step) => step.id !== id) }
+          : phrase
+      )
+    );
+    if (editingStepId === id) {
+      setEditingStepId(null);
+    }
+  }
+
+  function editStep(id) {
+    if (!activePhraseId) return;
+    const phrase = phrases.find((item) => item.id === activePhraseId);
+    const step = phrase?.steps?.find((item) => item.id === id);
+    if (!step) return;
+    const nextForm = participants.map((_, index) => ({
+      ...emptyParticipantState(),
+      ...(step.participants?.[index] ?? {})
+    }));
+    setForm(nextForm);
+    setEditingStepId(id);
+  }
+
+  function cancelEditStep() {
+    setEditingStepId(null);
+    setForm(DEFAULT_PARTICIPANTS.map(() => emptyParticipantState()));
+  }
+
+  function createPhrase() {
+    const nextNumber = phrases.length + 1;
+    const newPhrase = {
+      id: crypto.randomUUID(),
+      name: `Phrase ${nextNumber}`,
+      steps: []
+    };
+    setPhrases((prev) => [...prev, newPhrase]);
+    setActivePhraseId(newPhrase.id);
+  }
+
+  function renamePhrase(id, name) {
+    setPhrases((prev) =>
+      prev.map((phrase) => (phrase.id === id ? { ...phrase, name } : phrase))
+    );
+  }
+
+  function movePhrase(id, direction) {
+    setPhrases((prev) => {
+      const index = prev.findIndex((phrase) => phrase.id === id);
+      if (index < 0) return prev;
+      const nextIndex = direction === "up" ? index - 1 : index + 1;
+      if (nextIndex < 0 || nextIndex >= prev.length) return prev;
+      const copy = [...prev];
+      const [moved] = copy.splice(index, 1);
+      copy.splice(nextIndex, 0, moved);
+      return copy;
+    });
+  }
+
+  function movePhraseToIndex(id, targetIndex) {
+    setPhrases((prev) => {
+      const index = prev.findIndex((phrase) => phrase.id === id);
+      if (index < 0) return prev;
+      if (targetIndex < 0 || targetIndex >= prev.length) return prev;
+      if (index === targetIndex) return prev;
+      const copy = [...prev];
+      const [moved] = copy.splice(index, 1);
+      copy.splice(targetIndex, 0, moved);
+      return copy;
+    });
+  }
+
+  function deletePhrase(id) {
+    setPhrases((prev) => prev.filter((phrase) => phrase.id !== id));
+    if (activePhraseId === id) {
+      const remaining = phrases.filter((phrase) => phrase.id !== id);
+      setActivePhraseId(remaining[0]?.id ?? null);
+    }
   }
 
   if (!authUser) {
@@ -296,64 +460,87 @@ export default function App() {
     );
   }
 
+  const [isMenuCollapsed, setIsMenuCollapsed] = useState(false);
+
   return (
-    <div className="page layout">
+    <div className={`page layout ${isMenuCollapsed ? "layout--collapsed" : ""}`}>
       <aside className="sidebar">
         <div className="brand">
           <p className="kicker">Escribe</p>
           <h1>Archive vivante</h1>
           <p className="lead">Une page par usage pour garder l’édition lisible.</p>
+          <button type="button" className="chip chip--ghost" onClick={() => setIsMenuCollapsed((prev) => !prev)}>
+            {isMenuCollapsed ? "Afficher le menu" : "Réduire le menu"}
+          </button>
         </div>
 
         <nav className="menu">
           <button
             type="button"
             className={`menu__item ${page === "home" ? "is-active" : ""}`}
-            onClick={() => setPage("home")}
+            onClick={() => {
+              setPage("home");
+              setIsMenuCollapsed(true);
+            }}
           >
             <span className="menu__icon" aria-hidden="true"><FaHouse /></span>
-            Accueil
+            <span className="menu__label">Accueil</span>
           </button>
           <button
             type="button"
-            className={`menu__item ${page === "create" ? "is-active" : ""}`}
-            onClick={() => setPage("create")}
+            className={`menu__item ${page === "combats" ? "is-active" : ""}`}
+            onClick={() => {
+              setPage("combats");
+              setIsMenuCollapsed(true);
+            }}
           >
             <span className="menu__icon" aria-hidden="true"><FaPenNib /></span>
-            Créer une phrase
+            <span className="menu__label">Créer un combat</span>
           </button>
           <button
             type="button"
             className={`menu__item ${page === "phrases" ? "is-active" : ""}`}
-            onClick={() => setPage("phrases")}
+            onClick={() => {
+              setPage("phrases");
+              setIsMenuCollapsed(true);
+            }}
           >
             <span className="menu__icon" aria-hidden="true"><FaBookOpen /></span>
-            Phrases créées
+            <span className="menu__label">Phrases créées</span>
           </button>
           <button
             type="button"
             className={`menu__item ${page === "lexicon" ? "is-active" : ""}`}
-            onClick={() => setPage("lexicon")}
+            onClick={() => {
+              setPage("lexicon");
+              setIsMenuCollapsed(true);
+            }}
           >
             <span className="menu__icon" aria-hidden="true"><FaLayerGroup /></span>
-            Lexique
+            <span className="menu__label">Lexique</span>
           </button>
           <button
             type="button"
             className={`menu__item ${page === "account" ? "is-active" : ""}`}
-            onClick={() => setPage("account")}
+            onClick={() => {
+              setPage("account");
+              setIsMenuCollapsed(true);
+            }}
           >
             <span className="menu__icon" aria-hidden="true"><FaUser /></span>
-            Mon compte
+            <span className="menu__label">Mon compte</span>
           </button>
           {authUser && ["admin", "superadmin"].includes(authUser.role) ? (
             <button
               type="button"
               className={`menu__item ${page === "users" ? "is-active" : ""}`}
-              onClick={() => setPage("users")}
+              onClick={() => {
+                setPage("users");
+                setIsMenuCollapsed(true);
+              }}
             >
               <span className="menu__icon" aria-hidden="true"><FaUsers /></span>
-              Utilisateurs
+              <span className="menu__label">Utilisateurs</span>
             </button>
           ) : null}
         </nav>
@@ -363,8 +550,26 @@ export default function App() {
         {page === "home" ? (
           <HomePage
             authUser={authUser}
-            stepsCount={steps.length}
+            combatName={combatName}
+            combatDescription={combatDescription}
+            combatId={combatId}
+            stepsCount={activePhrase?.steps?.length ?? 0}
             participantsCount={participants.length}
+            onNavigate={setPage}
+            onOpenCombat={(id) => {
+              if (!id) return;
+              loadCombatById(id).then(() => setPage("create"));
+            }}
+          />
+        ) : null}
+
+        {page === "combats" ? (
+          <CombatListPage
+            apiBase={API_BASE}
+            authToken={authToken}
+            combatId={combatId}
+            onSelectCombat={loadCombatById}
+            onCreateCombat={handleCreateCombat}
             onNavigate={setPage}
           />
         ) : null}
@@ -373,12 +578,30 @@ export default function App() {
           <PhraseCreatePage
             participants={participants}
             form={form}
+            combatName={combatName}
+            combatDescription={combatDescription}
+            phrases={phrases}
+            activePhraseId={activePhraseId}
+            activePhrase={activePhrase}
+            stepsCount={activePhrase?.steps?.length ?? 0}
             participantLabels={participantLabels}
             normalizedLexicon={normalizedLexicon}
             onParticipantCountChange={updateParticipantCount}
             onParticipantNameChange={updateParticipantName}
             onFormChange={updateForm}
             onAddStep={addStep}
+            onCombatNameChange={setCombatName}
+            onCombatDescriptionChange={setCombatDescription}
+            onCreatePhrase={createPhrase}
+            onSelectPhrase={setActivePhraseId}
+            onRenamePhrase={renamePhrase}
+            onMovePhrase={movePhrase}
+            onMovePhraseToIndex={movePhraseToIndex}
+            onDeletePhrase={deletePhrase}
+            onEditStep={editStep}
+            onRemoveStep={removeStep}
+            onCancelEditStep={cancelEditStep}
+            editingStepId={editingStepId}
             buildParticipantLabel={buildParticipantLabel}
             buildSummaryLine={buildSummaryLine}
             toggleAttribute={toggleAttribute}
@@ -387,8 +610,10 @@ export default function App() {
 
         {page === "phrases" ? (
           <PhraseListPage
+            combatName={combatName}
+            combatDescription={combatDescription}
             participants={participants}
-            steps={steps}
+            steps={activePhrase?.steps ?? []}
             onRemoveStep={removeStep}
           />
         ) : null}

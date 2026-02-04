@@ -64,7 +64,8 @@ export async function handleLexicon(request, env) {
   return jsonResponse({ error: "method_not_allowed" }, 405, corsHeaders);
 }
 
-export async function handleLexiconType(request, env, type) {
+export async function handleLexiconType(request, env, params) {
+  const type = params?.type;
   const corsHeaders = buildCorsHeaders(request, env);
   const table = TYPE_MAP[type];
   if (!table) {
@@ -113,7 +114,8 @@ export async function handleLexiconType(request, env, type) {
   return jsonResponse({ error: "method_not_allowed" }, 405, corsHeaders);
 }
 
-export async function handleLexiconPersonal(request, env, type) {
+export async function handleLexiconPersonal(request, env, params) {
+  const type = params?.type;
   const corsHeaders = buildCorsHeaders(request, env);
   const session = await requireAuth(request, env);
   if (!session) return jsonResponse({ error: "unauthorized" }, 401, corsHeaders);

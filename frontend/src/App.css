@@ -14,7 +14,7 @@
 }
 
 .page {
-  max-width: 1200px;
+  max-width: 90%;
   margin: 0 auto;
   padding: 32px 20px 64px;
 }
@@ -24,6 +24,10 @@
   grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
   gap: 28px;
   align-items: start;
+}
+
+.layout--collapsed {
+  grid-template-columns: 88px minmax(0, 1fr);
 }
 
 .sidebar {
@@ -135,6 +139,25 @@ h2 {
   text-align: left;
 }
 
+.menu__label {
+  white-space: nowrap;
+}
+
+.layout--collapsed .menu__item {
+  grid-template-columns: 28px;
+  justify-items: center;
+}
+
+.layout--collapsed .menu__label,
+.layout--collapsed .brand h1,
+.layout--collapsed .brand .lead {
+  display: none;
+}
+
+.layout--collapsed .brand .kicker {
+  margin-bottom: 0;
+}
+
 .menu__item.is-active {
   background: var(--ink);
   color: #fff;
@@ -150,7 +173,10 @@ h2 {
   display: grid;
   place-items: center;
   font-size: 14px;
-  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease;
 }
 
 .menu__item.is-active .menu__icon {
@@ -164,26 +190,31 @@ h2 {
 }
 
 .menu__item.is-active:nth-child(2) .menu__icon {
+  background: #e6f3ff;
+  color: #2a6fb4;
+}
+
+.menu__item.is-active:nth-child(3) .menu__icon {
   background: #ffe5ec;
   color: #b43455;
 }
 
-.menu__item.is-active:nth-child(3) .menu__icon {
+.menu__item.is-active:nth-child(4) .menu__icon {
   background: #e7f0ff;
   color: #2f5fb4;
 }
 
-.menu__item.is-active:nth-child(4) .menu__icon {
+.menu__item.is-active:nth-child(5) .menu__icon {
   background: #e9f7ef;
   color: #2b7a4a;
 }
 
-.menu__item.is-active:nth-child(5) .menu__icon {
+.menu__item.is-active:nth-child(6) .menu__icon {
   background: #f4ecff;
   color: #6a3bc2;
 }
 
-.menu__item.is-active:nth-child(6) .menu__icon {
+.menu__item.is-active:nth-child(7) .menu__icon {
   background: #fdebd0;
   color: #b05a06;
 }
@@ -213,6 +244,113 @@ h2 {
   font-size: 16px;
 }
 
+.phrase-layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.phrase-list {
+  display: grid;
+  gap: 10px;
+  position: sticky;
+  top: 16px;
+}
+
+.phrase-row {
+  display: grid;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid #eadfce;
+  border-radius: 14px;
+  padding: 10px;
+}
+
+.phrase-row.is-active {
+  border-color: #c5b59f;
+  background: #fff7ea;
+}
+
+.phrase-row__main {
+  background: transparent;
+  border: none;
+  text-align: left;
+  display: grid;
+  gap: 4px;
+  padding: 0;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.phrase-row__title {
+  font-weight: 700;
+}
+
+.phrase-row__meta {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.phrase-row__actions {
+  display: flex;
+  gap: 6px;
+}
+
+.phrase-row {
+  cursor: grab;
+}
+
+.phrase-row:active {
+  cursor: grabbing;
+}
+
+.phrase-nav {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.phrase-editor .panel {
+  padding: 16px;
+}
+
+.step-list {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.step-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #eadfce;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.step-row.is-active {
+  border-color: #c5b59f;
+  background: #fff7ea;
+}
+
+.step-row__title {
+  font-weight: 600;
+}
+
+.step-row__meta {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.step-row__actions {
+  display: flex;
+  gap: 8px;
+}
+
 @media (max-width: 900px) {
   .layout {
     grid-template-columns: 1fr;
@@ -222,8 +360,25 @@ h2 {
     position: static;
   }
 
+  .layout--collapsed {
+    grid-template-columns: 1fr;
+  }
+
   .menu {
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+
+  .phrase-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .phrase-list {
+    position: static;
+  }
+
+  .step-row {
+    grid-template-columns: 1fr;
+    align-items: start;
   }
 }
 
@@ -698,6 +853,15 @@ button {
   padding: 10px 12px;
 }
 
+.lexicon-row.is-active {
+  border-color: #c5b59f;
+  background: #fff7ea;
+}
+
+.combat-row {
+  grid-template-columns: minmax(0, 1fr) 180px 90px auto auto;
+}
+
 .lexicon-row__label {
   font-weight: 600;
 }
@@ -735,6 +899,10 @@ button {
   .lexicon-row {
     grid-template-columns: 1fr;
     align-items: start;
+  }
+
+  .combat-row {
+    grid-template-columns: 1fr;
   }
 }
 

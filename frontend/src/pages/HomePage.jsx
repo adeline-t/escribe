@@ -1,4 +1,13 @@
-export default function HomePage({ authUser, stepsCount, participantsCount, onNavigate }) {
+export default function HomePage({
+  authUser,
+  combatName,
+  combatDescription,
+  combatId,
+  stepsCount,
+  participantsCount,
+  onNavigate,
+  onOpenCombat
+}) {
   const name = authUser.firstName || authUser.lastName
     ? `${authUser.firstName || ""} ${authUser.lastName || ""}`.trim()
     : authUser.email;
@@ -9,18 +18,30 @@ export default function HomePage({ authUser, stepsCount, participantsCount, onNa
         <div>
           <h2>Accueil</h2>
           <p className="muted">Bonjour {name}. Vous avez {participantsCount} combattant{participantsCount > 1 ? "s" : ""} configuré{participantsCount > 1 ? "s" : ""} et {stepsCount} étape{stepsCount > 1 ? "s" : ""} en cours.</p>
+          <div className="muted" style={{ marginTop: "6px" }}>
+            Combat: {combatName || "Combat sans nom"}
+          </div>
+          {combatDescription ? <div className="muted">{combatDescription}</div> : null}
         </div>
       </div>
       <div className="home-grid">
         <div className="home-card">
-          <h3>Créer une phrase</h3>
-          <p className="muted">Saisissez une nouvelle étape et construisez la phrase d'armes.</p>
-          <button type="button" onClick={() => onNavigate("create")}>Aller à la création</button>
+          <h3>Créer un combat</h3>
+          <p className="muted">Commencez un nouveau combat pour y ajouter vos phrases d'armes.</p>
+          <button type="button" onClick={() => onNavigate("combats")}>Créer un combat</button>
         </div>
         <div className="home-card">
-          <h3>Phrases créées</h3>
-          <p className="muted">Consultez la phrase en cours, vérifiez la lecture et supprimez des étapes.</p>
-          <button type="button" onClick={() => onNavigate("phrases")}>Voir la liste</button>
+          <h3>Dernier combat</h3>
+          <p className="muted">{combatName || "Combat sans nom"}</p>
+          {combatDescription ? <p className="muted">{combatDescription}</p> : null}
+          <button type="button" onClick={() => onOpenCombat?.(combatId)} disabled={!combatId}>
+            Ouvrir le dernier combat
+          </button>
+        </div>
+        <div className="home-card">
+          <h3>Mes combats</h3>
+          <p className="muted">Créez, sélectionnez et archivez vos combats.</p>
+          <button type="button" onClick={() => onNavigate("combats")}>Gérer les combats</button>
         </div>
         <div className="home-card">
           <h3>Lexique</h3>

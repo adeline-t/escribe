@@ -9,7 +9,9 @@ export async function handleState(request, env) {
     return jsonResponse({ error: "unauthorized" }, 401, corsHeaders);
   }
   if (request.method === "GET") {
-    const state = await getState(env);
+    const url = new URL(request.url);
+    const combatId = Number(url.searchParams.get("combatId"));
+    const state = await getState(env, session.user.id, Number.isFinite(combatId) ? combatId : null);
     return jsonResponse({ state }, 200, corsHeaders);
   }
 
@@ -19,9 +21,9 @@ export async function handleState(request, env) {
     if (!state || typeof state !== "object") {
       return jsonResponse({ error: "invalid_state" }, 400, corsHeaders);
     }
-    await saveState(env, state);
-    await logAudit(env, "state.save", session.user.id, null, {});
-    return jsonResponse({ ok: true }, 200, corsHeaders);
+    const combatId = await saveState(env, session.user.id, state);
+    await logAudit(env, "state.save", session.user.id, combatId, {});
+    return jsonResponse({ ok: true, combatId }, 200, corsHeaders);
   }
 
   return jsonResponse({ error: "method_not_allowed" }, 405, corsHeaders);

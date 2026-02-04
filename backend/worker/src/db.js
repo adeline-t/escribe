@@ -52,10 +52,23 @@ let lexiconSeeded = false;
 export async function ensureSchema(env) {
   if (schemaReady) return;
   const statements = [
-    `CREATE TABLE IF NOT EXISTS app_state (
-      id INTEGER PRIMARY KEY,
-      state TEXT NOT NULL,
+    `CREATE TABLE IF NOT EXISTS combats (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      description TEXT,
+      participants TEXT NOT NULL,
+      draft TEXT,
+      archived INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
+    );`,
+    `CREATE TABLE IF NOT EXISTS combat_phrases (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      combat_id INTEGER NOT NULL,
+      position INTEGER NOT NULL,
+      payload TEXT NOT NULL,
+      created_at TEXT NOT NULL
     );`
   ];
   await env.DB.batch(statements.map((sql) => env.DB.prepare(sql)));
@@ -99,30 +112,250 @@ async function ensureLexiconSeeded(env) {
   lexiconSeeded = true;
 }
 
-export async function getState(env) {
+export async function getCombatState(env, userId, combatId) {
   await ensureSchema(env);
-  const row = await env.DB.prepare("SELECT state FROM app_state WHERE id = 1").first();
-  if (!row?.state) return null;
+  const combat = await env.DB
+    .prepare(
+      `SELECT id, name, description, participants, draft
+       FROM combats
+       WHERE id = ?1 AND user_id = ?2`
+    )
+    .bind(combatId, userId)
+    .first();
+  if (!combat?.id) return null;
+
+  const phraseRows = await env.DB
+    .prepare(
+      `SELECT payload FROM combat_phrases
+       WHERE combat_id = ?1
+       ORDER BY position`
+    )
+    .bind(combat.id)
+    .all();
+
+  const phrases = phraseRows?.results?.map((row, index) => {
+    try {
+      const payload = JSON.parse(row.payload);
+      if (payload?.steps) {
+        return {
+          id: payload.id ?? crypto.randomUUID(),
+          name: payload.name ?? `Phrase ${index + 1}`,
+          steps: Array.isArray(payload.steps) ? payload.steps : []
+        };
+      }
+      if (payload?.participants) {
+        return {
+          id: crypto.randomUUID(),
+          name: `Phrase ${index + 1}`,
+          steps: [payload]
+        };
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }).filter(Boolean) ?? [];
+
+  let participants = [];
+  let form = null;
   try {
-    return JSON.parse(row.state);
+    participants = JSON.parse(combat.participants);
   } catch {
-    return null;
+    participants = [];
   }
+  try {
+    form = combat.draft ? JSON.parse(combat.draft) : null;
+  } catch {
+    form = null;
+  }
+
+  return {
+    combatId: combat.id,
+    combatName: combat.name,
+    combatDescription: combat.description ?? "",
+    participants,
+    phrases,
+    form
+  };
 }
 
-export async function saveState(env, state) {
+export async function getState(env, userId, combatId = null) {
+  await ensureSchema(env);
+  if (combatId) {
+    const state = await getCombatState(env, userId, combatId);
+    if (state) return state;
+  }
+  const combat = await env.DB
+    .prepare(
+      `SELECT id
+       FROM combats
+       WHERE user_id = ?1 AND archived = 0
+       ORDER BY updated_at DESC
+       LIMIT 1`
+    )
+    .bind(userId)
+    .first();
+  if (!combat?.id) return null;
+  return getCombatState(env, userId, combat.id);
+}
+
+export async function listCombats(env, userId, includeArchived = false) {
+  await ensureSchema(env);
+  const rows = await env.DB
+    .prepare(
+      `SELECT c.id, c.name, c.description, c.participants, c.archived, c.updated_at,
+        (SELECT COUNT(*) FROM combat_phrases cp WHERE cp.combat_id = c.id) as phrase_count
+       FROM combats c
+       WHERE c.user_id = ?1 ${includeArchived ? "" : "AND c.archived = 0"}
+       ORDER BY c.updated_at DESC`
+    )
+    .bind(userId)
+    .all();
+  return rows?.results?.map((row) => {
+    let participants = [];
+    try {
+      participants = JSON.parse(row.participants);
+    } catch {
+      participants = [];
+    }
+    return {
+      id: row.id,
+      name: row.name,
+      description: row.description ?? "",
+      archived: Boolean(row.archived),
+      updatedAt: row.updated_at,
+      phraseCount: Number(row.phrase_count ?? 0),
+      participantsCount: participants.length
+    };
+  }) ?? [];
+}
+
+export async function createCombat(env, userId, data) {
   await ensureSchema(env);
   const now = new Date().toISOString();
-  await env.DB.prepare(
-    `
-      INSERT INTO app_state (id, state, updated_at)
-      VALUES (1, ?1, ?2)
-      ON CONFLICT (id)
-      DO UPDATE SET state = excluded.state, updated_at = excluded.updated_at;
-    `
-  )
-    .bind(JSON.stringify(state), now)
+  const name = typeof data?.name === "string" && data.name.trim() ? data.name.trim() : "Combat sans nom";
+  const description = typeof data?.description === "string" ? data.description.trim() : "";
+  const participants = Array.isArray(data?.participants) && data.participants.length
+    ? data.participants
+    : ["A", "B"];
+  const result = await env.DB
+    .prepare(
+      `INSERT INTO combats (user_id, name, description, participants, draft, created_at, updated_at, archived)
+       VALUES (?1, ?2, ?3, ?4, NULL, ?5, ?5, 0)
+       RETURNING id, name, description`
+    )
+    .bind(userId, name, description, JSON.stringify(participants), now)
+    .first();
+  return result ?? null;
+}
+
+export async function updateCombat(env, userId, combatId, data) {
+  await ensureSchema(env);
+  const now = new Date().toISOString();
+  const name = typeof data?.name === "string" && data.name.trim() ? data.name.trim() : "Combat sans nom";
+  const description = typeof data?.description === "string" ? data.description.trim() : "";
+  const participants = Array.isArray(data?.participants) ? data.participants : [];
+  await env.DB
+    .prepare(
+      `UPDATE combats
+       SET name = ?1, description = ?2, participants = ?3, updated_at = ?4
+       WHERE id = ?5 AND user_id = ?6`
+    )
+    .bind(name, description, JSON.stringify(participants), now, combatId, userId)
     .run();
+}
+
+export async function archiveCombat(env, userId, combatId, archived) {
+  await ensureSchema(env);
+  const now = new Date().toISOString();
+  await env.DB
+    .prepare(`UPDATE combats SET archived = ?1, updated_at = ?2 WHERE id = ?3 AND user_id = ?4`)
+    .bind(archived ? 1 : 0, now, combatId, userId)
+    .run();
+}
+
+export async function saveState(env, userId, state) {
+  await ensureSchema(env);
+  const now = new Date().toISOString();
+  const combatName = typeof state.combatName === "string" && state.combatName.trim()
+    ? state.combatName.trim()
+    : "Combat sans nom";
+  const combatDescription = typeof state.combatDescription === "string" ? state.combatDescription.trim() : "";
+  const participants = Array.isArray(state.participants) ? state.participants : [];
+  const draft = Array.isArray(state.form) ? state.form : null;
+  const phrases = Array.isArray(state.phrases) ? state.phrases : [];
+  const requestedId = Number(state.combatId);
+
+  let combatId = Number.isFinite(requestedId) ? requestedId : null;
+  if (combatId) {
+    const exists = await env.DB
+      .prepare(`SELECT id FROM combats WHERE id = ?1 AND user_id = ?2 AND archived = 0`)
+      .bind(combatId, userId)
+      .first();
+    if (!exists?.id) {
+      combatId = null;
+    }
+  }
+
+  if (!combatId) {
+    const inserted = await env.DB
+      .prepare(
+        `INSERT INTO combats (user_id, name, description, participants, draft, created_at, updated_at, archived)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?6, 0)
+         RETURNING id`
+      )
+      .bind(
+        userId,
+        combatName,
+        combatDescription,
+        JSON.stringify(participants),
+        draft ? JSON.stringify(draft) : null,
+        now
+      )
+      .first();
+    combatId = inserted?.id;
+  } else {
+    await env.DB
+      .prepare(
+        `UPDATE combats
+         SET name = ?1, description = ?2, participants = ?3, draft = ?4, updated_at = ?5
+         WHERE id = ?6 AND user_id = ?7`
+      )
+      .bind(
+        combatName,
+        combatDescription,
+        JSON.stringify(participants),
+        draft ? JSON.stringify(draft) : null,
+        now,
+        combatId,
+        userId
+      )
+      .run();
+  }
+
+  if (combatId) {
+    await env.DB.prepare(`DELETE FROM combat_phrases WHERE combat_id = ?1`).bind(combatId).run();
+    if (phrases.length > 0) {
+      const inserts = phrases.map((phrase, index) =>
+        env.DB.prepare(
+          `INSERT INTO combat_phrases (combat_id, position, payload, created_at)
+           VALUES (?1, ?2, ?3, ?4)`
+        ).bind(
+          combatId,
+          index,
+          JSON.stringify({
+            id: phrase.id,
+            name: phrase.name,
+            steps: Array.isArray(phrase.steps) ? phrase.steps : []
+          }),
+          now
+        )
+      );
+      await env.DB.batch(inserts);
+    }
+  }
+
+  return combatId;
 }
 
 async function getLabels(env, table) {

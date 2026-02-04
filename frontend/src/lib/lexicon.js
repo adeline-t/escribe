@@ -1,6 +1,6 @@
 import lexiconJson from "../data/lexicon.json";
 
-export const DEFAULT_PARTICIPANTS = ["Portrait", "Fou", "Reflet"];
+export const DEFAULT_PARTICIPANTS = ["A", "B"];
 
 export const LEXICON_TYPES = [
   { key: "offensive", label: "Offensive" },

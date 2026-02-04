@@ -5,6 +5,7 @@ import { handleLexicon, handleLexiconType, handleLexiconPersonal } from "./handl
 import { createRouter } from "./router.js";
 import { handleRegister, handleLogin, handleMe, handleProfile, handleChangePassword, handleLogout } from "./handlers/auth.js";
 import { handleUsersList, handleUserRole, handleAudit } from "./handlers/users.js";
+import { handleCombats, handleCombat, handleCombatArchive } from "./handlers/combats.js";
 
 const router = createRouter();
 router.add("GET", "/api/state", handleState);
@@ -28,6 +29,11 @@ router.add("POST", "/api/auth/logout", handleLogout);
 router.add("GET", "/api/admin/users", handleUsersList);
 router.add("POST", "/api/admin/users/role", handleUserRole);
 router.add("GET", "/api/admin/audit", handleAudit);
+router.add("GET", "/api/combats", handleCombats);
+router.add("POST", "/api/combats", handleCombats);
+router.add("GET", "/api/combats/:id", handleCombat);
+router.add("POST", "/api/combats/:id", handleCombat);
+router.add("POST", "/api/combats/:id/archive", handleCombatArchive);
 
 export default {
   async fetch(request, env) {
@@ -47,7 +53,7 @@ export default {
     try {
       const route = router.match(method, path);
       if (route) {
-        return route.handler(request, env, route.params?.type);
+        return route.handler(request, env, route.params);
       }
 
       return jsonResponse({ error: "Route non trouvée" }, 404, buildCorsHeaders(request, env));

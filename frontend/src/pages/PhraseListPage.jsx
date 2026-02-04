@@ -1,13 +1,17 @@
 import StepCard from "../components/StepCard.jsx";
 import { labelForParticipant } from "../lib/participants.js";
 
-export default function PhraseListPage({ participants, steps, onRemoveStep }) {
+export default function PhraseListPage({ combatName, combatDescription, participants, steps, onRemoveStep }) {
   return (
     <section className="panel">
       <div className="panel-header">
         <div>
           <h2>Liste des phrases créées</h2>
           <p className="muted">Phrase en cours, composée des étapes ajoutées.</p>
+          <div className="muted" style={{ marginTop: "6px" }}>
+            Combat: {combatName || "Combat sans nom"}
+          </div>
+          {combatDescription ? <div className="muted">{combatDescription}</div> : null}
         </div>
         <span className="muted">{steps.length} étape{steps.length > 1 ? "s" : ""}</span>
       </div>
