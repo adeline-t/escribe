@@ -1,0 +1,283 @@
+Tech-MB: Tableau 1
+Déplacement;;Offensives;;Actions;;Defensive;;Cibles;;Position;P-var
+Marche;;Attaque;;Coup de pointe;;Parade directe;;Tête;;1;Haute
+Demi-Marche;;Feinte;;Tranché;;Parade en cédant;;Figure;;2;Basse
+Retraite;;;;Tranché intérieur;;Parade circulaire;;Visage;;3;
+Demi-Retraite;;;;Tranché extérieur;;Parade semi-circulaire;;Épaule;;4;
+Déplacement latéral interne;;;;Couronné;;Esquive en sautant;;Poitrine;;5;
+Déplacement latéral externe;;;;Couronné revers;;Esquive basse;;Flanc;;6;
+Passe avant;;;;Moulinet intérieur;;Esquive latérale intérieure;;Ventre;;7;
+Demi-Passe avant;;;;Moulinet extérieur;;Esquive latérale extérieure;;Cuisse;;8;
+Passe arrière;;;;Brisé intérieur;;Esquive arrière;;Tibia;;9;
+Demi-Passe arrière;;;;Brisé extérieur;;Parade dague directe;;Pied;;;
+Changement de garde avant;;;;Moulinet intérieur inversé;;Parade dague circulaire;;;;;
+Changement de garde arrière;;;;Moulinet extérieur inversé;;Parade dague semi-circulaire;;;;;
+Fente;;;;Brisé intérieur inversé;;Parade bouclier;;;;;
+Redoublement de fente;;;;Brisé extérieur inversé;;Parade cape;;;;;
+Retour en garde vers l'avant;;;;Dégagement par …;;Parade de main;;;;;
+Retour en garde vers l'arrière;;;;Coupé par …;;Déséquilibre;;;;;
+Balestra;;;;Enrobement;;Ramassé;;;;;
+Bond avant;;;;Terrassement;;Invitation;;;;;
+Bond arrière;;;;Banderole;;Parade en croix;;;;;
+Flèche;;;;Pression (Jeté);;Parade en double;;;;;
+Volte avant;;;;;;;;;;;
+Contre-Volte avant;;;;;;;;;;;
+Volte arrière;;;;;;;;;;;
+Contre-Volte arrière;;;;;;;;;;;
+Demi-Volte avant interne;;;;;;;;;;;
+Demi-Volte arrière interne;;;;;;;;;;;
+Demi-Volte avant externe;;;;;;;;;;;
+Demi-Volte arrière externe;;;;;;;;;;;
+Quart de Volte avant interne;;;;;;;;;;;
+Quart de Volte arrière interne;;;;;;;;;;;
+Quart de Volte avant externe;;;;;;;;;;;
+Quart de Volte arrière externe;;;;;;;;;;;
+Appel de pied avant;;;;;;;;;;;
+Appel de pied arrière;;;;;;;;;;;
+Fente inversée;;;;;;;;;;;
+
+Model: Tableau 1
+;Tireur 1 (gaucher);;;;;;;;Tireur 2;;;;;;
+;Offensive;;Cible;Défensive;Position;;Action de jambe;;Offensive;;Cible;Défensive;Position;;Action de jambe
+-;JARDIN;;;;;;;;COURT;;;;;;
+1;;;;;;;;;;;;;;;
+2;;;;;;;;;;;;;;;
+3;;;;;;;;;;;;;;;
+4;;;;;;;;;;;;;;;
+5;;;;;;;;;;;;;;;
+6;;;;;;;;;;;;;;;
+7;;;;;;;;;;;;;;;
+8;;;;;;;;;;;;;;;
+9;;;;;;;;;;;;;;;
+10;;;;;;;;;;;;;;;
+11;;;;;;;;;;;;;;;
+12;;;;;;;;;;;;;;;
+13;;;;;;;;;;;;;;;
+14;;;;;;;;;;;;;;;
+15;;;;;;;;;;;;;;;
+16;;;;;;;;;;;;;;;
+17;;;;;;;;;;;;;;;
+18;;;;;;;;;;;;;;;
+19;;;;;;;;;;;;;;;
+20;;;;;;;;;;;;;;;
+21;;;;;;;;;;;;;;;
+22;;;;;;;;;;;;;;;
+23;;;;;;;;;;;;;;;
+24;;;;;;;;;;;;;;;
+25;;;;;;;;;;;;;;;
+26;;;;;;;;;;;;;;;
+27;;;;;;;;;;;;;;;
+28;;;;;;;;;;;;;;;
+29;;;;;;;;;;;;;;;
+30;;;;;;;;;;;;;;;
+
+tout: 1er Mort
+;Tireur 1 (gaucher);;;;;;;;Tireur 2;;;;;;
+;Offensive;;Cible;Défensive;Position;;Action de jambe;;Offensive;;Cible;Défensive;Position;;Action de jambe
+-;JARDIN;;;;;;;;COURT;;;;;;
+;;;;Invitation;8;;Marche;;;;;;;;Retraite
+1;;;;Esquive arrière;;;Retraite;ç;Attaque;Coup de pointe;Avant bras;;;;
+2;Feinte;Enlevé diagonal extérieur;Visage;;;;;è;;;;Parade directe;4;;
+;;Coupé par …;;;;;;;;;;;;;
+3;Attaque;Brisé extérieur;Tête;;;;;è;;;;Esquive arrière;;;
+4;;;;Esquive arrière;;;;ç;Attaque;Coup de pointe;Poitrine;;;;
+5;Attaque;Tranché extérieur;;;;;Appel de pied avant;è;;;;Esquive arrière;;;
+6;;;;Esquive arrière;;;Fente inversée;ç;Attaque;Coup de pointe;Épaule;;;;
+;;;;;;;;;;;;;;;
+;;;;Invitation;8;;Marche;;;;;;;;
+7;;;;Parade directe;4;;Retraite;ç;Attaque;Coup de pointe;Avant bras;;;;Fente
+8;Feinte;Enlevé diagonal extérieur;Visage;;;;Demi-Passe avant;è;;;;Parade directe;4;;Retour en garde vers l'arrière
+;;Coupé par …;;;;;;;;;;;;;
+9;Attaque;Brisé extérieur;Tête;;;;Demi-Passe avant;è;;;;Esquive arrière;;;Retraite
+10;;;;Esquive arrière;;;Retraite;ç;Attaque;Coup de pointe;Poitrine;;;;Marche
+11;;;;Parade directe;3;;Retraite;ç;Attaque;Coup de pointe;Poitrine;;;;Fente
+12;Feinte;Coup de pointe;Épaule;;;;Demi-Passe avant;è;;;;Parade semi-circulaire;3;;Retour en garde vers l'arrière
+;;Dégagement par …;;;;;;;;;;;;;
+13;Attaque;Coup de pointe;Épaule;;;;Demi-Passe avant;è;;;;Parade circulaire;6;;Retraite
+14;;;;Esquive basse;;;Passata di sotto;ç;Attaque;Coup de pointe;Épaule;;;;Fente
+15;Attaque;Coup de pointe;Flanc;;;;;è;;;;Subit (mort);;;
+
+tout: Les débiles
+;Tireur 1 (gaucher);;;;;;;;Tireur 2;;;;;;
+;Offensive;;Cible;Défensive;Position;;Action de jambe;;Offensive;;Cible;Défensive;Position;;Action de jambe
+-;JARDIN;;;;;;;;COURT;;;;;;
+;;;;;;;;;Attaque;Coup de pointe;Tibia;;;;Appel de pied avant
+;;;;Parade directe;4;;;ç;Attaque;Tranché extérieur;Poitrine;;;;Appel de pied avant
+;Attaque;Brisé intérieur;Tête;;;;;è;;;;Parade directe;5;;
+;;;;Parade directe;5;;;ç;Attaque;Tranché extérieur;Tibia;;;;
+;Attaque;Tranché extérieur;Tibia;;;;;è;;;;Parade directe;3;Haute;
+;Menace;Coup de pointe;Tête;Esquive arrière;;;;ç;Attaque;Coup de pointe;Pied;;;;
+;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;
+16;;;;Parade directe;8;;Mise en garde;ç;Feinte;Coup de pointe (pronation);Tibia;;;;Appel de pied avant
+;;;;;;;;;;Dégagement par …;;;;;
+17;;;;Parade directe;4;;;ç;Attaque;Coup de pointe (supination);Poitrine;;;;
+18;Attaque;Brisé intérieur;Tête;;;;;è;;;;Parade active (glissé);1;Haute;Fente latéral droite
+19;;;;Esquive arrière;;;Demi-Passe arrière;ç;Attaque;Tranché extérieur;Poitrine;;;;
+20;Attaque;Coup de pointe;Épaule;;;;;è;;;;Parade directe;6;;
+21;;;;Parade directe;5;;;ç;Attaque;Brisé extérieur;Tête;;;;
+22;Attaque;Tranché extérieur;Cuisse;;;;;è;;;;Esquive arrière;;;Demi-Passe arrière
+23;Attaque;Coup de pointe;Épaule;;;;;è;;;;Parade directe;3;;
+;;;;;;;;;Attaq au fer;pression;;;3;Haute;
+24;;;;Parade de main;2;;Demi-Passe arrière;ç;Attaque;Coup de pointe;Pied;;;;Fente
+;;;;;;;;;;;;;;;
+;Menace;Coup de pointe;Tête;;2;Haute;;;;;;;;;
+25;Feinte;Coup de pointe;Épaule;;;;;è;;;;Parade directe;3;;
+;;Dégagement par …;;;;;;;;;;;;;
+26;Attaque;Coup de pointe;Épaule;;;;;è;;;;Parade circulaire;6;;
+27;;;;Parade semi-circulaire;3;;;ç;Attaque;Coup de pointe;Épaule;;;;
+28;Attaque;Coup de pointe;Poitrine;;;;;è;;;;Parade semi-circulaire;4;;
+;;Coupé par …;;;;;;;;;;;;;
+29;Attaque;Coup de pointe;Épaule;;;;;è;;;;Parade directe;3;;
+;;;;;;;;;;;;Parade de main;4;;Changement de garde avant
+30;;;;Parade circulaire;1;;Quart de Volte arrière externe;ç;Attaque;Coup de pointe;Cuisse;;;;Fente inversée
+31;Attaque;Tranché;Figure;;;;Passe avant;è;;;;Esquive basse;;;Contre-Volte avant
+
+tout: On la voit partout
+;Tireur 1 (gaucher);;;;;;;;Tireur 2;;;;;;
+;Offensive;;Cible;Défensive;Position;;Action de jambe;;Offensive;;Cible;Défensive;Position;;Action de jambe
+-;JARDIN - fond de scène;;;;;;;;COURT - devant de scène;;;;;;
+32;;;;Parade semi-circulaire;7;;;ç;Attaque;Coup de pointe;Tibia;;;;Balestra
+;;;;;;;;;;Dégagement par …;;;;;
+33;;;;Parade semi-circulaire;3;;;ç;Feinte;Coup de pointe;Épaule;;;;
+;;;;;;;;;;Dégagement par …;;;;;
+34;;;;Parade semi-circulaire;3;;;ç;Attaque;Coup de pointe;Flanc;;;;Fente
+35;Attaque;Coup de pointe;Cuisse;;;;;è;;;;Parade en cédant;4;Basse;
+;;Dégagement par …;;;;;;;;;;;;;
+36;Attaque;Coup de pointe;Épaule;;;;;è;;;;Parade directe;3;;
+37;Attaque;Couronné revers;Poitrine;;;;;è;;;;Parade directe;4;;
+;;;;;;;;;Prise de fer;Croisé;;;;;
+38;;;;Parade en cédant;1;;Quart de Volte arrière externe;ç;Attaque;Coup de pointe;Cuisse;;;;Fente
+39;;;;Parade semi-circulaire;3;;Changement de garde arrière;ç;Attaque;Brisé extérieur;Épaule;;;;Redoublement de fente
+40;Attaque;Coup de pointe;Poitrine;;;;Bond avant;è;;;;Esquive latérale intérieure;;;Contre-Volte arrière
+;;;;;;;;;;;;;;;
+41;;;;Parade active;3;;;ç;Attaque;Tranché extérieur;Épaule;;;;
+42;Attaque;Coup de pointe;Épaule;;;;;è;;;;Parade directe;3;;
+43;Attaque;Tranché intérieur;Poitrine;;;;Fente;è;;;;Parade active;4;;
+;;;;;;;;;Prise de fer;Lier;;;8;;
+44;;;;Esquive arrière;;;Retour en garde vers l'arrière;ç;Attaque;Coup de pointe;Ventre;;;;Passe avant
+;;;;;;;;;;;;;;;
+;;Battement;;;;;;;Menace;;;;;;
+45;Attaque;Coup de pointe;Épaule;;;;Passe avant;è;;;;Parade semi-circulaire;3;;Passe arrière
+;;Dégagement par …;;;;;;;;;;;;;
+46;;;;Parade circulaire;3;;;ç;Attaque;Coup de pointe;Épaule;;;;
+;Attaq au fer;Froissement;;;;;;;;;;;;;
+47;Attaque;Coup de pointe;Flanc;;;;;è;;;;Parade de main;7;;Quart de Volte arrière externe
+48;;;;Esquive latérale extérieure;;;;ç;Attaque;Couronné;Tête;;;;Flèche
+;;;;;;;Déplacement latéral externe;;;;;;;;Déplacement latéral interne
+49;Attaque;Coup de pointe;Cuisse;;;;;è;;;;Parade directe;2;;
+;;Dégagement par …;;;;;;;;;;;;;
+50;Attaque;Coup de pointe;Épaule;;;;Déplacement latéral externe;è;;;;Parade semi-circulaire;3;;Déplacement latéral interne
+51;;;;Parade directe;4;;;ç;Attaque;Coup de pointe (pronation);Flanc;;;;Fente
+52;;;;Parade directe;4;Haute;;ç;Attaque;Coup de pointe (cavé - supination);Épaule;;;;Fente inversé latéral interne
+53;Attaque;Brisé intérieur;Tête;;;;;è;;;;Parade semi-circulaire (active);8;Haute;Retour en garde vers l'avant
+54;;;;Parade semi-circulaire;7;;;ç;Attaque;Couronné revers;Cuisse;;;;Fente latéral interne
+;;;;Parade de main;2;;;;;;;;;;
+55;Attaque;Coup de pointe;Cuisse;;;;Déplacement latéral externe;è;;;;Parade semi-circulaire;2;;Déplacement latéral externe
+;;;;;;;;;;Coupé par …;;;;;
+56;;;;Esquive arrière;;;Fente arrière;ç;Attaque;Coup de pointe;Poitrine;;;;Fente
+
+tout: C’est quoi la suite ? Baisse ta pointe - loupé
+;Tireur 1 (gaucher);;;;;;;;Tireur 2;;;;;;
+;Offensive;;Cible;Défensive;Position;;Action de jambe;;Offensive;;Cible;Défensive;Position;;Action de jambe
+-;COURT;;;;;;;;JARDIN;;;;;;
+57;;;;Parade de main (batté haut);;;;ç;Menace;Coup de pointe;Poitrine;;;;
+58;Attaque;Coup de pointe;Ventre;;;;;è;;;;Parade semi-circulaire;2;Haute;Bond arrière
+;;;;;;;;;Prise de fer;Croisé;;;2;;
+59;;;;Parade en cédant;3;;;ç;Attaque;Coup de pointe;Flanc;;;;
+60;Attaque;Coup de pointe;Poitrine;;;;;è;;;;Parade en opposition;4;;
+;;;;;;;;;Prise de fer;Croisé bas;;;7;;
+61;;;;Parade circulaire;2;;;ç;Attaque;Coup de pointe;Flanc;;;;
+;Prise de fer;Croisé haut;;;2;Haute;;;;;;;;;
+62;Attaque;Coup de pointe;Épaule;;;;;è;;;;Parade en cédant;3;;
+63;;;;Parade en opposition;4;;;ç;Attaque;Coup de pointe;Poitrine;;;;
+64;Attaque;Coup de pointe;Poitrine;;;;;è;;;;Parade en cédant;1;;
+65;;;;Parade en opposition;2;;;ç;Attaque;Coup de pointe;Cuisse;;;;
+66;Attaque;Coup de pointe;Cuisse;;;;;è;;;;Parade circulaire;2;;
+;;;;;;;;;Prise de fer;Liement;;;4;;
+67;;;;Parade en cédant;5;;;ç;Attaque;Coup de pointe;Poitrine;;;;
+;Prise de fer;Liement;;;1;;Demi-Volte avant externe;;;;;;;;
+68;Attaque;Coup de pointe (dos);Ventre;;;;;è;;;;Déséquilibre;;;
+;;;;;;;;;;;;;;;
+69;Attaque;Coup de pointe;Ventre;;;;;è;;;;Parade circulaire;7;;
+70;Feinte;Coup de pointe;Épaule;;;;;è;;;;Parade semi-circulaire;6;;
+;;Dégagement par …;;;;;;;;;;;;;
+71;Attaque;Coup de pointe;Épaule;;;;;è;;;;Parade circulaire;4;;
+;;;;;;;;;Prise de fer;Liement;;;8;;
+72;;;;Parade directe;4;;Passe arrière;ç;Feinte;Coup de pointe;Poitrine;;;;Passe avant
+;;;;;;;Passe arrière;;;Dégagement par …;;;;;Passe avant
+73;;;;Parade de main;4;;Passe arrière;ç;Feinte;Coup de pointe;Poitrine;;;;Passe avant
+;;;;;;;Passe arrière;;;Dégagement par …;;;;;Passe avant
+74;;;;Parade circulaire;4;;Passe arrière;ç;Attaque;Coup de pointe;Poitrine;;;;Passe avant
+75;Attaque;Tranché;Visage;;;;Changement de garde avant;è;;;;Esquive arrière;;;Passe arrière
+76;Attaque;Brisé extérieur;Tête;;;;Changement de garde avant;è;;;;Esquive arrière;;;Passe arrière
+77;Attaque;Coup de pointe;Ventre;;;;Fente;è;;;;Esquive arrière;;;Bond arrière
+
+tout: Ce n'est plus une démonstration
+;Tireur 1 (gaucher);;;;;;;;Tireur 2;;;;;;
+;Offensive;;Cible;Défensive;Position;;Action de jambe;;Offensive;;Cible;Défensive;Position;;Action de jambe
+-;COURT;;;;;;;;JARDIN;;;;;;
+78;Attaque;Coup de pointe;Épaule;;;;Passe avant;è;;;;Parade directe;3;;Passe arrière
+;;Dégagement par …;;;;;;;;;;;;;
+79;Attaque;Coup de pointe;Épaule;;;;Passe avant;è;;;;Parade circulaire;3;;Passe arrière
+;;;;;;;;;Attaq au fer;Froissement;;;;;
+80;;;;Parade directe;2;;;ç;Feinte;Brisé intérieur inversé;Cuisse;;;;
+81;;;;Parade directe;5;;;ç;Attaque;Brisé intérieur;Tête;;;;Flèche
+;;;;;;;;;;;;;;;
+82;Attaque;Coup de pointe;Flanc;;;;;è;;;;Esquive latérale intérieure;;;Quart de Volte arrière interne
+83;;;;Esquive arrière;;;;ç;Attaque;Tranché;Visage;;;;
+84;Attaque;Tranché;Épaule;;;;;è;;;;Parade directe;3;;
+;;;;;;;;;;Baté de la main livre;;;;;
+85;;;;Parade circulaire;1;;Demi-Retraite;ç;Attaque;Coup de pointe;Poitrine;;;;
+;;;;;;;;;;Dégagement par …;;;;;
+86;;;;Engagement;2;Haute;;ç;Menace;Coup de pointe;Flanc;;;;
+;;;;;;;;;;Dégagement par …;;;;;
+87;;;;Parade semi-circulaire;4;;;ç;Attaque;Coup de pointe;Poitrine;;;;Fente
+88;Attaq au fer;Battement;;;4;;;è;;;;Déséquilibre;;;
+;;;;;;;;;;;;;;;
+89;Attaque;Coup de pointe;Poitrine;;;;Marche;è;;;;Esquive arrière;;;Retour en garde vers l'arrière
+;;;;;;;;;;;;Recherche de Fer;4;;
+;;Dégagement par …;;;;;;;;;;;;;
+90;Attaque;Coup de pointe;Cuisse;;;;;è;;;;Parade semi-circulaire;8;;
+91;;;;Parade circulaire;2;;Changement de garde arrière;ç;Attaque;Coup de pointe;Cuisse;;;;Fente
+92;Attaque;Brisé extérieur;Figure;;;;;è;;;;Esquive arrière;;;Retour en garde vers l'arrière
+;;;;;;;;;;;;;;;Changement de garde arrière
+;;;;;;;;;;;;Baté;5;;Changement de garde avant
+93;;;;Parade de main;2;;Changement de garde arrière;ç;Attaque;Coup de pointe;Ventre;;;;
+94;Attaque;Coup de pointe;Épaule;;;;;è;;;;Parade directe;6;;
+;;;;;;;;;Prise de fer;Croisé bas;;;8;;
+95;;;;Parade directe;8;;Passe arrière;ç;Feinte;Coup de pointe (supination);;;;;Flèche
+;;;;;;;Passe arrière;;;Dégagement par …;;;;;
+96;;;;Parade circulaire;2;;Passe arrière;ç;Attaque;Coup de pointe (pronation);;;;;Passe avant
+;;Projection;;;;;;;;;;;;;
+97;Feinte;Coup de pointe;Cuisse;;;;Passe avant;è;;;;Parade directe;2;;Passe arrière
+;;Dégagement par …;;;;;;;;;;;;;
+98;Attaque;Coup de pointe;Poitrine;;;;Fente;è;;;;Parade circulaire;1;;Quart de Volte arrière externe
+;;;;;;;;;;Saisie garde main libre;;;;;
+99;;;;Esquive basse;;;Passe avant;ç;Attaque;Tranché;Figure;;;;Demi-Passe avant
+;;;;;;;Demi-Volte avant externe;;;;;;;;Demi-Volte arrière externe
+-;JARDIN;;;;;;;;COURT;;;;;;
+100;;Tranché extérieur;Ventre;;;;Passe avant;è;;;;Esquive arrière;;;Passe arrière
+101;;Tranché intérieur;Épaule;;;;Passe avant;è;;;;Parade directe;2;;Passe arrière
+102;;;;Parade directe;4;;Passe avant;ç;Attaque;Coup de pointe;Poitrine;;;;Passe arrière
+103;;Tranché intérieur;Visage;;;;Demi-Passe avant;è;;;;Esquive arrière;;;Fente inversée
+104;;Tranché extérieur;Figure;;;;;è;;;;Esquive basse;;;Redoublement de fente
+105;;;;Déséquilibre;;;Demi-Passe arrière;ç;Menace;Coup de pointe;Flanc;;;;
+
+tout: Mort final
+;Tireur 1 (gaucher);;;;;;;;Tireur 2;;;;;;
+;Offensive;;Cible;Défensive;Position;;Action de jambe;;Offensive;;Cible;Défensive;Position;;Action de jambe
+-;JARDIN;;;;;;;;COURT;;;;;;
+;;;;Invitation;8;;Marche;;;;;;;;
+106;;;;Parade directe;4;;Retraite;ç;Attaque;Coup de pointe;Avant bras;;;;Marche
+107;Feinte;Enlevé diagonal extérieur;Visage;;;;Changement de garde avant;è;;;;Parade directe;4;;Demi-Passe arrière
+;;Coupé par …;;;;;;;;;;;;;
+108;Attaque;Brisé extérieur;Tête;;;;Changement de garde avant;è;;;;Esquive arrière;;;Demi-Passe arrière
+109;;;;Esquive arrière;;;Retraite;ç;Attaque;Coup de pointe;Poitrine;;;;
+110;;;;Parade directe;3;;;ç;Attaque;Coup de pointe;Poitrine;;;;
+111;Feinte;Coup de pointe;Épaule;;;;;è;;;;Parade semi-circulaire;3;;
+;;Dégagement par …;;;;;;;;;;;;;
+112;Attaque;Coup de pointe;Épaule;;;;;è;;;;Parade circulaire;6;;
+113;;;;Esquive basse;;;Passata di sotto;ç;Attaque;Coup de pointe;Épaule;;;;Fente
+114;Attaque;Coup de pointe;Ventre;;;;;è;;;;Subit (mort);;;

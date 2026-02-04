@@ -1,0 +1,31 @@
+name = "escribe-backend"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+workers_dev = true
+preview_urls = true
+
+[vars]
+ENVIRONMENT = "development"
+CORS_ORIGIN = "http://localhost:5173"
+
+[observability]
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+invocation_logs = true
+persist = true
+
+[observability.traces]
+enabled = false
+head_sampling_rate = 1
+persist = true
+
+[env.dev]
+name = "escribe-backend-dev"
+vars = { ENVIRONMENT = "development", LOG_LEVEL = "debug", CORS_ORIGIN = "http://localhost:5173" }
+
+[[hyperdrive]]
+binding = "HYPERDRIVE"
+id = "91f601c11ad94b1da3a189dcdc0012fd"
