@@ -1,0 +1,1 @@
+ALTER TABLE combats ADD COLUMN type TEXT NOT NULL DEFAULT 'classic';

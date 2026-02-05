@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff7ea"/>
+      <stop offset="100%" stop-color="#f4eadb"/>
+    </linearGradient>
+  </defs>
+  <rect x="24" y="24" width="464" height="464" rx="96" fill="url(#bg)" stroke="#e2d7c6" stroke-width="8"/>
+
+  <!-- Letter E -->
+  <path d="M170 148H336" stroke="#1c160f" stroke-width="28" stroke-linecap="round"/>
+  <path d="M170 256H316" stroke="#1c160f" stroke-width="28" stroke-linecap="round"/>
+  <path d="M170 364H336" stroke="#1c160f" stroke-width="28" stroke-linecap="round"/>
+  <path d="M170 148V364" stroke="#1c160f" stroke-width="28" stroke-linecap="round"/>
+
+  <!-- Feather crossing the E -->
+  <path d="M128 392C188 326 238 278 292 234C344 191 386 162 416 144" stroke="#b76712" stroke-width="18" stroke-linecap="round"/>
+  <path d="M160 368L210 348" stroke="#b76712" stroke-width="10" stroke-linecap="round"/>
+  <path d="M196 330L244 310" stroke="#b76712" stroke-width="10" stroke-linecap="round"/>
+  <path d="M236 294L282 274" stroke="#b76712" stroke-width="10" stroke-linecap="round"/>
+  <path d="M274 258L318 238" stroke="#b76712" stroke-width="10" stroke-linecap="round"/>
+  <path d="M312 224L352 206" stroke="#b76712" stroke-width="10" stroke-linecap="round"/>
+  <path d="M350 192L386 176" stroke="#b76712" stroke-width="10" stroke-linecap="round"/>
+
+  <!-- Feather tip -->
+  <path d="M416 144L438 132" stroke="#b76712" stroke-width="10" stroke-linecap="round"/>
+  <path d="M416 144L430 166" stroke="#b76712" stroke-width="10" stroke-linecap="round"/>
+</svg>

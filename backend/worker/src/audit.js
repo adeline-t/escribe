@@ -1,15 +1,10 @@
 async function ensureAuditSchema(env) {
-  const statements = [
-    `CREATE TABLE IF NOT EXISTS audit_logs (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      actor_id INTEGER,
-      action TEXT NOT NULL,
-      target_id INTEGER,
-      meta TEXT,
-      created_at TEXT NOT NULL
-    );`
-  ];
-  await env.DB.batch(statements.map((sql) => env.DB.prepare(sql)));
+  const row = await env.DB
+    .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name = 'audit_logs'")
+    .first();
+  if (!row?.name) {
+    throw new Error("Missing audit_logs table. Run D1 migrations.");
+  }
 }
 
 export async function logAudit(env, action, actorId, targetId = null, meta = null) {

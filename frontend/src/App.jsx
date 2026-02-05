@@ -15,13 +15,16 @@ import {
   FaPenNib,
   FaUser,
   FaUsers,
+  FaRightFromBracket,
   FaBars,
   FaAngleLeft,
 } from "react-icons/fa6";
 import {
   DEFAULT_LEXICON,
   DEFAULT_PARTICIPANTS,
+  DEFAULT_SABRE_LEXICON,
   normalizeLexicon,
+  normalizeSabreLexicon,
 } from "./lib/lexicon.js";
 import {
   buildParticipantLabel,
@@ -45,7 +48,9 @@ export default function App() {
   const [authError, setAuthError] = useState("");
   const [page, setPage] = useState("home");
 
-  const [participants, setParticipants] = useState(DEFAULT_PARTICIPANTS);
+  const [participants, setParticipants] = useState(() =>
+    DEFAULT_PARTICIPANTS.map((participant) => ({ ...participant })),
+  );
   const [phrases, setPhrases] = useState([]);
   const [activePhraseId, setActivePhraseId] = useState(null);
   const [form, setForm] = useState(
@@ -55,11 +60,16 @@ export default function App() {
   const [combatId, setCombatId] = useState(null);
   const [combatName, setCombatName] = useState("Combat sans nom");
   const [combatDescription, setCombatDescription] = useState("");
+  const [combatType, setCombatType] = useState("classic");
   const [isHydrated, setIsHydrated] = useState(false);
   const [lexiconData, setLexiconData] = useState(() =>
     normalizeLexicon(DEFAULT_LEXICON),
   );
+  const [sabreLexiconData, setSabreLexiconData] = useState(
+    () => DEFAULT_SABRE_LEXICON,
+  );
   const [favorites, setFavorites] = useState({});
+  const [sabreFavorites, setSabreFavorites] = useState({});
   const saveTimerRef = useRef(null);
   const [isMenuCollapsed, setIsMenuCollapsed] = useState(false);
 
@@ -76,6 +86,11 @@ export default function App() {
   const normalizedLexicon = useMemo(
     () => normalizeLexicon(lexiconData),
     [lexiconData],
+  );
+
+  const normalizedSabreLexicon = useMemo(
+    () => normalizeSabreLexicon(sabreLexiconData),
+    [sabreLexiconData],
   );
 
   function apiFetch(path, options = {}) {
@@ -127,6 +142,15 @@ export default function App() {
             setLexiconData(lexiconPayload.lexicon);
           }
         }
+        const sabreLexiconResponse = await apiFetch(
+          "/api/lexicon?lexicon=sabre-laser",
+        );
+        if (sabreLexiconResponse.ok) {
+          const sabrePayload = await sabreLexiconResponse.json();
+          if (sabrePayload?.lexicon) {
+            setSabreLexiconData(sabrePayload.lexicon);
+          }
+        }
 
         if (authUser) {
           const favoritesResponse = await apiFetch("/api/lexicon/favorites");
@@ -134,6 +158,15 @@ export default function App() {
             const favoritesPayload = await favoritesResponse.json();
             if (favoritesPayload?.favorites) {
               setFavorites(favoritesPayload.favorites);
+            }
+          }
+          const sabreFavoritesResponse = await apiFetch(
+            "/api/lexicon/favorites?lexicon=sabre-laser",
+          );
+          if (sabreFavoritesResponse.ok) {
+            const sabreFavoritesPayload = await sabreFavoritesResponse.json();
+            if (sabreFavoritesPayload?.favorites) {
+              setSabreFavorites(sabreFavoritesPayload.favorites);
             }
           }
         }
@@ -150,6 +183,7 @@ export default function App() {
           setCombatId(normalized.combatId ?? null);
           setCombatName(normalized.combatName ?? "Combat sans nom");
           setCombatDescription(normalized.combatDescription ?? "");
+          setCombatType(normalized.combatType ?? "classic");
           if (normalized.phrases?.length) {
             setActivePhraseId(normalized.phrases[0].id);
           } else {
@@ -177,6 +211,7 @@ export default function App() {
       combatId,
       combatName,
       combatDescription,
+      combatType,
       participants,
       phrases,
       form,
@@ -209,6 +244,7 @@ export default function App() {
     combatName,
     combatDescription,
     combatId,
+    combatType,
     isHydrated,
     authUser,
   ]);
@@ -226,24 +262,30 @@ export default function App() {
       setCombatId(normalized.combatId ?? id);
       setCombatName(normalized.combatName ?? "Combat sans nom");
       setCombatDescription(normalized.combatDescription ?? "");
+      setCombatType(normalized.combatType ?? "classic");
       if (normalized.phrases?.length) {
         setActivePhraseId(normalized.phrases[0].id);
       } else {
         setActivePhraseId(null);
       }
-      return true;
+      return normalized.combatType ?? "classic";
     }
-    return false;
+    return null;
   }
 
   async function handleCreateCombat(payload) {
+    const type = payload?.type === "sabre-laser" ? "sabre-laser" : "classic";
+    const defaultParticipants = DEFAULT_PARTICIPANTS.map((participant) => ({
+      ...participant,
+    }));
     const response = await apiFetch("/api/combats", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: payload?.name,
         description: payload?.description,
-        participants: DEFAULT_PARTICIPANTS,
+        participants: defaultParticipants,
+        type,
       }),
     });
     const data = await response.json().catch(() => ({}));
@@ -252,16 +294,17 @@ export default function App() {
     const initialPhrase = {
       id: crypto.randomUUID(),
       name: "Phrase 1",
-      steps: []
+      steps: [],
     };
     setCombatId(newId);
     setCombatName(data.combat.name ?? "Combat sans nom");
     setCombatDescription(data.combat.description ?? "");
-    setParticipants(DEFAULT_PARTICIPANTS);
+    setCombatType(type);
+    setParticipants(defaultParticipants);
     setPhrases([initialPhrase]);
     setActivePhraseId(initialPhrase.id);
-    setForm(DEFAULT_PARTICIPANTS.map(() => emptyParticipantState()));
-    setPage("create");
+    setForm(defaultParticipants.map(() => emptyParticipantState()));
+    setPage(type === "sabre-laser" ? "create-sabre" : "create");
   }
 
   async function handleLogin(event) {
@@ -328,7 +371,23 @@ export default function App() {
   function updateParticipantName(index, value) {
     setParticipants((prev) => {
       const next = [...prev];
-      next[index] = value;
+      const current =
+        next[index] && typeof next[index] === "object"
+          ? next[index]
+          : { name: "", weapon: "" };
+      next[index] = { ...current, name: value };
+      return next;
+    });
+  }
+
+  function updateParticipantWeapon(index, value) {
+    setParticipants((prev) => {
+      const next = [...prev];
+      const current =
+        next[index] && typeof next[index] === "object"
+          ? next[index]
+          : { name: "", weapon: "" };
+      next[index] = { ...current, weapon: value };
       return next;
     });
   }
@@ -339,7 +398,7 @@ export default function App() {
       const next = [...prev];
       if (count > next.length) {
         for (let i = next.length; i < count; i += 1) {
-          next.push("");
+          next.push({ name: "", weapon: "" });
         }
       }
       if (count < next.length) {
@@ -371,8 +430,19 @@ export default function App() {
   }
 
   function addStep() {
-    const hasRole = form.some((item) => item.role !== "none");
-    if (!hasRole) return;
+    const hasContent = form.some((item) => {
+      if (item.mode === "combat") {
+        return item.role !== "none";
+      }
+      if (item.mode === "choregraphie") {
+        return Boolean(item.chorePhase) || Boolean(item.note);
+      }
+      if (item.mode === "note") {
+        return Boolean(item.note);
+      }
+      return false;
+    });
+    if (!hasContent) return;
 
     const step = {
       id: crypto.randomUUID(),
@@ -509,6 +579,9 @@ export default function App() {
     );
   }
 
+  const isSabreList = page === "combats-sabre" || page === "combats-sabre-new";
+  const autoOpenSabreCreate = page === "combats-sabre-new";
+
   return (
     <div
       className={`page layout ${isMenuCollapsed ? "layout--collapsed" : "layout--expanded"}`}
@@ -543,9 +616,12 @@ export default function App() {
 
         <div className="brand">
           <p className="kicker"></p>
-          <h1>Escribe</h1>
+          <div className="brand-title">
+            <img src="/icon.png" alt="Escribe" />
+            <h1>Escribe</h1>
+          </div>
           <p className="lead">
-            Archive des phrases d'armes. Décrivez chaque étape avec précision,
+            Archive des phrases d'armes. Décrivez chaque passe avec précision,
             sans perdre la lecture globale.
           </p>
         </div>
@@ -592,6 +668,32 @@ export default function App() {
           </button>
           <button
             type="button"
+            className={`menu__item ${isSabreList ? "is-active" : ""}`}
+            onClick={() => {
+              setPage("combats-sabre");
+              setIsMenuCollapsed(true);
+            }}
+          >
+            <span className="menu__icon" aria-hidden="true">
+              <FaPenNib />
+            </span>
+            <span className="menu__label">Combats sabre laser</span>
+          </button>
+          <button
+            type="button"
+            className={`menu__item ${page === "combats-sabre-new" ? "is-active" : ""}`}
+            onClick={() => {
+              setPage("combats-sabre-new");
+              setIsMenuCollapsed(true);
+            }}
+          >
+            <span className="menu__icon" aria-hidden="true">
+              <FaPenNib />
+            </span>
+            <span className="menu__label">Créer un combat sabre laser</span>
+          </button>
+          <button
+            type="button"
             className={`menu__item ${page === "lexicon" ? "is-active" : ""}`}
             onClick={() => {
               setPage("lexicon");
@@ -631,6 +733,21 @@ export default function App() {
               <span className="menu__label">Utilisateurs</span>
             </button>
           ) : null}
+          <button
+            type="button"
+            className="menu__item menu__item--logout"
+            onClick={() => {
+              handleLogout();
+              setIsMenuCollapsed(true);
+            }}
+            title="Se déconnecter"
+            aria-label="Se déconnecter"
+          >
+            <span className="menu__icon" aria-hidden="true">
+              <FaRightFromBracket />
+            </span>
+            <span className="menu__label">Déconnexion</span>
+          </button>
         </nav>
       </aside>
 
@@ -646,7 +763,10 @@ export default function App() {
             onNavigate={setPage}
             onOpenCombat={(id) => {
               if (!id) return;
-              loadCombatById(id).then(() => setPage("create"));
+              loadCombatById(id).then((type) => {
+                if (!type) return;
+                setPage(type === "sabre-laser" ? "create-sabre" : "create");
+              });
             }}
           />
         ) : null}
@@ -656,6 +776,24 @@ export default function App() {
             apiBase={API_BASE}
             authToken={authToken}
             combatId={combatId}
+            combatType="classic"
+            title="Liste des combats"
+            subtitle="Crée, sélectionne et archive des combats."
+            onSelectCombat={loadCombatById}
+            onCreateCombat={handleCreateCombat}
+            onNavigate={setPage}
+          />
+        ) : null}
+
+        {isSabreList ? (
+          <CombatListPage
+            apiBase={API_BASE}
+            authToken={authToken}
+            combatId={combatId}
+            combatType="sabre-laser"
+            title="Combats sabre laser"
+            subtitle="Crée, sélectionne et archive des combats sabre laser."
+            autoOpenCreate={autoOpenSabreCreate}
             onSelectCombat={loadCombatById}
             onCreateCombat={handleCreateCombat}
             onNavigate={setPage}
@@ -677,6 +815,7 @@ export default function App() {
             favorites={favorites}
             onParticipantCountChange={updateParticipantCount}
             onParticipantNameChange={updateParticipantName}
+            onParticipantWeaponChange={updateParticipantWeapon}
             onFormChange={updateForm}
             onAddStep={addStep}
             onCombatNameChange={setCombatName}
@@ -691,6 +830,68 @@ export default function App() {
             onRemoveStep={removeStep}
             onCancelEditStep={cancelEditStep}
             editingStepId={editingStepId}
+            buildParticipantLabel={buildParticipantLabel}
+            buildSummaryLine={buildSummaryLine}
+            buildSummaryLines={buildSummaryLines}
+            toggleAttribute={toggleAttribute}
+          />
+        ) : null}
+
+        {page === "create-sabre" ? (
+          <PhraseCreatePage
+            participants={participants}
+            form={form}
+            combatName={combatName}
+            combatDescription={combatDescription}
+            phrases={phrases}
+            activePhraseId={activePhraseId}
+            activePhrase={activePhrase}
+            stepsCount={activePhrase?.steps?.length ?? 0}
+            participantLabels={participantLabels}
+            normalizedLexicon={normalizedSabreLexicon}
+            favorites={sabreFavorites}
+            labels={{
+              offensive: "Technique offensive",
+              action: "Préparation",
+              attackAttribute: "Attribut offensif",
+              target: "Cible",
+              attackMove: "Déplacement",
+              defensive: "Technique défensive",
+              paradeAttribute: "Attribut défensif",
+              defendMove: "Déplacement",
+              notes: "Notes",
+              weapon: "Arme",
+            }}
+            favoriteTypeKeys={{
+              offensive: "techniques_offensives",
+              action: "preparations",
+              attackAttribute: "attributs_offensifs",
+              target: "cibles",
+              attackMove: "deplacements",
+              defensive: "techniques_defensives",
+              paradeAttribute: "attributs_defensifs",
+              defendMove: "deplacements",
+            }}
+            showParadeNumber={false}
+            participantWeaponOptions={normalizedSabreLexicon.armes ?? []}
+            onParticipantCountChange={updateParticipantCount}
+            onParticipantNameChange={updateParticipantName}
+            onParticipantWeaponChange={updateParticipantWeapon}
+            onFormChange={updateForm}
+            onAddStep={addStep}
+            onCombatNameChange={setCombatName}
+            onCombatDescriptionChange={setCombatDescription}
+            onCreatePhrase={createPhrase}
+            onSelectPhrase={setActivePhraseId}
+            onRenamePhrase={renamePhrase}
+            onMovePhrase={movePhrase}
+            onMovePhraseToIndex={movePhraseToIndex}
+            onDeletePhrase={deletePhrase}
+            onEditStep={editStep}
+            onRemoveStep={removeStep}
+            onCancelEditStep={cancelEditStep}
+            editingStepId={editingStepId}
+            phaseOptions={normalizedSabreLexicon.phases ?? []}
             buildParticipantLabel={buildParticipantLabel}
             buildSummaryLine={buildSummaryLine}
             buildSummaryLines={buildSummaryLines}
@@ -715,6 +916,8 @@ export default function App() {
             authUser={authUser}
             favorites={favorites}
             setFavorites={setFavorites}
+            sabreFavorites={sabreFavorites}
+            setSabreFavorites={setSabreFavorites}
           />
         ) : null}
 

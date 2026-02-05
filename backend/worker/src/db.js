@@ -44,6 +44,7 @@ export function buildCorsHeaders(request, env) {
 }
 
 import seedLexicon from "./lexicon.seed.json";
+import seedSabreLexicon from "./lexicon-sabre-laser.seed.json";
 
 let schemaReady = false;
 let lexiconReady = false;
@@ -51,59 +52,71 @@ let lexiconSeeded = false;
 
 export async function ensureSchema(env) {
   if (schemaReady) return;
-  const statements = [
-    `CREATE TABLE IF NOT EXISTS combats (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      name TEXT NOT NULL,
-      description TEXT,
-      participants TEXT NOT NULL,
-      draft TEXT,
-      archived INTEGER NOT NULL DEFAULT 0,
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL
-    );`,
-    `CREATE TABLE IF NOT EXISTS combat_phrases (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      combat_id INTEGER NOT NULL,
-      position INTEGER NOT NULL,
-      payload TEXT NOT NULL,
-      created_at TEXT NOT NULL
-    );`
-  ];
-  await env.DB.batch(statements.map((sql) => env.DB.prepare(sql)));
+  const required = ["combats", "combat_phrases"];
+  const missing = [];
+  for (const table of required) {
+    const row = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name = ?1")
+      .bind(table)
+      .first();
+    if (!row?.name) missing.push(table);
+  }
+  if (missing.length) {
+    throw new Error(`Missing tables: ${missing.join(", ")}. Run D1 migrations.`);
+  }
   schemaReady = true;
 }
 
 export async function ensureLexiconSchema(env) {
   if (lexiconReady) return;
-  const statements = [
-    `CREATE TABLE IF NOT EXISTS offensive (id INTEGER PRIMARY KEY AUTOINCREMENT, label TEXT NOT NULL);`,
-    `CREATE TABLE IF NOT EXISTS action (id INTEGER PRIMARY KEY AUTOINCREMENT, label TEXT NOT NULL);`,
-    `CREATE TABLE IF NOT EXISTS defensive (id INTEGER PRIMARY KEY AUTOINCREMENT, label TEXT NOT NULL);`,
-    `CREATE TABLE IF NOT EXISTS cible (id INTEGER PRIMARY KEY AUTOINCREMENT, label TEXT NOT NULL);`,
-    `CREATE TABLE IF NOT EXISTS deplacement_attaque (id INTEGER PRIMARY KEY AUTOINCREMENT, label TEXT NOT NULL);`,
-    `CREATE TABLE IF NOT EXISTS deplacement_defense (id INTEGER PRIMARY KEY AUTOINCREMENT, label TEXT NOT NULL);`,
-    `CREATE TABLE IF NOT EXISTS parade_numero (id INTEGER PRIMARY KEY AUTOINCREMENT, label TEXT NOT NULL);`,
-    `CREATE TABLE IF NOT EXISTS parade_attribut (id INTEGER PRIMARY KEY AUTOINCREMENT, label TEXT NOT NULL);`,
-    `CREATE TABLE IF NOT EXISTS attaque_attribut (id INTEGER PRIMARY KEY AUTOINCREMENT, label TEXT NOT NULL);`,
-    `CREATE TABLE IF NOT EXISTS user_offensive (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, label TEXT NOT NULL);`,
-    `CREATE TABLE IF NOT EXISTS user_action (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, label TEXT NOT NULL);`,
-    `CREATE TABLE IF NOT EXISTS user_defensive (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, label TEXT NOT NULL);`,
-    `CREATE TABLE IF NOT EXISTS user_cible (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, label TEXT NOT NULL);`,
-    `CREATE TABLE IF NOT EXISTS user_deplacement_attaque (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, label TEXT NOT NULL);`,
-    `CREATE TABLE IF NOT EXISTS user_deplacement_defense (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, label TEXT NOT NULL);`,
-    `CREATE TABLE IF NOT EXISTS user_parade_numero (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, label TEXT NOT NULL);`,
-    `CREATE TABLE IF NOT EXISTS user_parade_attribut (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, label TEXT NOT NULL);`,
-    `CREATE TABLE IF NOT EXISTS user_attaque_attribut (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, label TEXT NOT NULL);`,
-    `CREATE TABLE IF NOT EXISTS user_lexicon_favorites (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      type TEXT NOT NULL,
-      label TEXT NOT NULL
-    );`
+  const required = [
+    "offensive",
+    "action",
+    "defensive",
+    "cible",
+    "deplacement_attaque",
+    "deplacement_defense",
+    "parade_numero",
+    "parade_attribut",
+    "attaque_attribut",
+    "sl_armes",
+    "sl_phases_choregraphie",
+    "sl_cibles",
+    "sl_techniques_offensives",
+    "sl_attributs_offensifs",
+    "sl_techniques_defensives",
+    "sl_attributs_defensifs",
+    "sl_preparations",
+    "sl_deplacements",
+    "user_offensive",
+    "user_action",
+    "user_defensive",
+    "user_cible",
+    "user_deplacement_attaque",
+    "user_deplacement_defense",
+    "user_parade_numero",
+    "user_parade_attribut",
+    "user_attaque_attribut",
+    "user_sl_armes",
+    "user_sl_phases_choregraphie",
+    "user_sl_cibles",
+    "user_sl_techniques_offensives",
+    "user_sl_attributs_offensifs",
+    "user_sl_techniques_defensives",
+    "user_sl_attributs_defensifs",
+    "user_sl_preparations",
+    "user_sl_deplacements",
+    "user_lexicon_favorites"
   ];
-  await env.DB.batch(statements.map((sql) => env.DB.prepare(sql)));
+  const missing = [];
+  for (const table of required) {
+    const row = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name = ?1")
+      .bind(table)
+      .first();
+    if (!row?.name) missing.push(table);
+  }
+  if (missing.length) {
+    throw new Error(`Missing lexicon tables: ${missing.join(", ")}. Run D1 migrations.`);
+  }
   lexiconReady = true;
 }
 
@@ -115,6 +128,11 @@ async function ensureLexiconSeeded(env) {
   if (count === 0) {
     await replaceLexicon(env, seedLexicon);
   }
+  const sabreRow = await env.DB.prepare("SELECT COUNT(*) AS count FROM sl_armes").first();
+  const sabreCount = Number(sabreRow?.count ?? 0);
+  if (sabreCount === 0) {
+    await replaceLexiconByKey(env, "sabre-laser", seedSabreLexicon);
+  }
   lexiconSeeded = true;
 }
 
@@ -122,7 +140,7 @@ export async function getCombatState(env, userId, combatId) {
   await ensureSchema(env);
   const combat = await env.DB
     .prepare(
-      `SELECT id, name, description, participants, draft
+      `SELECT id, name, description, participants, draft, type
        FROM combats
        WHERE id = ?1 AND user_id = ?2`
     )
@@ -179,44 +197,46 @@ export async function getCombatState(env, userId, combatId) {
     combatId: combat.id,
     combatName: combat.name,
     combatDescription: combat.description ?? "",
+    combatType: combat.type ?? "classic",
     participants,
     phrases,
     form
   };
 }
 
-export async function getState(env, userId, combatId = null) {
+export async function getState(env, userId, combatId = null, combatType = null) {
   await ensureSchema(env);
   if (combatId) {
     const state = await getCombatState(env, userId, combatId);
     if (state) return state;
   }
-  const combat = await env.DB
-    .prepare(
-      `SELECT id
-       FROM combats
-       WHERE user_id = ?1 AND archived = 0
-       ORDER BY updated_at DESC
-       LIMIT 1`
-    )
-    .bind(userId)
-    .first();
+  const typeFilter = combatType ? "AND type = ?2" : "";
+  const query = `
+      SELECT id
+      FROM combats
+      WHERE user_id = ?1 AND archived = 0 ${typeFilter}
+      ORDER BY updated_at DESC
+      LIMIT 1`;
+  const stmt = combatType
+    ? env.DB.prepare(query).bind(userId, combatType)
+    : env.DB.prepare(query).bind(userId);
+  const combat = await stmt.first();
   if (!combat?.id) return null;
   return getCombatState(env, userId, combat.id);
 }
 
-export async function listCombats(env, userId, includeArchived = false) {
+export async function listCombats(env, userId, includeArchived = false, combatType = null) {
   await ensureSchema(env);
-  const rows = await env.DB
-    .prepare(
-      `SELECT c.id, c.name, c.description, c.participants, c.archived, c.updated_at,
-        (SELECT COUNT(*) FROM combat_phrases cp WHERE cp.combat_id = c.id) as phrase_count
-       FROM combats c
-       WHERE c.user_id = ?1 ${includeArchived ? "" : "AND c.archived = 0"}
-       ORDER BY c.updated_at DESC`
-    )
-    .bind(userId)
-    .all();
+  const typeFilter = combatType ? "AND c.type = ?2" : "";
+  const query = `SELECT c.id, c.name, c.description, c.participants, c.archived, c.updated_at, c.type,
+      (SELECT COUNT(*) FROM combat_phrases cp WHERE cp.combat_id = c.id) as phrase_count
+     FROM combats c
+     WHERE c.user_id = ?1 ${includeArchived ? "" : "AND c.archived = 0"} ${typeFilter}
+     ORDER BY c.updated_at DESC`;
+  const stmt = combatType
+    ? env.DB.prepare(query).bind(userId, combatType)
+    : env.DB.prepare(query).bind(userId);
+  const rows = await stmt.all();
   return rows?.results?.map((row) => {
     let participants = [];
     try {
@@ -228,6 +248,7 @@ export async function listCombats(env, userId, includeArchived = false) {
       id: row.id,
       name: row.name,
       description: row.description ?? "",
+      type: row.type ?? "classic",
       archived: Boolean(row.archived),
       updatedAt: row.updated_at,
       phraseCount: Number(row.phrase_count ?? 0),
@@ -241,16 +262,17 @@ export async function createCombat(env, userId, data) {
   const now = new Date().toISOString();
   const name = typeof data?.name === "string" && data.name.trim() ? data.name.trim() : "Combat sans nom";
   const description = typeof data?.description === "string" ? data.description.trim() : "";
+  const type = data?.type === "sabre-laser" ? "sabre-laser" : "classic";
   const participants = Array.isArray(data?.participants) && data.participants.length
     ? data.participants
-    : ["A", "B"];
+    : [{ name: "A", weapon: "" }, { name: "B", weapon: "" }];
   const result = await env.DB
     .prepare(
-      `INSERT INTO combats (user_id, name, description, participants, draft, created_at, updated_at, archived)
-       VALUES (?1, ?2, ?3, ?4, NULL, ?5, ?5, 0)
-       RETURNING id, name, description`
+      `INSERT INTO combats (user_id, name, description, participants, draft, type, created_at, updated_at, archived)
+       VALUES (?1, ?2, ?3, ?4, NULL, ?5, ?6, ?6, 0)
+       RETURNING id, name, description, type`
     )
-    .bind(userId, name, description, JSON.stringify(participants), now)
+    .bind(userId, name, description, JSON.stringify(participants), type, now)
     .first();
   return result ?? null;
 }
@@ -287,6 +309,7 @@ export async function saveState(env, userId, state) {
     ? state.combatName.trim()
     : "Combat sans nom";
   const combatDescription = typeof state.combatDescription === "string" ? state.combatDescription.trim() : "";
+  const combatType = state.combatType === "sabre-laser" ? "sabre-laser" : "classic";
   const participants = Array.isArray(state.participants) ? state.participants : [];
   const draft = Array.isArray(state.form) ? state.form : null;
   const phrases = Array.isArray(state.phrases) ? state.phrases : [];
@@ -306,8 +329,8 @@ export async function saveState(env, userId, state) {
   if (!combatId) {
     const inserted = await env.DB
       .prepare(
-        `INSERT INTO combats (user_id, name, description, participants, draft, created_at, updated_at, archived)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?6, 0)
+        `INSERT INTO combats (user_id, name, description, participants, draft, type, created_at, updated_at, archived)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?7, 0)
          RETURNING id`
       )
       .bind(
@@ -316,6 +339,7 @@ export async function saveState(env, userId, state) {
         combatDescription,
         JSON.stringify(participants),
         draft ? JSON.stringify(draft) : null,
+        combatType,
         now
       )
       .first();
@@ -474,20 +498,39 @@ export async function isFavorite(env, userId, type, label) {
 }
 
 export async function replaceLexicon(env, lexicon) {
-  await ensureLexiconSchema(env);
-  const tables = [
-    ["offensive", lexicon.offensive],
-    ["action", lexicon.action],
-    ["defensive", lexicon.defensive],
-    ["cible", lexicon.cible],
-    ["deplacement_attaque", lexicon["deplacement-attaque"]],
-    ["deplacement_defense", lexicon["deplacement-defense"]],
-    ["parade_numero", lexicon["parade-numero"]],
-    ["parade_attribut", lexicon["parade-attribut"]],
-    ["attaque_attribut", lexicon["attaque-attribut"]]
-  ];
+  await replaceLexiconByKey(env, "classic", lexicon);
+}
 
-  for (const [table, values] of tables) {
+const LEXICON_TABLES = {
+  classic: {
+    offensive: "offensive",
+    action: "action",
+    defensive: "defensive",
+    cible: "cible",
+    "deplacement-attaque": "deplacement_attaque",
+    "deplacement-defense": "deplacement_defense",
+    "parade-numero": "parade_numero",
+    "parade-attribut": "parade_attribut",
+    "attaque-attribut": "attaque_attribut"
+  },
+  "sabre-laser": {
+    armes: "sl_armes",
+    phases_choregraphie: "sl_phases_choregraphie",
+    cibles: "sl_cibles",
+    techniques_offensives: "sl_techniques_offensives",
+    attributs_offensifs: "sl_attributs_offensifs",
+    techniques_defensives: "sl_techniques_defensives",
+    attributs_defensifs: "sl_attributs_defensifs",
+    preparations: "sl_preparations",
+    deplacements: "sl_deplacements"
+  }
+};
+
+export async function replaceLexiconByKey(env, lexiconKey, lexicon) {
+  await ensureLexiconSchema(env);
+  const tables = LEXICON_TABLES[lexiconKey] || LEXICON_TABLES.classic;
+  for (const [key, table] of Object.entries(tables)) {
+    const values = lexicon?.[key];
     if (!Array.isArray(values)) continue;
     await env.DB.prepare(`DELETE FROM ${table}`).run();
     for (const value of values) {
@@ -498,30 +541,15 @@ export async function replaceLexicon(env, lexicon) {
   }
 }
 
-export async function getLexicon(env) {
+export async function getLexiconByKey(env, lexiconKey) {
   await ensureLexiconSeeded(env);
-  const [offensive, action, defensive, cible, deplacementAttaque, deplacementDefense, paradeNumero, paradeAttribut, attaqueAttribut] =
-    await Promise.all([
-      getLabels(env, "offensive"),
-      getLabels(env, "action"),
-      getLabels(env, "defensive"),
-      getLabels(env, "cible"),
-      getLabels(env, "deplacement_attaque"),
-      getLabels(env, "deplacement_defense"),
-      getLabels(env, "parade_numero"),
-      getLabels(env, "parade_attribut"),
-      getLabels(env, "attaque_attribut")
-    ]);
+  const tables = LEXICON_TABLES[lexiconKey] || LEXICON_TABLES.classic;
+  const entries = await Promise.all(
+    Object.entries(tables).map(async ([key, table]) => [key, await getLabels(env, table)])
+  );
+  return Object.fromEntries(entries);
+}
 
-  return {
-    offensive,
-    action,
-    defensive,
-    cible,
-    "deplacement-attaque": deplacementAttaque,
-    "deplacement-defense": deplacementDefense,
-    "parade-numero": paradeNumero,
-    "parade-attribut": paradeAttribut,
-    "attaque-attribut": attaqueAttribut
-  };
+export async function getLexicon(env) {
+  return getLexiconByKey(env, "classic");
 }

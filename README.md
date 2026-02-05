@@ -9,7 +9,7 @@ Escribe est une application pour créer, organiser et relire des phrases d'armes
 1. Se connecter (ou créer un compte).
 2. Créer un combat avec un nom et une description.
 3. Définir les combattants (nombre et noms).
-4. Créer des phrases, puis ajouter des étapes à chaque phrase.
+4. Créer des phrases, puis ajouter des passes à chaque phrase.
 5. Lire la phrase en mode cartes (lecture par colonne et par rôle).
 6. Gérer le lexique partagé et ses favoris.
 
@@ -17,7 +17,7 @@ Escribe est une application pour créer, organiser et relire des phrases d'armes
 
 #### Accueil
 
-- Résumé de l'état courant: nombre de combattants, nombre d'étapes en cours, dernier combat.
+- Résumé de l'état courant: nombre de combattants, dernier combat.
 - Accès rapides vers: création d'un combat, gestion des combats, lexique, compte.
 
 #### Créer un combat / Liste des combats
@@ -38,9 +38,9 @@ Escribe est une application pour créer, organiser et relire des phrases d'armes
   - renommage,
   - réorganisation (drag & drop + flèches).
 - Étapes d'une phrase:
-  - ajout d'une étape (attaque, défense, ou sans rôle),
-  - édition d'une étape existante,
-  - suppression d'une étape.
+  - ajout d'une passe (attaque, défense, ou inactif),
+  - édition d'une passe existante,
+  - suppression d'une passe.
 - Lecture par cartes:
   - lecture en colonnes (un combattant par colonne),
   - visualisation des actions et réactions,
@@ -51,9 +51,9 @@ Escribe est une application pour créer, organiser et relire des phrases d'armes
 
 #### Liste des phrases créées
 
-- Lecture de la phrase active avec le détail de toutes les étapes.
+- Lecture de la phrase active avec le détail de toutes les passes.
 - Résumé par combattant (cards), même logique de rôles.
-- Bloc de nettoyage pour supprimer des étapes rapidement.
+- Bloc de nettoyage pour supprimer des passes rapidement.
 
 #### Lexique
 
@@ -64,7 +64,7 @@ Escribe est une application pour créer, organiser et relire des phrases d'armes
   - Cible
   - Déplacement attaque
   - Défensive
-  - Numéro de parade
+  - Position de parade
   - Attribut parade
   - Déplacement défense
 - Vue Global et Personnel.
@@ -92,7 +92,7 @@ Escribe est une application pour créer, organiser et relire des phrases d'armes
 
 ### Données et persistance
 
-- L'état de travail (combat, combattants, phrases, étapes, formulaire) est persisté automatiquement.
+- L'état de travail (combat, combattants, phrases, passes, formulaire) est persisté automatiquement.
 - Sauvegarde automatique déclenchée après les modifications (debounce de 400 ms).
 - Possibilité de reprendre le dernier combat via l'accueil.
 

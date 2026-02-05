@@ -10,7 +10,9 @@ export async function handleCombats(request, env) {
   if (request.method === "GET") {
     const url = new URL(request.url);
     const includeArchived = url.searchParams.get("archived") === "1";
-    const combats = await listCombats(env, session.user.id, includeArchived);
+    const combatType = url.searchParams.get("type");
+    const type = combatType === "sabre-laser" ? "sabre-laser" : combatType === "classic" ? "classic" : null;
+    const combats = await listCombats(env, session.user.id, includeArchived, type);
     return jsonResponse({ combats }, 200, corsHeaders);
   }
 

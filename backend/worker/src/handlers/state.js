@@ -11,7 +11,9 @@ export async function handleState(request, env) {
   if (request.method === "GET") {
     const url = new URL(request.url);
     const combatId = Number(url.searchParams.get("combatId"));
-    const state = await getState(env, session.user.id, Number.isFinite(combatId) ? combatId : null);
+    const typeParam = url.searchParams.get("type");
+    const combatType = typeParam === "sabre-laser" ? "sabre-laser" : typeParam === "classic" ? "classic" : null;
+    const state = await getState(env, session.user.id, Number.isFinite(combatId) ? combatId : null, combatType);
     return jsonResponse({ state }, 200, corsHeaders);
   }
 

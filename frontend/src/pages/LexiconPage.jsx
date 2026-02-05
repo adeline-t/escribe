@@ -1,8 +1,25 @@
 import { useEffect, useMemo, useState } from "react";
-import { LEXICON_TYPES } from "../lib/lexicon.js";
+import { LEXICON_TYPES, SABRE_LEXICON_TYPES } from "../lib/lexicon.js";
 
-export default function LexiconPage({ apiBase, authToken, authUser, favorites, setFavorites }) {
-  const [activeType, setActiveType] = useState(LEXICON_TYPES[0]?.key ?? "");
+export default function LexiconPage({
+  apiBase,
+  authToken,
+  authUser,
+  favorites,
+  setFavorites,
+  sabreFavorites,
+  setSabreFavorites,
+}) {
+  const [lexiconKey, setLexiconKey] = useState(() => {
+    try {
+      return localStorage.getItem("escribe_lexicon_mode") || "classic";
+    } catch {
+      return "classic";
+    }
+  });
+  const lexiconTypes =
+    lexiconKey === "sabre-laser" ? SABRE_LEXICON_TYPES : LEXICON_TYPES;
+  const [activeType, setActiveType] = useState(lexiconTypes[0]?.key ?? "");
   const [scope, setScope] = useState("global");
   const [items, setItems] = useState([]);
   const [draft, setDraft] = useState("");
@@ -11,10 +28,11 @@ export default function LexiconPage({ apiBase, authToken, authUser, favorites, s
   const [sort, setSort] = useState("az");
   const [view, setView] = useState("all");
   const [error, setError] = useState("");
+  const [localFavorites, setLocalFavorites] = useState({});
 
   const activeLabel = useMemo(
-    () => LEXICON_TYPES.find((type) => type.key === activeType)?.label ?? "",
-    [activeType]
+    () => lexiconTypes.find((type) => type.key === activeType)?.label ?? "",
+    [activeType, lexiconTypes],
   );
 
   function authFetch(path, options = {}) {
@@ -25,12 +43,15 @@ export default function LexiconPage({ apiBase, authToken, authUser, favorites, s
     return fetch(`${apiBase}${path}`, { ...options, headers });
   }
 
-  const canEditGlobal = authUser && ["admin", "superadmin"].includes(authUser.role);
+  const canEditGlobal =
+    authUser && ["admin", "superadmin"].includes(authUser.role);
   const isGlobalScope = scope === "global";
   const canEdit = isGlobalScope ? canEditGlobal : true;
+  const favoritesSource =
+    lexiconKey === "classic" ? favorites : (sabreFavorites ?? localFavorites);
   const favoriteSet = useMemo(
-    () => new Set(favorites?.[activeType] ?? []),
-    [favorites, activeType]
+    () => new Set(favoritesSource?.[activeType] ?? []),
+    [favoritesSource, activeType],
   );
 
   async function loadType(signal) {
@@ -40,8 +61,8 @@ export default function LexiconPage({ apiBase, authToken, authUser, favorites, s
     try {
       const path =
         scope === "personal"
-          ? `/api/lexicon/personal/${activeType}`
-          : `/api/lexicon/${activeType}`;
+          ? `/api/lexicon/personal/${activeType}?lexicon=${lexiconKey}`
+          : `/api/lexicon/${activeType}?lexicon=${lexiconKey}`;
       const response = await authFetch(path, { signal });
       const payload = await response.json().catch(() => ({}));
       setItems(payload.items ?? []);
@@ -60,7 +81,43 @@ export default function LexiconPage({ apiBase, authToken, authUser, favorites, s
     return () => {
       controller.abort();
     };
-  }, [apiBase, activeType, scope]);
+  }, [apiBase, activeType, scope, lexiconKey]);
+
+  useEffect(() => {
+    if (!authUser) return;
+    const controller = new AbortController();
+    authFetch(`/api/lexicon/favorites?lexicon=${lexiconKey}`, {
+      signal: controller.signal,
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (!payload?.favorites) return;
+        if (lexiconKey === "classic") {
+          setFavorites?.(payload.favorites);
+        } else if (setSabreFavorites) {
+          setSabreFavorites(payload.favorites);
+        } else {
+          setLocalFavorites(payload.favorites);
+        }
+      })
+      .catch(() => null);
+    return () => controller.abort();
+  }, [apiBase, authUser, lexiconKey, setFavorites]);
+
+  useEffect(() => {
+    setActiveType(lexiconTypes[0]?.key ?? "");
+    setScope("global");
+    setView("all");
+    setSearch("");
+  }, [lexiconKey, lexiconTypes]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("escribe_lexicon_mode", lexiconKey);
+    } catch {
+      // ignore
+    }
+  }, [lexiconKey]);
 
   const filteredItems = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -81,7 +138,7 @@ export default function LexiconPage({ apiBase, authToken, authUser, favorites, s
       sorted.sort((a, b) => a.id - b.id);
     }
     return sorted;
-  }, [items, search, sort]);
+  }, [items, search, sort, view, favoriteSet]);
 
   async function addItem() {
     const label = draft.trim();
@@ -92,12 +149,12 @@ export default function LexiconPage({ apiBase, authToken, authUser, favorites, s
     setError("");
     const path =
       scope === "personal"
-        ? `/api/lexicon/personal/${activeType}`
-        : `/api/lexicon/${activeType}`;
+        ? `/api/lexicon/personal/${activeType}?lexicon=${lexiconKey}`
+        : `/api/lexicon/${activeType}?lexicon=${lexiconKey}`;
     const response = await authFetch(path, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ label })
+      body: JSON.stringify({ label }),
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
@@ -118,12 +175,12 @@ export default function LexiconPage({ apiBase, authToken, authUser, favorites, s
     }
     const path =
       scope === "personal"
-        ? `/api/lexicon/personal/${activeType}`
-        : `/api/lexicon/${activeType}`;
+        ? `/api/lexicon/personal/${activeType}?lexicon=${lexiconKey}`
+        : `/api/lexicon/${activeType}?lexicon=${lexiconKey}`;
     const response = await authFetch(path, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id })
+      body: JSON.stringify({ id }),
     });
     if (!response.ok) return;
     setItems((prev) => prev.filter((item) => item.id !== id));
@@ -135,10 +192,15 @@ export default function LexiconPage({ apiBase, authToken, authUser, favorites, s
     const response = await authFetch("/api/lexicon/favorites", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: activeType, label, favorite: next })
+      body: JSON.stringify({
+        type: activeType,
+        label,
+        favorite: next,
+        lexicon: lexiconKey,
+      }),
     });
     if (!response.ok) return;
-    setFavorites((prev) => {
+    const updateFavorites = (prev) => {
       const copy = { ...(prev || {}) };
       const list = new Set(copy[activeType] ?? []);
       if (next) {
@@ -148,7 +210,14 @@ export default function LexiconPage({ apiBase, authToken, authUser, favorites, s
       }
       copy[activeType] = Array.from(list);
       return copy;
-    });
+    };
+    if (lexiconKey === "classic") {
+      setFavorites?.(updateFavorites);
+    } else if (setSabreFavorites) {
+      setSabreFavorites(updateFavorites);
+    } else {
+      setLocalFavorites(updateFavorites);
+    }
   }
 
   return (
@@ -156,16 +225,39 @@ export default function LexiconPage({ apiBase, authToken, authUser, favorites, s
       <div className="panel-header">
         <div>
           <h2>Atelier de lexique</h2>
-          <p className="muted">Organise et enrichis les catégories en un clic.</p>
+          <p className="muted">
+            Organise et enrichis les catégories en un clic.
+          </p>
         </div>
-        <span className="muted">{loading ? "Chargement..." : "Données en base D1"}</span>
+        <span className="muted">
+          {loading ? "Chargement..." : "Données en base D1"}
+        </span>
       </div>
 
       <div className="lexicon-layout">
         <aside className="lexicon-sidebar">
+          <div className="lexicon-sidebar__title">Lexique</div>
+          <div className="lexicon-switch">
+            <div className="segmented">
+              <button
+                type="button"
+                className={`segmented__item ${lexiconKey === "classic" ? "is-active" : ""}`}
+                onClick={() => setLexiconKey("classic")}
+              >
+                Escrime
+              </button>
+              <button
+                type="button"
+                className={`segmented__item ${lexiconKey === "sabre-laser" ? "is-active" : ""}`}
+                onClick={() => setLexiconKey("sabre-laser")}
+              >
+                Sabre laser
+              </button>
+            </div>
+          </div>
           <div className="lexicon-sidebar__title">Catégories</div>
           <div className="lexicon-sidebar__list">
-            {LEXICON_TYPES.map((type) => (
+            {lexiconTypes.map((type) => (
               <button
                 key={type.key}
                 type="button"
@@ -173,7 +265,9 @@ export default function LexiconPage({ apiBase, authToken, authUser, favorites, s
                 onClick={() => setActiveType(type.key)}
               >
                 <span>{type.label}</span>
-                <span className="lexicon-count">{type.key === activeType ? items.length : ""}</span>
+                <span className="lexicon-count">
+                  {type.key === activeType ? items.length : ""}
+                </span>
               </button>
             ))}
           </div>
@@ -225,7 +319,10 @@ export default function LexiconPage({ apiBase, authToken, authUser, favorites, s
                 placeholder="Filtrer une entrée..."
                 onChange={(event) => setSearch(event.target.value)}
               />
-              <select value={sort} onChange={(event) => setSort(event.target.value)}>
+              <select
+                value={sort}
+                onChange={(event) => setSort(event.target.value)}
+              >
                 <option value="az">A → Z</option>
                 <option value="za">Z → A</option>
                 <option value="new">Récent</option>
@@ -251,8 +348,8 @@ export default function LexiconPage({ apiBase, authToken, authUser, favorites, s
           <div className="lexicon-table">
             {filteredItems.map((item) => (
               <div key={item.id} className="lexicon-row">
-                <div className="lexicon-row__label">{item.label}</div>
                 <div className="lexicon-row__meta">#{item.id}</div>
+                <div className="lexicon-row__label">{item.label}</div>
                 <button
                   type="button"
                   className={`chip ${favoriteSet.has(item.label) ? "chip--active" : ""}`}
@@ -261,7 +358,11 @@ export default function LexiconPage({ apiBase, authToken, authUser, favorites, s
                   {favoriteSet.has(item.label) ? "★ Favori" : "☆ Favori"}
                 </button>
                 {canEdit ? (
-                  <button type="button" className="chip chip--danger" onClick={() => deleteItem(item.id)}>
+                  <button
+                    type="button"
+                    className="chip chip--danger"
+                    onClick={() => deleteItem(item.id)}
+                  >
                     Supprimer
                   </button>
                 ) : null}
@@ -269,7 +370,9 @@ export default function LexiconPage({ apiBase, authToken, authUser, favorites, s
             ))}
             {filteredItems.length === 0 ? (
               <div className="lexicon-empty">
-                <div className="lexicon-empty__title">Aucune valeur trouvée.</div>
+                <div className="lexicon-empty__title">
+                  Aucune valeur trouvée.
+                </div>
                 <div className="lexicon-empty__subtitle">
                   Essaie un autre filtre ou ajoute une nouvelle entrée.
                 </div>

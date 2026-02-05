@@ -13,8 +13,14 @@ export default function PhraseCreatePage({
   participantLabels,
   normalizedLexicon,
   favorites,
+  labels,
+  favoriteTypeKeys,
+  showParadeNumber = true,
+  participantWeaponOptions,
+  phaseOptions,
   onParticipantCountChange,
   onParticipantNameChange,
+  onParticipantWeaponChange,
   onFormChange,
   onAddStep,
   onCombatNameChange,
@@ -32,10 +38,42 @@ export default function PhraseCreatePage({
   buildParticipantLabel,
   buildSummaryLine,
   buildSummaryLines,
-  toggleAttribute
+  toggleAttribute,
 }) {
   const favoriteMap = favorites || {};
   const [activeParticipantIndex, setActiveParticipantIndex] = useState(0);
+  const showWeapons =
+    Array.isArray(participantWeaponOptions) &&
+    participantWeaponOptions.length > 0;
+  const showPhase = Array.isArray(phaseOptions) && phaseOptions.length > 0;
+
+  const uiLabels = {
+    offensive: "Offensive",
+    action: "Action d'arme",
+    attackAttribute: "Attribut attaque",
+    target: "Cible",
+    attackMove: "Déplacement",
+    defensive: "Défensive",
+    paradeNumber: "Position de parade",
+    paradeAttribute: "Attribut parade",
+    defendMove: "Déplacement",
+    notes: "Notes",
+    weapon: "Arme",
+    ...labels,
+  };
+
+  const favoriteKeys = {
+    offensive: "offensive",
+    action: "action",
+    attackAttribute: "attaque-attribut",
+    target: "cible",
+    attackMove: "deplacement-attaque",
+    defensive: "defensive",
+    paradeNumber: "parade-numero",
+    paradeAttribute: "parade-attribut",
+    defendMove: "deplacement-defense",
+    ...favoriteTypeKeys,
+  };
 
   useEffect(() => {
     if (participants.length === 0) return;
@@ -86,6 +124,34 @@ export default function PhraseCreatePage({
   }
 
   function buildInlineLine(item, name) {
+    if (item.mode === "choregraphie") {
+      return (
+        <span>
+          {name} chorégraphie{" "}
+          {item.chorePhase ? (
+            <span className="note-inline">{item.chorePhase}</span>
+          ) : (
+            ""
+          )}
+          {item.note ? (
+            <span>
+              {" "}
+              (<span className="note-inline">{item.note}</span>)
+            </span>
+          ) : null}
+        </span>
+      );
+    }
+
+    if (item.mode === "note") {
+      return (
+        <span>
+          {name} note{" "}
+          <span className="note-inline">{item.note || "à compléter"}</span>
+        </span>
+      );
+    }
+
     if (item.role === "attack") {
       if (item.noteOverrides) {
         return (
@@ -96,21 +162,31 @@ export default function PhraseCreatePage({
       }
       return (
         <span>
-          {name} fait une{" "}
-          {badge(item.offensive, "offensive", "offensive")}
+          {name} fait une {badge(item.offensive, "offensive", "offensive")}
           {badge(
             [
               item.action,
-              item.attackAttribute?.length ? item.attackAttribute.join(", ") : ""
+              item.attackAttribute?.length
+                ? item.attackAttribute.join(", ")
+                : "",
             ]
               .filter(Boolean)
               .join(" "),
             "action",
-            "action"
+            "action",
           )}
-          {item.target ? <span>sur {badge(item.target, "target", "target")}</span> : null}
-          {item.attackMove ? <span> en {badge(item.attackMove, "move", "move")}</span> : null}
-          {item.note ? <span> (<span className="note-inline">{item.note}</span>)</span> : null}
+          {item.target ? (
+            <span>sur {badge(item.target, "target", "target")}</span>
+          ) : null}
+          {item.attackMove ? (
+            <span> en {badge(item.attackMove, "move", "move")}</span>
+          ) : null}
+          {item.note ? (
+            <span>
+              {" "}
+              (<span className="note-inline">{item.note}</span>)
+            </span>
+          ) : null}
         </span>
       );
     }
@@ -123,13 +199,22 @@ export default function PhraseCreatePage({
           </span>
         );
       }
-      const paradeLabel = [item.paradeNumber, item.paradeAttribute].filter(Boolean).join(" ");
+      const paradeLabel = [item.paradeNumber, item.paradeAttribute]
+        .filter(Boolean)
+        .join(" ");
       return (
         <span>
           {name} défend en {badge("parade", "defensive", "parade")}
           {badge(paradeLabel, "parade-number", "paradeLabel")}
-          {item.defendMove ? <span> en {badge(item.defendMove, "move", "move")}</span> : null}
-          {item.note ? <span> (<span className="note-inline">{item.note}</span>)</span> : null}
+          {item.defendMove ? (
+            <span> en {badge(item.defendMove, "move", "move")}</span>
+          ) : null}
+          {item.note ? (
+            <span>
+              {" "}
+              (<span className="note-inline">{item.note}</span>)
+            </span>
+          ) : null}
         </span>
       );
     }
@@ -142,14 +227,17 @@ export default function PhraseCreatePage({
       );
     }
 
-    return <span>{name} sans rôle</span>;
+    return <span>{name} inactif</span>;
   }
 
   const combatFull = (
     <div className="form-grid">
       <label className="span-2">
         Nom du combat
-        <input value={combatName} onChange={(event) => onCombatNameChange(event.target.value)} />
+        <input
+          value={combatName}
+          onChange={(event) => onCombatNameChange(event.target.value)}
+        />
       </label>
       <label className="span-2">
         Description
@@ -165,22 +253,47 @@ export default function PhraseCreatePage({
     <div className="form-grid">
       <label>
         Nombre de combattants
-        <select value={participants.length} onChange={(event) => onParticipantCountChange(event.target.value)}>
+        <select
+          value={participants.length}
+          onChange={(event) => onParticipantCountChange(event.target.value)}
+        >
           <option value={2}>2</option>
           <option value={3}>3</option>
           <option value={4}>4</option>
         </select>
       </label>
       <div className="names span-2">
-        {participants.map((name, index) => (
-          <label key={index}>
-            {`Nom ${index + 1}`}
-            <input
-              value={name}
-              placeholder={buildParticipantLabel(index)}
-              onChange={(event) => onParticipantNameChange(index, event.target.value)}
-            />
-          </label>
+        {participants.map((participant, index) => (
+          <div key={index} className="participant-entry">
+            <label>
+              {`Nom ${index + 1}`}
+              <input
+                value={participant?.name ?? ""}
+                placeholder={buildParticipantLabel(index)}
+                onChange={(event) =>
+                  onParticipantNameChange(index, event.target.value)
+                }
+              />
+            </label>
+            {showWeapons ? (
+              <label>
+                {`${uiLabels.weapon} ${index + 1}`}
+                <select
+                  value={participant?.weapon ?? ""}
+                  onChange={(event) =>
+                    onParticipantWeaponChange?.(index, event.target.value)
+                  }
+                >
+                  <option value="">—</option>
+                  {participantWeaponOptions.map((weapon) => (
+                    <option key={weapon} value={weapon}>
+                      {weapon}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+          </div>
         ))}
       </div>
     </div>
@@ -190,7 +303,10 @@ export default function PhraseCreatePage({
     <div className="combat-compact">
       <label>
         Nom
-        <input value={combatName} onChange={(event) => onCombatNameChange(event.target.value)} />
+        <input
+          value={combatName}
+          onChange={(event) => onCombatNameChange(event.target.value)}
+        />
       </label>
       <label>
         Description
@@ -201,7 +317,10 @@ export default function PhraseCreatePage({
       </label>
       <label>
         Combattants
-        <select value={participants.length} onChange={(event) => onParticipantCountChange(event.target.value)}>
+        <select
+          value={participants.length}
+          onChange={(event) => onParticipantCountChange(event.target.value)}
+        >
           <option value={2}>2</option>
           <option value={3}>3</option>
           <option value={4}>4</option>
@@ -225,7 +344,9 @@ export default function PhraseCreatePage({
         {phrases.length === 0 ? (
           <div className="lexicon-empty">
             <div className="lexicon-empty__title">Aucune phrase.</div>
-            <div className="lexicon-empty__subtitle">Ajoute une phrase pour commencer.</div>
+            <div className="lexicon-empty__subtitle">
+              Ajoute une phrase pour commencer.
+            </div>
           </div>
         ) : (
           phrases.map((phrase, index) => (
@@ -242,15 +363,36 @@ export default function PhraseCreatePage({
                 className="phrase-row__main"
                 onClick={() => onSelectPhrase(phrase.id)}
               >
-                <div className="phrase-row__title">{phrase.name?.trim() || `Phrase ${index + 1}`}</div>
+                <div className="phrase-row__title">
+                  {phrase.name?.trim() || `Phrase ${index + 1}`}
+                </div>
                 <div className="phrase-row__meta">
-                  {phrase.steps.length} étape{phrase.steps.length > 1 ? "s" : ""} · #{index + 1}
+                  {phrase.steps.length} passe
+                  {phrase.steps.length > 1 ? "s" : ""} · #{index + 1}
                 </div>
               </button>
               <div className="phrase-row__actions">
-                <button type="button" className="chip" onClick={() => onMovePhrase(phrase.id, "up")}>↑</button>
-                <button type="button" className="chip" onClick={() => onMovePhrase(phrase.id, "down")}>↓</button>
-                <button type="button" className="chip chip--danger" onClick={() => onDeletePhrase(phrase.id)}>Suppr.</button>
+                <button
+                  type="button"
+                  className="chip"
+                  onClick={() => onMovePhrase(phrase.id, "up")}
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  className="chip"
+                  onClick={() => onMovePhrase(phrase.id, "down")}
+                >
+                  ↓
+                </button>
+                <button
+                  type="button"
+                  className="chip chip--danger"
+                  onClick={() => onDeletePhrase(phrase.id)}
+                >
+                  Suppr.
+                </button>
               </div>
             </div>
           ))
@@ -292,18 +434,32 @@ export default function PhraseCreatePage({
     activePhrase.steps.length > 0 ? (
       <div className="step-list">
         {activePhrase.steps.map((step, index) => (
-          <div key={step.id} className={`step-row ${editingStepId === step.id ? "is-active" : ""}`}>
+          <div
+            key={step.id}
+            className={`step-row ${editingStepId === step.id ? "is-active" : ""}`}
+          >
             <div>
-              <div className="step-row__title">Étape {index + 1}</div>
+              <div className="step-row__title">Passe {index + 1}</div>
               <div className="step-row__meta">
-                {step.participants?.filter((item) => item.role !== "none").length || 0} rôles actifs
+                {step.participants?.filter(
+                  (item) => item.mode === "combat" && item.role !== "none",
+                ).length || 0}{" "}
+                rôles actifs
               </div>
             </div>
             <div className="step-row__actions">
-              <button type="button" className="chip" onClick={() => onEditStep(step.id)}>
+              <button
+                type="button"
+                className="chip"
+                onClick={() => onEditStep(step.id)}
+              >
                 Modifier
               </button>
-              <button type="button" className="chip chip--danger" onClick={() => onRemoveStep(step.id)}>
+              <button
+                type="button"
+                className="chip chip--danger"
+                onClick={() => onRemoveStep(step.id)}
+              >
                 Supprimer
               </button>
             </div>
@@ -311,7 +467,7 @@ export default function PhraseCreatePage({
         ))}
       </div>
     ) : (
-      <div className="empty">Aucune étape pour le moment.</div>
+      <div className="empty">Aucune passe pour le moment.</div>
     )
   ) : null;
 
@@ -321,13 +477,17 @@ export default function PhraseCreatePage({
         <h3>Phrase résumée</h3>
         <div className="summary__body">
           {form.map((item, index) => (
-            <div key={participantLabels[index]} className="summary__line">
-              {buildSummaryLine(item, participantLabels[index])}
+            <div key={`${index}-summary`} className="summary__line">
+              {buildSummaryLine(item, participants[index], index)}
             </div>
           ))}
         </div>
       </div>
-      <div className="participant-selector" role="tablist" aria-label="Choisir un combattant">
+      <div
+        className="participant-selector"
+        role="tablist"
+        aria-label="Choisir un combattant"
+      >
         {participants.map((_, index) => {
           const name = participantLabels[index];
           const isActive = index === activeParticipantIndex;
@@ -347,7 +507,9 @@ export default function PhraseCreatePage({
       </div>
       <div
         className="participant-grid"
-        style={{ gridTemplateColumns: `repeat(${participants.length}, minmax(0, 1fr))` }}
+        style={{
+          gridTemplateColumns: `repeat(${participants.length}, minmax(0, 1fr))`,
+        }}
       >
         {participants.map((_, index) => {
           const item = form[index];
@@ -359,54 +521,103 @@ export default function PhraseCreatePage({
             >
               <div className="participant-card__header">
                 <div className="participant-name">{name}</div>
-                <div className="segmented" role="radiogroup" aria-label={`Rôle de ${name}`}>
+                <div
+                  className="segmented"
+                  role="radiogroup"
+                  aria-label={`Mode de ${name}`}
+                >
                   <button
                     type="button"
-                    className={`segmented__item ${item.role === "none" ? "is-active" : ""}`}
-                    aria-pressed={item.role === "none"}
-                    onClick={() => onFormChange(index, { role: "none" })}
+                    className={`segmented__item ${item.mode === "note" ? "is-active" : ""}`}
+                    aria-pressed={item.mode === "note"}
+                    onClick={() => onFormChange(index, { mode: "note" })}
                   >
-                    Sans rôle
+                    Note
                   </button>
+                  {showPhase ? (
+                    <button
+                      type="button"
+                      className={`segmented__item ${item.mode === "choregraphie" ? "is-active" : ""}`}
+                      aria-pressed={item.mode === "choregraphie"}
+                      onClick={() =>
+                        onFormChange(index, { mode: "choregraphie" })
+                      }
+                    >
+                      Chorégraphie
+                    </button>
+                  ) : null}
                   <button
                     type="button"
-                    className={`segmented__item ${item.role === "attack" ? "is-active" : ""}`}
-                    aria-pressed={item.role === "attack"}
-                    onClick={() => onFormChange(index, { role: "attack" })}
+                    className={`segmented__item ${item.mode === "combat" ? "is-active" : ""}`}
+                    aria-pressed={item.mode === "combat"}
+                    onClick={() => onFormChange(index, { mode: "combat" })}
                   >
-                    Attaque
-                  </button>
-                  <button
-                    type="button"
-                    className={`segmented__item ${item.role === "defense" ? "is-active" : ""}`}
-                    aria-pressed={item.role === "defense"}
-                    onClick={() => onFormChange(index, { role: "defense" })}
-                  >
-                    Défense
+                    Combat
                   </button>
                 </div>
               </div>
 
-              {item.role === "attack" ? (
+              {item.mode === "combat" ? (
                 <div className="participant-fields">
+                  <div
+                    className="segmented segmented--tight"
+                    role="radiogroup"
+                    aria-label={`Rôle de ${name}`}
+                  >
+                    <button
+                      type="button"
+                      className={`segmented__item ${item.role === "none" ? "is-active" : ""}`}
+                      aria-pressed={item.role === "none"}
+                      onClick={() => onFormChange(index, { role: "none" })}
+                    >
+                      Sans rôle
+                    </button>
+                    <button
+                      type="button"
+                      className={`segmented__item ${item.role === "attack" ? "is-active" : ""}`}
+                      aria-pressed={item.role === "attack"}
+                      onClick={() => onFormChange(index, { role: "attack" })}
+                    >
+                      Attaque
+                    </button>
+                    <button
+                      type="button"
+                      className={`segmented__item ${item.role === "defense" ? "is-active" : ""}`}
+                      aria-pressed={item.role === "defense"}
+                      onClick={() => onFormChange(index, { role: "defense" })}
+                    >
+                      Défense
+                    </button>
+                  </div>
                   <label className="checkbox">
                     <input
                       type="checkbox"
                       checked={item.noteOverrides}
-                      onChange={(event) => onFormChange(index, { noteOverrides: event.target.checked })}
+                      onChange={(event) =>
+                        onFormChange(index, {
+                          noteOverrides: event.target.checked,
+                        })
+                      }
                     />
                     La note remplace la formulation
                   </label>
-                  {!item.noteOverrides ? (
+                  {!item.noteOverrides && item.role === "attack" ? (
                     <>
                       <label>
-                        Offensive
+                        {uiLabels.offensive}
                         <select
                           value={item.offensive}
-                          onChange={(event) => onFormChange(index, { offensive: event.target.value })}
+                          onChange={(event) =>
+                            onFormChange(index, {
+                              offensive: event.target.value,
+                            })
+                          }
                         >
                           <option value="">—</option>
-                          {orderOptions(normalizedLexicon.offensive, "offensive").map((option) => (
+                          {orderOptions(
+                            normalizedLexicon.offensive,
+                            favoriteKeys.offensive,
+                          ).map((option) => (
                             <option key={option.value} value={option.value}>
                               {option.label}
                             </option>
@@ -414,13 +625,18 @@ export default function PhraseCreatePage({
                         </select>
                       </label>
                       <label>
-                        Action d'arme
+                        {uiLabels.action}
                         <select
                           value={item.action}
-                          onChange={(event) => onFormChange(index, { action: event.target.value })}
+                          onChange={(event) =>
+                            onFormChange(index, { action: event.target.value })
+                          }
                         >
                           <option value="">—</option>
-                          {orderOptions(normalizedLexicon.action, "action").map((option) => (
+                          {orderOptions(
+                            normalizedLexicon.action,
+                            favoriteKeys.action,
+                          ).map((option) => (
                             <option key={option.value} value={option.value}>
                               {option.label}
                             </option>
@@ -428,32 +644,45 @@ export default function PhraseCreatePage({
                         </select>
                       </label>
                       <label>
-                        Attribut attaque
+                        {uiLabels.attackAttribute}
                         <div className="checkbox-row">
-                                  {orderOptions(normalizedLexicon.attackAttribute, "attaque-attribut").map((option) => (
-                                    <label key={option.value} className="checkbox">
-                                      <input
-                                        type="checkbox"
-                                        checked={item.attackAttribute.includes(option.value)}
-                                        onChange={() =>
-                                          onFormChange(index, {
-                                            attackAttribute: toggleAttribute(item.attackAttribute, option.value)
-                                          })
-                                        }
-                                      />
-                                      {option.label}
-                                    </label>
-                                  ))}
+                          {orderOptions(
+                            normalizedLexicon.attackAttribute,
+                            favoriteKeys.attackAttribute,
+                          ).map((option) => (
+                            <label key={option.value} className="checkbox">
+                              <input
+                                type="checkbox"
+                                checked={item.attackAttribute.includes(
+                                  option.value,
+                                )}
+                                onChange={() =>
+                                  onFormChange(index, {
+                                    attackAttribute: toggleAttribute(
+                                      item.attackAttribute,
+                                      option.value,
+                                    ),
+                                  })
+                                }
+                              />
+                              {option.label}
+                            </label>
+                          ))}
                         </div>
                       </label>
                       <label>
-                        Cible
+                        {uiLabels.target}
                         <select
                           value={item.target}
-                          onChange={(event) => onFormChange(index, { target: event.target.value })}
+                          onChange={(event) =>
+                            onFormChange(index, { target: event.target.value })
+                          }
                         >
                           <option value="">—</option>
-                          {orderOptions(normalizedLexicon.cible, "cible").map((option) => (
+                          {orderOptions(
+                            normalizedLexicon.cible,
+                            favoriteKeys.target,
+                          ).map((option) => (
                             <option key={option.value} value={option.value}>
                               {option.label}
                             </option>
@@ -461,13 +690,20 @@ export default function PhraseCreatePage({
                         </select>
                       </label>
                       <label>
-                        Déplacement
+                        {uiLabels.attackMove}
                         <select
                           value={item.attackMove}
-                          onChange={(event) => onFormChange(index, { attackMove: event.target.value })}
+                          onChange={(event) =>
+                            onFormChange(index, {
+                              attackMove: event.target.value,
+                            })
+                          }
                         >
                           <option value="">—</option>
-                          {orderOptions(normalizedLexicon.attackMove, "deplacement-attaque").map((option) => (
+                          {orderOptions(
+                            normalizedLexicon.attackMove,
+                            favoriteKeys.attackMove,
+                          ).map((option) => (
                             <option key={option.value} value={option.value}>
                               {option.label}
                             </option>
@@ -476,64 +712,65 @@ export default function PhraseCreatePage({
                       </label>
                     </>
                   ) : null}
-                  <label>
-                    Notes
-                    <input
-                      value={item.note}
-                      onChange={(event) => onFormChange(index, { note: event.target.value })}
-                    />
-                  </label>
-                </div>
-              ) : null}
-
-              {item.role === "defense" ? (
-                <div className="participant-fields">
-                  <label className="checkbox">
-                    <input
-                      type="checkbox"
-                      checked={item.noteOverrides}
-                      onChange={(event) => onFormChange(index, { noteOverrides: event.target.checked })}
-                    />
-                    La note remplace la formulation
-                  </label>
-                  {!item.noteOverrides ? (
+                  {!item.noteOverrides && item.role === "defense" ? (
                     <>
                       <label>
-                        Défensive
+                        {uiLabels.defensive}
                         <select
                           value={item.defense}
-                          onChange={(event) => onFormChange(index, { defense: event.target.value })}
+                          onChange={(event) =>
+                            onFormChange(index, { defense: event.target.value })
+                          }
                         >
                           <option value="">—</option>
-                          {orderOptions(normalizedLexicon.defensive, "defensive").map((option) => (
+                          {orderOptions(
+                            normalizedLexicon.defensive,
+                            favoriteKeys.defensive,
+                          ).map((option) => (
                             <option key={option.value} value={option.value}>
                               {option.label}
                             </option>
                           ))}
                         </select>
                       </label>
+                      {showParadeNumber ? (
+                        <label>
+                          {uiLabels.paradeNumber}
+                          <select
+                            value={item.paradeNumber}
+                            onChange={(event) =>
+                              onFormChange(index, {
+                                paradeNumber: event.target.value,
+                              })
+                            }
+                          >
+                            <option value="">—</option>
+                            {orderOptions(
+                              normalizedLexicon.paradeNumber,
+                              favoriteKeys.paradeNumber,
+                            ).map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      ) : null}
                       <label>
-                        Numéro de parade
-                        <select
-                          value={item.paradeNumber}
-                          onChange={(event) => onFormChange(index, { paradeNumber: event.target.value })}
-                        >
-                          <option value="">—</option>
-                          {orderOptions(normalizedLexicon.paradeNumber, "parade-numero").map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label>
-                        Attribut parade
+                        {uiLabels.paradeAttribute}
                         <select
                           value={item.paradeAttribute}
-                          onChange={(event) => onFormChange(index, { paradeAttribute: event.target.value })}
+                          onChange={(event) =>
+                            onFormChange(index, {
+                              paradeAttribute: event.target.value,
+                            })
+                          }
                         >
                           <option value="">—</option>
-                          {orderOptions(normalizedLexicon.paradeAttribute, "parade-attribut").map((option) => (
+                          {orderOptions(
+                            normalizedLexicon.paradeAttribute,
+                            favoriteKeys.paradeAttribute,
+                          ).map((option) => (
                             <option key={option.value} value={option.value}>
                               {option.label}
                             </option>
@@ -541,13 +778,20 @@ export default function PhraseCreatePage({
                         </select>
                       </label>
                       <label>
-                        Déplacement
+                        {uiLabels.defendMove}
                         <select
                           value={item.defendMove}
-                          onChange={(event) => onFormChange(index, { defendMove: event.target.value })}
+                          onChange={(event) =>
+                            onFormChange(index, {
+                              defendMove: event.target.value,
+                            })
+                          }
                         >
                           <option value="">—</option>
-                          {orderOptions(normalizedLexicon.defendMove, "deplacement-defense").map((option) => (
+                          {orderOptions(
+                            normalizedLexicon.defendMove,
+                            favoriteKeys.defendMove,
+                          ).map((option) => (
                             <option key={option.value} value={option.value}>
                               {option.label}
                             </option>
@@ -556,34 +800,48 @@ export default function PhraseCreatePage({
                       </label>
                     </>
                   ) : null}
+                </div>
+              ) : null}
+
+              {item.mode === "choregraphie" ? (
+                <div className="participant-fields">
                   <label>
-                    Notes
-                    <input
-                      value={item.note}
-                      onChange={(event) => onFormChange(index, { note: event.target.value })}
-                    />
+                    Phase de chorégraphie
+                    <select
+                      value={item.chorePhase}
+                      onChange={(event) =>
+                        onFormChange(index, { chorePhase: event.target.value })
+                      }
+                    >
+                      <option value="">—</option>
+                      {phaseOptions.map((phase) => (
+                        <option key={phase} value={phase}>
+                          {phase}
+                        </option>
+                      ))}
+                    </select>
                   </label>
                 </div>
               ) : null}
 
-              {item.role === "none" ? (
-                <div className="participant-fields">
-                  <label>
-                    Notes
-                    <input
-                      value={item.note}
-                      onChange={(event) => onFormChange(index, { note: event.target.value })}
-                    />
-                  </label>
-                </div>
-              ) : null}
+              <div className="participant-fields">
+                <label>
+                  {uiLabels.notes}
+                  <input
+                    value={item.note}
+                    onChange={(event) =>
+                      onFormChange(index, { note: event.target.value })
+                    }
+                  />
+                </label>
+              </div>
             </div>
           );
         })}
       </div>
       <div className="form-actions">
         <button type="button" onClick={onAddStep}>
-          {editingStepId ? "Mettre à jour l'étape" : "Ajouter l'étape"}
+          {editingStepId ? "Mettre à jour la passe" : "Ajouter la passe"}
         </button>
         {editingStepId ? (
           <button type="button" className="chip" onClick={onCancelEditStep}>
@@ -596,7 +854,12 @@ export default function PhraseCreatePage({
 
   const readingBlock = activePhrase ? (
     <div className="phrase">
-      <div className="phrase__header" style={{ gridTemplateColumns: `repeat(${participants.length}, minmax(0, 1fr))` }}>
+      <div
+        className="phrase__header"
+        style={{
+          gridTemplateColumns: `repeat(${participants.length}, minmax(0, 1fr))`,
+        }}
+      >
         {participantLabels.map((name, index) => (
           <div key={index} className="phrase__name">
             {name}
@@ -605,7 +868,7 @@ export default function PhraseCreatePage({
       </div>
       <div className="phrase__body">
         {activePhrase.steps.length === 0 ? (
-          <div className="empty">Ajoutez une étape pour voir la lecture.</div>
+          <div className="empty">Ajoutez une passe pour voir la lecture.</div>
         ) : (
           activePhrase.steps.map((step, index) => {
             const attackers = step.participants
@@ -616,29 +879,47 @@ export default function PhraseCreatePage({
               .filter((item) => item.role === "defense");
 
             return (
-              <div key={step.id} className="phrase__row" style={{ gridTemplateColumns: `repeat(${participants.length}, minmax(0, 1fr))` }}>
+              <div
+                key={step.id}
+                className="phrase__row"
+                style={{
+                  gridTemplateColumns: `repeat(${participants.length}, minmax(0, 1fr))`,
+                }}
+              >
                 {step.participants.map((item, colIndex) => {
                   const role = item.role;
                   return (
-                    <div key={`${step.id}-${colIndex}`} className="phrase__cell">
-                                    {role === "attack" ? (
-                                      <StepCard
-                                        type="action"
-                                        title={`Étape ${index + 1}`}
-                                        accent="accent-attack"
-                                        lines={[buildInlineLine(item, participantLabels[colIndex])]}
-                                      />
-                                    ) : null}
-                                    {role === "defense" ? (
-                                      <StepCard
-                                        type="reaction"
-                                        title="Réaction"
-                                        accent="accent-defense"
-                                        lines={[buildInlineLine(item, participantLabels[colIndex])]}
-                                      />
-                                    ) : null}
-                                    {role === "none" && item.note ? (
-                                      <StepCard type="neutral" title="Note" accent="accent-neutral" lines={[item.note]} />
+                    <div
+                      key={`${step.id}-${colIndex}`}
+                      className="phrase__cell"
+                    >
+                      {role === "attack" ? (
+                        <StepCard
+                          type="action"
+                          title={`Passe ${index + 1}`}
+                          accent="accent-attack"
+                          lines={[
+                            buildInlineLine(item, participantLabels[colIndex]),
+                          ]}
+                        />
+                      ) : null}
+                      {role === "defense" ? (
+                        <StepCard
+                          type="reaction"
+                          title="Réaction"
+                          accent="accent-defense"
+                          lines={[
+                            buildInlineLine(item, participantLabels[colIndex]),
+                          ]}
+                        />
+                      ) : null}
+                      {role === "none" && item.note ? (
+                        <StepCard
+                          type="neutral"
+                          title="Note"
+                          accent="accent-neutral"
+                          lines={[item.note]}
+                        />
                       ) : null}
                     </div>
                   );
@@ -654,18 +935,18 @@ export default function PhraseCreatePage({
                           <div
                             key={`${step.id}-${attacker.index}-${defender.index}`}
                             className={`arrow ${isReverse ? "arrow--reverse" : ""}`}
-                                          style={{
-                                            left: isReverse
-                                              ? `calc(${defender.index + 1} * 100% / ${participants.length})`
-                                              : `calc(${attacker.index + 1} * 100% / ${participants.length})`,
-                                            width: isReverse
-                                              ? `calc(${Math.max(0, attacker.index - defender.index - 1)} * 100% / ${participants.length})`
-                                              : `calc(${Math.max(0, defender.index - attacker.index - 1)} * 100% / ${participants.length})`
-                                          }}
-                                        />
-                                      );
-                                    })
-                                )}
+                            style={{
+                              left: isReverse
+                                ? `calc(${defender.index + 1} * 100% / ${participants.length})`
+                                : `calc(${attacker.index + 1} * 100% / ${participants.length})`,
+                              width: isReverse
+                                ? `calc(${Math.max(0, attacker.index - defender.index - 1)} * 100% / ${participants.length})`
+                                : `calc(${Math.max(0, defender.index - attacker.index - 1)} * 100% / ${participants.length})`,
+                            }}
+                          />
+                        );
+                      }),
+                  )}
                 </div>
               </div>
             );
@@ -676,7 +957,9 @@ export default function PhraseCreatePage({
   ) : (
     <div className="lexicon-empty">
       <div className="lexicon-empty__title">Sélectionne une phrase.</div>
-      <div className="lexicon-empty__subtitle">Choisis une phrase dans la liste ou crée-en une nouvelle.</div>
+      <div className="lexicon-empty__subtitle">
+        Choisis une phrase dans la liste ou crée-en une nouvelle.
+      </div>
     </div>
   );
 
@@ -704,10 +987,10 @@ export default function PhraseCreatePage({
               {readingBlock}
             </details>
             <details className="fold" open>
-              <summary>Édition des étapes</summary>
+              <summary>Édition des passes</summary>
               <div className="panel-header">
                 <div className="header-with-badge">
-                  <h3>Étapes de la phrase</h3>
+                  <h3>Passes de la phrase</h3>
                   <span className="badge">#{phraseIndex + 1}</span>
                 </div>
                 {phraseNavigation}

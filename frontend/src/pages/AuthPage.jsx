@@ -1,9 +1,14 @@
+import { useState } from "react";
+import { FaEye, FaEyeSlash } from "react-icons/fa6";
+
 export default function AuthPage({
   authLoading,
   authError,
   onLogin,
   onRegister,
 }) {
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   return (
     <div className="page">
       <header className="hero">
@@ -11,7 +16,7 @@ export default function AuthPage({
           <p className="kicker"></p>
           <h1>Escribe</h1>
           <p className="lead">
-            Archive des phrases d'armes. Décrivez chaque étape avec précision,
+            Archive des phrases d'armes. Décrivez chaque passe avec précision,
             sans perdre la lecture globale.
           </p>
         </div>
@@ -28,6 +33,7 @@ export default function AuthPage({
             <div className="empty">
               Connecte-toi pour accéder aux phrases et au lexique.
             </div>
+            {authError ? <div className="auth-error">{authError}</div> : null}
             <div className="auth-grid">
               <form className="auth-form" onSubmit={onLogin}>
                 <h3>Connexion</h3>
@@ -37,11 +43,22 @@ export default function AuthPage({
                 </label>
                 <label>
                   Mot de passe
-                  <input
-                    name="password"
-                    type="password"
-                    required
-                  />
+                  <div className="password-input">
+                    <input
+                      name="password"
+                      type={showLoginPassword ? "text" : "password"}
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() => setShowLoginPassword((prev) => !prev)}
+                      aria-label={showLoginPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                      title={showLoginPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                    >
+                      {showLoginPassword ? <FaEyeSlash /> : <FaEye />}
+                    </button>
+                  </div>
                 </label>
                 <button type="submit">Se connecter</button>
               </form>
@@ -61,19 +78,29 @@ export default function AuthPage({
                 </label>
                 <label>
                   Mot de passe
-                  <input
-                    name="password"
-                    type="password"
-                    required
-                    minLength={12}
-                  />
+                  <div className="password-input">
+                    <input
+                      name="password"
+                      type={showRegisterPassword ? "text" : "password"}
+                      required
+                      minLength={12}
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() => setShowRegisterPassword((prev) => !prev)}
+                      aria-label={showRegisterPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                      title={showRegisterPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                    >
+                      {showRegisterPassword ? <FaEyeSlash /> : <FaEye />}
+                    </button>
+                  </div>
                 </label>
                 <button type="submit">Créer un compte</button>
               </form>
             </div>
           </>
         )}
-        {authError ? <div className="lexicon-error">{authError}</div> : null}
       </section>
     </div>
   );

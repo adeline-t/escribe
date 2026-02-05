@@ -63,35 +63,16 @@ function normalizeEmail(email) {
 }
 
 async function ensureAuthSchema(env) {
-  const statements = [
-    `CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      email TEXT NOT NULL UNIQUE,
-      password_hash TEXT NOT NULL,
-      role TEXT NOT NULL,
-      force_reset INTEGER NOT NULL DEFAULT 0,
-      first_name TEXT,
-      last_name TEXT,
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL
-    );`,
-    `CREATE TABLE IF NOT EXISTS sessions (
-      id TEXT PRIMARY KEY,
-      user_id INTEGER NOT NULL,
-      token TEXT NOT NULL UNIQUE,
-      expires_at TEXT NOT NULL,
-      created_at TEXT NOT NULL
-    );`
-  ];
-  await env.DB.batch(statements.map((sql) => env.DB.prepare(sql)));
-
-  const columns = await env.DB.prepare("PRAGMA table_info(users)").all();
-  const names = new Set((columns?.results ?? []).map((row) => row.name));
-  if (!names.has("first_name")) {
-    await env.DB.exec("ALTER TABLE users ADD COLUMN first_name TEXT;");
+  const required = ["users", "sessions"];
+  const missing = [];
+  for (const table of required) {
+    const row = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name = ?1")
+      .bind(table)
+      .first();
+    if (!row?.name) missing.push(table);
   }
-  if (!names.has("last_name")) {
-    await env.DB.exec("ALTER TABLE users ADD COLUMN last_name TEXT;");
+  if (missing.length) {
+    throw new Error(`Missing auth tables: ${missing.join(", ")}. Run D1 migrations.`);
   }
 }
 
@@ -251,6 +232,20 @@ export async function changePassword(env, userId, currentPassword, newPassword, 
     "UPDATE users SET password_hash = ?1, force_reset = 0, updated_at = ?2 WHERE id = ?3"
   )
     .bind(passwordHash, now, userId)
+    .run();
+  return { ok: true };
+}
+
+export async function adminResetPassword(env, userId, newPassword, forceReset) {
+  await ensureAuthSchema(env);
+  const passError = validatePassword(newPassword);
+  if (passError) return { error: "weak_password", message: passError };
+  const passwordHash = await hashPassword(newPassword);
+  const now = new Date().toISOString();
+  await env.DB.prepare(
+    "UPDATE users SET password_hash = ?1, force_reset = ?2, updated_at = ?3 WHERE id = ?4"
+  )
+    .bind(passwordHash, forceReset ? 1 : 0, now, userId)
     .run();
   return { ok: true };
 }

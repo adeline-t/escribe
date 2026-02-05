@@ -1,8 +1,10 @@
 import { useState } from "react";
 
 export default function ProfilePage({ apiBase, authToken, authUser, setAuthUser, onLogout }) {
-  const [status, setStatus] = useState("");
-  const [error, setError] = useState("");
+  const [profileStatus, setProfileStatus] = useState("");
+  const [profileError, setProfileError] = useState("");
+  const [passwordStatus, setPasswordStatus] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   function authFetch(path, options = {}) {
     const headers = { ...(options.headers || {}) };
@@ -14,8 +16,8 @@ export default function ProfilePage({ apiBase, authToken, authUser, setAuthUser,
 
   async function saveProfile(event) {
     event.preventDefault();
-    setStatus("");
-    setError("");
+    setProfileStatus("");
+    setProfileError("");
     const formData = new FormData(event.currentTarget);
     const firstName = formData.get("firstName");
     const lastName = formData.get("lastName");
@@ -25,17 +27,17 @@ export default function ProfilePage({ apiBase, authToken, authUser, setAuthUser,
       body: JSON.stringify({ firstName, lastName })
     });
     if (!response.ok) {
-      setError("Impossible de mettre à jour le profil.");
+      setProfileError("Impossible de mettre à jour le profil.");
       return;
     }
     setAuthUser((prev) => (prev ? { ...prev, firstName, lastName } : prev));
-    setStatus("Profil mis à jour.");
+    setProfileStatus("Profil mis à jour avec succès.");
   }
 
   async function changePassword(event) {
     event.preventDefault();
-    setStatus("");
-    setError("");
+    setPasswordStatus("");
+    setPasswordError("");
     const formData = new FormData(event.currentTarget);
     const currentPassword = formData.get("currentPassword");
     const newPassword = formData.get("newPassword");
@@ -46,10 +48,10 @@ export default function ProfilePage({ apiBase, authToken, authUser, setAuthUser,
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setError(payload?.message || "Changement de mot de passe impossible.");
+      setPasswordError(payload?.message || "Changement de mot de passe impossible.");
       return;
     }
-    setStatus("Mot de passe mis à jour.");
+    setPasswordStatus("Mot de passe mis à jour avec succès.");
     setAuthUser((prev) => (prev ? { ...prev, forceReset: false } : prev));
   }
 
@@ -85,6 +87,8 @@ export default function ProfilePage({ apiBase, authToken, authUser, setAuthUser,
           <input name="email" defaultValue={authUser.email} disabled />
         </label>
         <button type="submit">Enregistrer</button>
+        {profileStatus ? <div className="success-banner">{profileStatus}</div> : null}
+        {profileError ? <div className="error-banner">{profileError}</div> : null}
       </form>
 
       <form className="profile-form" onSubmit={changePassword}>
@@ -102,10 +106,10 @@ export default function ProfilePage({ apiBase, authToken, authUser, setAuthUser,
           <input name="newPassword" type="password" required minLength={12} />
         </label>
         <button type="submit">Changer le mot de passe</button>
+        {passwordStatus ? <div className="success-banner">{passwordStatus}</div> : null}
+        {passwordError ? <div className="error-banner">{passwordError}</div> : null}
       </form>
 
-      {status ? <div className="muted">{status}</div> : null}
-      {error ? <div className="lexicon-error">{error}</div> : null}
     </section>
   );
 }

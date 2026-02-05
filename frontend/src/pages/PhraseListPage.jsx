@@ -1,7 +1,13 @@
 import StepCard from "../components/StepCard.jsx";
 import { labelForParticipant } from "../lib/participants.js";
 
-export default function PhraseListPage({ combatName, combatDescription, participants, steps, onRemoveStep }) {
+export default function PhraseListPage({
+  combatName,
+  combatDescription,
+  participants,
+  steps,
+  onRemoveStep,
+}) {
   function badge(label, variant = "note", key) {
     if (!label) return null;
     return (
@@ -12,6 +18,34 @@ export default function PhraseListPage({ combatName, combatDescription, particip
   }
 
   function buildInlineLine(item, name) {
+    if (item.mode === "choregraphie") {
+      return (
+        <span>
+          {name} chorégraphie{" "}
+          {item.chorePhase ? (
+            <span className="note-inline">{item.chorePhase}</span>
+          ) : (
+            ""
+          )}
+          {item.note ? (
+            <span>
+              {" "}
+              (<span className="note-inline">{item.note}</span>)
+            </span>
+          ) : null}
+        </span>
+      );
+    }
+
+    if (item.mode === "note") {
+      return (
+        <span>
+          {name} note{" "}
+          <span className="note-inline">{item.note || "à compléter"}</span>
+        </span>
+      );
+    }
+
     if (item.role === "attack") {
       if (item.noteOverrides) {
         return (
@@ -22,21 +56,31 @@ export default function PhraseListPage({ combatName, combatDescription, particip
       }
       return (
         <span>
-          {name} fait une{" "}
-          {badge(item.offensive, "offensive", "offensive")}
+          {name} fait une {badge(item.offensive, "offensive", "offensive")}
           {badge(
             [
               item.action,
-              item.attackAttribute?.length ? item.attackAttribute.join(", ") : ""
+              item.attackAttribute?.length
+                ? item.attackAttribute.join(", ")
+                : "",
             ]
               .filter(Boolean)
               .join(" "),
             "action",
-            "action"
+            "action",
           )}
-          {item.target ? <span>sur {badge(item.target, "target", "target")}</span> : null}
-          {item.attackMove ? <span> en {badge(item.attackMove, "move", "move")}</span> : null}
-          {item.note ? <span> (<span className="note-inline">{item.note}</span>)</span> : null}
+          {item.target ? (
+            <span>sur {badge(item.target, "target", "target")}</span>
+          ) : null}
+          {item.attackMove ? (
+            <span> en {badge(item.attackMove, "move", "move")}</span>
+          ) : null}
+          {item.note ? (
+            <span>
+              {" "}
+              (<span className="note-inline">{item.note}</span>)
+            </span>
+          ) : null}
         </span>
       );
     }
@@ -49,13 +93,22 @@ export default function PhraseListPage({ combatName, combatDescription, particip
           </span>
         );
       }
-      const paradeLabel = [item.paradeNumber, item.paradeAttribute].filter(Boolean).join(" ");
+      const paradeLabel = [item.paradeNumber, item.paradeAttribute]
+        .filter(Boolean)
+        .join(" ");
       return (
         <span>
           {name} défend en {badge("parade", "defensive", "parade")}
           {badge(paradeLabel, "parade-number", "paradeLabel")}
-          {item.defendMove ? <span> en {badge(item.defendMove, "move", "move")}</span> : null}
-          {item.note ? <span> (<span className="note-inline">{item.note}</span>)</span> : null}
+          {item.defendMove ? (
+            <span> en {badge(item.defendMove, "move", "move")}</span>
+          ) : null}
+          {item.note ? (
+            <span>
+              {" "}
+              (<span className="note-inline">{item.note}</span>)
+            </span>
+          ) : null}
         </span>
       );
     }
@@ -68,23 +121,34 @@ export default function PhraseListPage({ combatName, combatDescription, particip
       );
     }
 
-    return <span>{name} sans rôle</span>;
+    return <span>{name} inactif</span>;
   }
   return (
     <section className="panel">
       <div className="panel-header">
         <div>
           <h2>Liste des phrases créées</h2>
-          <p className="muted">Phrase en cours, composée des étapes ajoutées.</p>
+          <p className="muted">
+            Phrase en cours, composée des passes ajoutées.
+          </p>
           <div className="muted" style={{ marginTop: "6px" }}>
             Combat: {combatName || "Combat sans nom"}
           </div>
-          {combatDescription ? <div className="muted">{combatDescription}</div> : null}
+          {combatDescription ? (
+            <div className="muted">{combatDescription}</div>
+          ) : null}
         </div>
-        <span className="muted">{steps.length} étape{steps.length > 1 ? "s" : ""}</span>
+        <span className="muted">
+          {steps.length} passe{steps.length > 1 ? "s" : ""}
+        </span>
       </div>
       <div className="phrase">
-        <div className="phrase__header" style={{ gridTemplateColumns: `repeat(${participants.length}, minmax(0, 1fr))` }}>
+        <div
+          className="phrase__header"
+          style={{
+            gridTemplateColumns: `repeat(${participants.length}, minmax(0, 1fr))`,
+          }}
+        >
           {participants.map((name, index) => (
             <div key={index} className="phrase__name">
               {labelForParticipant(name, index)}
@@ -93,7 +157,9 @@ export default function PhraseListPage({ combatName, combatDescription, particip
         </div>
         <div className="phrase__body">
           {steps.length === 0 ? (
-            <div className="empty">Ajoutez une étape pour commencer la phrase.</div>
+            <div className="empty">
+              Ajoutez une passe pour commencer la phrase.
+            </div>
           ) : (
             steps.map((step, index) => {
               const attackers = step.participants
@@ -107,25 +173,47 @@ export default function PhraseListPage({ combatName, combatDescription, particip
                 <div
                   key={step.id}
                   className="phrase__row"
-                  style={{ gridTemplateColumns: `repeat(${participants.length}, minmax(0, 1fr))` }}
+                  style={{
+                    gridTemplateColumns: `repeat(${participants.length}, minmax(0, 1fr))`,
+                  }}
                 >
                   {step.participants.map((item, colIndex) => {
                     const role = item.role;
                     return (
-                      <div key={`${step.id}-${colIndex}`} className="phrase__cell">
+                      <div
+                        key={`${step.id}-${colIndex}`}
+                        className="phrase__cell"
+                      >
                         {role === "attack" ? (
                           <StepCard
                             type="action"
-                            title={`Étape ${index + 1}`}
+                            title={`Passe ${index + 1}`}
                             accent="accent-attack"
-                            lines={[buildInlineLine(item, labelForParticipant(participants[colIndex], colIndex))]}
+                            lines={[
+                              buildInlineLine(
+                                item,
+                                labelForParticipant(
+                                  participants[colIndex],
+                                  colIndex,
+                                ),
+                              ),
+                            ]}
                             tags={[
-                              item.noteOverrides ? null : { label: item.target, variant: "target" },
-                              item.noteOverrides ? null : { label: item.attackMove, variant: "move" },
                               item.noteOverrides
                                 ? null
-                                : { label: item.attackAttribute?.join(", "), variant: "note" },
-                              item.noteOverrides ? null : { label: item.note, variant: "note" }
+                                : { label: item.target, variant: "target" },
+                              item.noteOverrides
+                                ? null
+                                : { label: item.attackMove, variant: "move" },
+                              item.noteOverrides
+                                ? null
+                                : {
+                                    label: item.attackAttribute?.join(", "),
+                                    variant: "note",
+                                  },
+                              item.noteOverrides
+                                ? null
+                                : { label: item.note, variant: "note" },
                             ]}
                           />
                         ) : null}
@@ -134,22 +222,46 @@ export default function PhraseListPage({ combatName, combatDescription, particip
                             type="reaction"
                             title="Réaction"
                             accent="accent-defense"
-                            lines={[buildInlineLine(item, labelForParticipant(participants[colIndex], colIndex))]}
+                            lines={[
+                              buildInlineLine(
+                                item,
+                                labelForParticipant(
+                                  participants[colIndex],
+                                  colIndex,
+                                ),
+                              ),
+                            ]}
                             tags={[
-                              item.noteOverrides ? null : { label: "parade", variant: "note" },
+                              item.noteOverrides
+                                ? null
+                                : { label: "parade", variant: "note" },
                               item.noteOverrides
                                 ? null
                                 : {
-                                    label: [item.paradeNumber, item.paradeAttribute].filter(Boolean).join(" "),
-                                    variant: "note"
+                                    label: [
+                                      item.paradeNumber,
+                                      item.paradeAttribute,
+                                    ]
+                                      .filter(Boolean)
+                                      .join(" "),
+                                    variant: "note",
                                   },
-                              item.noteOverrides ? null : { label: item.defendMove, variant: "move" },
-                              item.noteOverrides ? null : { label: item.note, variant: "note" }
+                              item.noteOverrides
+                                ? null
+                                : { label: item.defendMove, variant: "move" },
+                              item.noteOverrides
+                                ? null
+                                : { label: item.note, variant: "note" },
                             ]}
                           />
                         ) : null}
                         {role === "none" && item.note ? (
-                          <StepCard type="neutral" title="Note" accent="accent-neutral" lines={[item.note]} />
+                          <StepCard
+                            type="neutral"
+                            title="Note"
+                            accent="accent-neutral"
+                            lines={[item.note]}
+                          />
                         ) : null}
                       </div>
                     );
@@ -171,11 +283,11 @@ export default function PhraseListPage({ combatName, combatDescription, particip
                                   : `calc(${attacker.index + 1} * 100% / ${participants.length})`,
                                 width: isReverse
                                   ? `calc(${Math.max(0, attacker.index - defender.index - 1)} * 100% / ${participants.length})`
-                                  : `calc(${Math.max(0, defender.index - attacker.index - 1)} * 100% / ${participants.length})`
+                                  : `calc(${Math.max(0, defender.index - attacker.index - 1)} * 100% / ${participants.length})`,
                               }}
                             />
                           );
-                        })
+                        }),
                     )}
                   </div>
                 </div>
@@ -190,8 +302,12 @@ export default function PhraseListPage({ combatName, combatDescription, particip
           <h3>Nettoyage</h3>
           <div className="chip-row">
             {steps.map((step, index) => (
-              <button key={step.id} className="chip" onClick={() => onRemoveStep(step.id)}>
-                Supprimer l'étape {index + 1}
+              <button
+                key={step.id}
+                className="chip"
+                onClick={() => onRemoveStep(step.id)}
+              >
+                Supprimer la passe {index + 1}
               </button>
             ))}
           </div>

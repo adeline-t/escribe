@@ -26,15 +26,6 @@ const pool = new Pool({
   ssl
 });
 
-async function ensureSchema() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS app_state (
-      id integer PRIMARY KEY,
-      state jsonb NOT NULL,
-      updated_at timestamptz NOT NULL DEFAULT now()
-    );
-  `);
-}
 
 app.get("/api/state", async (req, res) => {
   try {
@@ -75,13 +66,6 @@ app.get("/api/health", (req, res) => {
   res.json({ ok: true });
 });
 
-ensureSchema()
-  .then(() => {
-    app.listen(port, () => {
-      console.log(`API listening on http://localhost:${port}`);
-    });
-  })
-  .catch((error) => {
-    console.error("Failed to initialize database", error);
-    process.exit(1);
-  });
+app.listen(port, () => {
+  console.log(`API listening on http://localhost:${port}`);
+});

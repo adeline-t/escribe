@@ -20,7 +20,7 @@ persist = true
 
 [vars]
 ENVIRONMENT = "production"
-CORS_ORIGIN = "https://main.escribe-1ur.pages.dev"
+CORS_ORIGIN = "https://main.escribe-1ur.pages.dev,https://escribe-1ur.pages.dev"
 SUPERADMIN_EMAIL = "admin@escribe.prod"
 
 [env.dev]

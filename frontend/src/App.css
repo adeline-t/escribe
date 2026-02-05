@@ -2,7 +2,7 @@
   --bg: #f7f2ea;
   --bg-soft: #fffaf3;
   --ink: #1c1a17;
-  --muted: #6c6359;
+  --muted: #887f75;
   --panel: #ffffff;
   --attack: #f29b38;
   --attack-soft: #fff1dc;
@@ -43,7 +43,9 @@
   border-radius: 20px;
   padding: 12px;
   box-shadow: none;
-  transition: transform 0.25s ease, opacity 0.25s ease;
+  transition:
+    transform 0.25s ease,
+    opacity 0.25s ease;
   z-index: 20;
 }
 
@@ -128,6 +130,11 @@ h2 {
   gap: 10px;
 }
 
+.participant-entry {
+  display: grid;
+  gap: 10px;
+}
+
 .panel {
   background: var(--panel);
   border-radius: 20px;
@@ -166,6 +173,17 @@ h2 {
   align-items: center;
   gap: 10px;
   text-align: left;
+}
+
+.menu__item--logout {
+  margin-top: 10px;
+  border-color: #f2c2be;
+  color: #7a1f1f;
+  background: #fff2f2;
+}
+
+.menu__item--logout:hover {
+  background: #ffe6e6;
 }
 
 .menu__label {
@@ -339,6 +357,44 @@ h2 {
 .home-card h3 {
   margin: 0;
   font-size: 16px;
+}
+
+.home-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.home-title img {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid #eadfce;
+  background: #fff;
+}
+
+.home-title h2 {
+  margin: 0;
+  line-height: 1;
+}
+
+.brand-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-title img {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid #eadfce;
+  background: #fff;
+}
+
+.brand-title h1 {
+  margin: 0;
+  line-height: 1;
 }
 
 .phrase-layout {
@@ -656,6 +712,8 @@ h2 {
   border-radius: 999px;
   padding: 4px;
   gap: 4px;
+  justify-self: start; /* 👈 empêche le stretch en grid */
+  width: fit-content;
 }
 
 .segmented__item {
@@ -1024,6 +1082,12 @@ button {
   gap: 10px;
 }
 
+.lexicon-switch {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
 .lexicon-tab {
   display: flex;
   justify-content: space-between;
@@ -1100,7 +1164,8 @@ button {
 }
 
 .lexicon-table {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
   max-height: none;
   overflow: visible;
@@ -1109,7 +1174,7 @@ button {
 
 .lexicon-row {
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: 50px 1fr 150px 150px;
   align-items: center;
   gap: 12px;
   background: #fff;
@@ -1132,8 +1197,11 @@ button {
 }
 
 .lexicon-row__meta {
+  display: flex;
   font-size: 12px;
+  width: 50px;
   color: var(--muted);
+  flex-wrap: wrap;
 }
 
 .lexicon-empty {
@@ -1222,13 +1290,75 @@ button {
   border: 1px solid #eadfce;
   border-radius: 16px;
   padding: 16px;
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  justify-items: flex-start;
   gap: 10px;
 }
 
 .auth-form h3 {
-  margin: 0;
-  font-size: 16px;
+  margin-top: 8px;
+  font-size: 20px;
+  color: var(--muted);
+}
+
+.auth-form button {
+  width: 100%;
+}
+
+.auth-error {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #ffe8e8;
+  border: 1px solid #f2b8b5;
+  color: #7a1f1f;
+  font-weight: 600;
+}
+
+.success-banner {
+  margin-top: 12px;
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #e9f7ee;
+  border: 1px solid #bfe3c7;
+  color: #1f5b36;
+  font-weight: 600;
+}
+
+.error-banner {
+  margin-top: 12px;
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #ffe8e8;
+  border: 1px solid #f2b8b5;
+  color: #7a1f1f;
+  font-weight: 600;
+}
+
+.password-input {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.password-toggle {
+  border-radius: 10px;
+  border: 1px solid #eadfce;
+  background: #fff;
+  padding: 8px 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #5b4b3a;
+}
+
+.password-toggle:hover {
+  background: #f7efe4;
 }
 
 .users-table {
@@ -1239,7 +1369,7 @@ button {
 
 .users-row {
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 12px;
   align-items: center;
   background: #fff;
@@ -1247,15 +1377,36 @@ button {
   border-radius: 12px;
   padding: 10px 12px;
 }
+.users-row > :last-child {
+  justify-self: end;
+}
+
+.users-row-group {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.users-row-inline {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+}
 
 .users-email {
   font-weight: 600;
+  margin-bottom: 8px;
 }
 
 .users-meta {
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+.users-role {
+  display: grid;
+  gap: 6px;
 }
 
 .audit-panel {
