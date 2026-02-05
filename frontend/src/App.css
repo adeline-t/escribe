@@ -623,6 +623,13 @@ h2 {
   align-items: start;
 }
 
+.participant-selector {
+  display: none;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
 .participant-card {
   background: #fffaf3;
   border-radius: 16px;
@@ -670,6 +677,33 @@ h2 {
 .participant-fields {
   display: grid;
   gap: 12px;
+}
+
+@media (max-width: 900px) {
+  .participant-selector {
+    display: flex;
+  }
+
+  .participant-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .participant-card {
+    display: none;
+  }
+
+  .participant-card.is-active {
+    display: grid;
+  }
+
+  .participant-card__header {
+    flex-wrap: wrap;
+  }
+
+  .segmented {
+    width: 100%;
+    justify-content: space-between;
+  }
 }
 
 .form-grid {
@@ -1139,6 +1173,7 @@ button {
 
 .summary {
   margin-top: 18px;
+  margin-bottom: 12px;
   padding: 16px;
   border-radius: 14px;
   background: #faf3e8;

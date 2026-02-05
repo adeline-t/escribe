@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import StepCard from "../components/StepCard.jsx";
 
 export default function PhraseCreatePage({
@@ -34,6 +35,14 @@ export default function PhraseCreatePage({
   toggleAttribute
 }) {
   const favoriteMap = favorites || {};
+  const [activeParticipantIndex, setActiveParticipantIndex] = useState(0);
+
+  useEffect(() => {
+    if (participants.length === 0) return;
+    if (activeParticipantIndex > participants.length - 1) {
+      setActiveParticipantIndex(participants.length - 1);
+    }
+  }, [participants.length, activeParticipantIndex]);
 
   function orderOptions(list, typeKey) {
     const favs = new Set(favoriteMap[typeKey] ?? []);
@@ -308,6 +317,34 @@ export default function PhraseCreatePage({
 
   const stepForm = (
     <>
+      <div className="summary">
+        <h3>Phrase résumée</h3>
+        <div className="summary__body">
+          {form.map((item, index) => (
+            <div key={participantLabels[index]} className="summary__line">
+              {buildSummaryLine(item, participantLabels[index])}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="participant-selector" role="tablist" aria-label="Choisir un combattant">
+        {participants.map((_, index) => {
+          const name = participantLabels[index];
+          const isActive = index === activeParticipantIndex;
+          return (
+            <button
+              key={`${name}-${index}`}
+              type="button"
+              className={`chip ${isActive ? "chip--active" : ""}`}
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => setActiveParticipantIndex(index)}
+            >
+              {name}
+            </button>
+          );
+        })}
+      </div>
       <div
         className="participant-grid"
         style={{ gridTemplateColumns: `repeat(${participants.length}, minmax(0, 1fr))` }}
@@ -316,7 +353,10 @@ export default function PhraseCreatePage({
           const item = form[index];
           const name = participantLabels[index];
           return (
-            <div key={name} className="participant-card">
+            <div
+              key={`${name}-${index}`}
+              className={`participant-card ${index === activeParticipantIndex ? "is-active" : ""}`}
+            >
               <div className="participant-card__header">
                 <div className="participant-name">{name}</div>
                 <div className="segmented" role="radiogroup" aria-label={`Rôle de ${name}`}>
@@ -540,16 +580,6 @@ export default function PhraseCreatePage({
             </div>
           );
         })}
-      </div>
-      <div className="summary">
-        <h3>Phrase résumée</h3>
-        <div className="summary__body">
-          {form.map((item, index) => (
-            <div key={participantLabels[index]} className="summary__line">
-              {buildSummaryLine(item, participantLabels[index])}
-            </div>
-          ))}
-        </div>
       </div>
       <div className="form-actions">
         <button type="button" onClick={onAddStep}>
