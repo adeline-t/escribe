@@ -16,7 +16,7 @@
     "dev:worker": "npx wrangler dev --config backend/worker/wrangler.toml --env=local",
     "deploy:worker": "npx wrangler deploy --config backend/worker/wrangler.toml --env=\"\"",
     "deploy:worker:dev": "npx wrangler deploy --config backend/worker/wrangler.toml --env=dev",
-    "pages:deploy": "VITE_API_BASE=https://escribe-backend.leembory-equestrian.workers.dev npm run build && npx wrangler pages deploy frontend/dist --project-name escribe",
+    "pages:deploy": "VITE_API_BASE=https://escribe-backend.leembory-equestrian.workers.dev npm run build && npx wrangler pages deploy frontend/dist --project-name escribe --branch main",
     "deploy:prod": "npm run deploy:worker && npm run pages:deploy",
     "deploy:local": "concurrently \"npm:dev:worker\" \"npm:dev:client\"",
     "db:seed:local": "npx wrangler d1 execute escribe-dev --config backend/worker/wrangler.toml --env=local --local --file db/lexicon.sql",

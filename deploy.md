@@ -130,6 +130,7 @@ Ce document décrit les étapes **local**, **dev** et **prod** ainsi que les fic
    ```bash
    npm run pages:deploy
    ```
+   Ce script déploie explicitement sur la branche `main` pour forcer l'environnement Production.
 
 ### Variante: déploiement complet
 ```bash
