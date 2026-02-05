@@ -41,7 +41,6 @@ export default function AuthPage({
                     name="password"
                     type="password"
                     required
-                    minLength={12}
                   />
                 </label>
                 <button type="submit">Se connecter</button>

@@ -1,7 +1,7 @@
 const encoder = new TextEncoder();
 
 const PASSWORD_MIN_LENGTH = 12;
-const PBKDF2_ITERATIONS = 310000;
+const PBKDF2_ITERATIONS = 80000;
 const HASH_ALGO = "SHA-256";
 
 function toBase64(buffer) {

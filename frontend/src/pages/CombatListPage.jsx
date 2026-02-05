@@ -9,6 +9,15 @@ export default function CombatListPage({ apiBase, authToken, combatId, onSelectC
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("");
   const [accessDenied, setAccessDenied] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+  function buildDefaultTitle() {
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, "0");
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const year = String(now.getFullYear());
+    return `Combat du ${day}-${month}-${year}`;
+  }
 
   function authFetch(path, options = {}) {
     const headers = { ...(options.headers || {}) };
@@ -66,6 +75,7 @@ export default function CombatListPage({ apiBase, authToken, combatId, onSelectC
     await onCreateCombat({ name: trimmed, description });
     setName("");
     setDescription("");
+    setIsCreateOpen(false);
     await loadCombats();
   }
 
@@ -92,6 +102,17 @@ export default function CombatListPage({ apiBase, authToken, combatId, onSelectC
           <h2>Liste des combats</h2>
           <p className="muted">Crée, sélectionne et archive des combats.</p>
         </div>
+        {!accessDenied ? (
+          <button
+            type="button"
+            onClick={() => {
+              setStatus("");
+              setIsCreateOpen(true);
+            }}
+          >
+            Nouveau combat
+          </button>
+        ) : null}
       </div>
 
       {accessDenied ? (
@@ -101,22 +122,56 @@ export default function CombatListPage({ apiBase, authToken, combatId, onSelectC
         </div>
       ) : (
       <>
-      <div className="form-grid">
-        <label className="span-2">
-          Nom du combat
-          <input value={name} onChange={(event) => setName(event.target.value)} />
-        </label>
-        <label className="span-2">
-          Description
-          <input value={description} onChange={(event) => setDescription(event.target.value)} />
-        </label>
-        <div>
-          <button type="button" onClick={createCombat}>
-            Créer le combat
-          </button>
+      {isCreateOpen ? (
+        <div className="modal-backdrop" role="presentation" onClick={() => setIsCreateOpen(false)}>
+          <div
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Créer un combat"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h3>Créer un combat</h3>
+            <p className="muted">Saisis un nom pour démarrer le combat. La première phrase sera créée automatiquement.</p>
+            <label>
+              Nom du combat
+              <input
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="Nom du combat"
+                autoFocus
+              />
+            </label>
+            <button
+              type="button"
+              className="chip"
+              onClick={() => {
+                setName(buildDefaultTitle());
+                setStatus("");
+              }}
+            >
+              Titre par défaut
+            </button>
+            <label>
+              Description (optionnel)
+              <input
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder="Notes, contexte, etc."
+              />
+            </label>
+            {status ? <div className="lexicon-error">{status}</div> : null}
+            <div className="modal-actions">
+              <button type="button" className="chip" onClick={() => setIsCreateOpen(false)}>
+                Annuler
+              </button>
+              <button type="button" onClick={createCombat}>
+                Créer le combat
+              </button>
+            </div>
+          </div>
         </div>
-        {status ? <div className="lexicon-error">{status}</div> : null}
-      </div>
+      ) : null}
 
       <div className="panel" style={{ marginTop: "20px" }}>
         <div className="lexicon-header">

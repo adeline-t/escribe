@@ -249,12 +249,17 @@ export default function App() {
     const data = await response.json().catch(() => ({}));
     if (!response.ok || !data?.combat?.id) return;
     const newId = data.combat.id;
+    const initialPhrase = {
+      id: crypto.randomUUID(),
+      name: "Phrase 1",
+      steps: []
+    };
     setCombatId(newId);
     setCombatName(data.combat.name ?? "Combat sans nom");
     setCombatDescription(data.combat.description ?? "");
     setParticipants(DEFAULT_PARTICIPANTS);
-    setPhrases([]);
-    setActivePhraseId(null);
+    setPhrases([initialPhrase]);
+    setActivePhraseId(initialPhrase.id);
     setForm(DEFAULT_PARTICIPANTS.map(() => emptyParticipantState()));
     setPage("create");
   }

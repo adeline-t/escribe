@@ -19,13 +19,17 @@ head_sampling_rate = 1
 persist = true
 
 [vars]
-ENVIRONMENT = "development"
-CORS_ORIGIN = "http://localhost:5173"
-SUPERADMIN_EMAIL = "admin@escribe.local"
+ENVIRONMENT = "production"
+CORS_ORIGIN = "https://main.escribe-1ur.pages.dev"
+SUPERADMIN_EMAIL = "admin@escribe.prod"
 
 [env.dev]
 name = "escribe-backend-dev"
-vars = { ENVIRONMENT = "development", LOG_LEVEL = "debug", CORS_ORIGIN = "http://localhost:5173", SUPERADMIN_EMAIL = "admin@escribe.local" }
+vars = { ENVIRONMENT = "development", LOG_LEVEL = "debug", CORS_ORIGIN = "http://localhost:5173", SUPERADMIN_EMAIL = "admin@escribe.dev" }
+
+[env.local]
+name = "escribe-backend-local"
+vars = { ENVIRONMENT = "local", LOG_LEVEL = "debug", CORS_ORIGIN = "http://localhost:5173", SUPERADMIN_EMAIL = "admin@escribe.local" }
 
 [[d1_databases]]
 binding = "DB"
@@ -34,6 +38,12 @@ database_id = "28ea8b49-1888-4750-9a0c-2f37b54a6374"
 migrations_dir = "../../db/migrations"
 
 [[env.dev.d1_databases]]
+binding = "DB"
+database_name = "escribe-dev"
+database_id = "2f3d7f1d-30c6-47c6-bb3f-52f91d7738f5"
+migrations_dir = "../../db/migrations"
+
+[[env.local.d1_databases]]
 binding = "DB"
 database_name = "escribe-dev"
 database_id = "2f3d7f1d-30c6-47c6-bb3f-52f91d7738f5"
