@@ -129,6 +129,8 @@ export function normalizeState(raw, defaultParticipants) {
   });
   const combatType =
     typeof raw.combatType === "string" ? raw.combatType : "classic";
+  const combatShareRole =
+    typeof raw.combatShareRole === "string" ? raw.combatShareRole : "read";
   return {
     combatId,
     combatName,
@@ -137,6 +139,7 @@ export function normalizeState(raw, defaultParticipants) {
     form,
     phrases,
     combatType,
+    combatShareRole,
   };
 }
 

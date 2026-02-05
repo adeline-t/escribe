@@ -18,6 +18,7 @@ export default function PhraseCreatePage({
   showParadeNumber = true,
   participantWeaponOptions,
   phaseOptions,
+  isReadOnly = false,
   onParticipantCountChange,
   onParticipantNameChange,
   onParticipantWeaponChange,
@@ -237,6 +238,7 @@ export default function PhraseCreatePage({
         <input
           value={combatName}
           onChange={(event) => onCombatNameChange(event.target.value)}
+          disabled={isReadOnly}
         />
       </label>
       <label className="span-2">
@@ -244,6 +246,7 @@ export default function PhraseCreatePage({
         <input
           value={combatDescription}
           onChange={(event) => onCombatDescriptionChange(event.target.value)}
+          disabled={isReadOnly}
         />
       </label>
     </div>
@@ -306,6 +309,7 @@ export default function PhraseCreatePage({
         <input
           value={combatName}
           onChange={(event) => onCombatNameChange(event.target.value)}
+          disabled={isReadOnly}
         />
       </label>
       <label>
@@ -313,6 +317,7 @@ export default function PhraseCreatePage({
         <input
           value={combatDescription}
           onChange={(event) => onCombatDescriptionChange(event.target.value)}
+          disabled={isReadOnly}
         />
       </label>
       <label>
@@ -499,6 +504,7 @@ export default function PhraseCreatePage({
               role="tab"
               aria-selected={isActive}
               onClick={() => setActiveParticipantIndex(index)}
+              disabled={isReadOnly}
             >
               {name}
             </button>
@@ -531,6 +537,7 @@ export default function PhraseCreatePage({
                     className={`segmented__item ${item.mode === "note" ? "is-active" : ""}`}
                     aria-pressed={item.mode === "note"}
                     onClick={() => onFormChange(index, { mode: "note" })}
+                    disabled={isReadOnly}
                   >
                     Note
                   </button>
@@ -551,6 +558,7 @@ export default function PhraseCreatePage({
                     className={`segmented__item ${item.mode === "combat" ? "is-active" : ""}`}
                     aria-pressed={item.mode === "combat"}
                     onClick={() => onFormChange(index, { mode: "combat" })}
+                    disabled={isReadOnly}
                   >
                     Combat
                   </button>
@@ -569,6 +577,7 @@ export default function PhraseCreatePage({
                       className={`segmented__item ${item.role === "none" ? "is-active" : ""}`}
                       aria-pressed={item.role === "none"}
                       onClick={() => onFormChange(index, { role: "none" })}
+                      disabled={isReadOnly}
                     >
                       Sans rôle
                     </button>
@@ -577,6 +586,7 @@ export default function PhraseCreatePage({
                       className={`segmented__item ${item.role === "attack" ? "is-active" : ""}`}
                       aria-pressed={item.role === "attack"}
                       onClick={() => onFormChange(index, { role: "attack" })}
+                      disabled={isReadOnly}
                     >
                       Attaque
                     </button>
@@ -585,6 +595,7 @@ export default function PhraseCreatePage({
                       className={`segmented__item ${item.role === "defense" ? "is-active" : ""}`}
                       aria-pressed={item.role === "defense"}
                       onClick={() => onFormChange(index, { role: "defense" })}
+                      disabled={isReadOnly}
                     >
                       Défense
                     </button>
@@ -664,6 +675,7 @@ export default function PhraseCreatePage({
                                     ),
                                   })
                                 }
+                                disabled={isReadOnly}
                               />
                               {option.label}
                             </label>
@@ -840,11 +852,11 @@ export default function PhraseCreatePage({
         })}
       </div>
       <div className="form-actions">
-        <button type="button" onClick={onAddStep}>
+        <button type="button" onClick={onAddStep} disabled={isReadOnly}>
           {editingStepId ? "Mettre à jour la passe" : "Ajouter la passe"}
         </button>
         {editingStepId ? (
-          <button type="button" className="chip" onClick={onCancelEditStep}>
+          <button type="button" className="chip" onClick={onCancelEditStep} disabled={isReadOnly}>
             Annuler la modification
           </button>
         ) : null}

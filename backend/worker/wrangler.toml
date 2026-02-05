@@ -25,11 +25,11 @@ SUPERADMIN_EMAIL = "admin@escribe.prod"
 
 [env.dev]
 name = "escribe-backend-dev"
-vars = { ENVIRONMENT = "development", LOG_LEVEL = "debug", CORS_ORIGIN = "http://localhost:5173", SUPERADMIN_EMAIL = "admin@escribe.dev" }
+vars = { ENVIRONMENT = "development", LOG_LEVEL = "debug", CORS_ORIGIN = "http://localhost:5173,http://localhost:5174", SUPERADMIN_EMAIL = "admin@escribe.dev" }
 
 [env.local]
 name = "escribe-backend-local"
-vars = { ENVIRONMENT = "local", LOG_LEVEL = "debug", CORS_ORIGIN = "http://localhost:5173", SUPERADMIN_EMAIL = "admin@escribe.local" }
+vars = { ENVIRONMENT = "local", LOG_LEVEL = "debug", CORS_ORIGIN = "http://localhost:5173,http://localhost:5174", SUPERADMIN_EMAIL = "admin@escribe.local" }
 
 [[d1_databases]]
 binding = "DB"

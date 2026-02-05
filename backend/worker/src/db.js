@@ -52,7 +52,7 @@ let lexiconSeeded = false;
 
 export async function ensureSchema(env) {
   if (schemaReady) return;
-  const required = ["combats", "combat_phrases"];
+  const required = ["combats", "combat_phrases", "combat_shares"];
   const missing = [];
   for (const table of required) {
     const row = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name = ?1")
@@ -140,9 +140,11 @@ export async function getCombatState(env, userId, combatId) {
   await ensureSchema(env);
   const combat = await env.DB
     .prepare(
-      `SELECT id, name, description, participants, draft, type
-       FROM combats
-       WHERE id = ?1 AND user_id = ?2`
+      `SELECT c.id, c.name, c.description, c.participants, c.draft, c.type,
+        CASE WHEN c.user_id = ?2 THEN 'owner' ELSE cs.role END as share_role
+       FROM combats c
+       LEFT JOIN combat_shares cs ON cs.combat_id = c.id AND cs.shared_user_id = ?2
+       WHERE c.id = ?1 AND (c.user_id = ?2 OR cs.shared_user_id = ?2)`
     )
     .bind(combatId, userId)
     .first();
@@ -198,6 +200,7 @@ export async function getCombatState(env, userId, combatId) {
     combatName: combat.name,
     combatDescription: combat.description ?? "",
     combatType: combat.type ?? "classic",
+    combatShareRole: combat.share_role ?? "read",
     participants,
     phrases,
     form
@@ -228,10 +231,13 @@ export async function getState(env, userId, combatId = null, combatType = null) 
 export async function listCombats(env, userId, includeArchived = false, combatType = null) {
   await ensureSchema(env);
   const typeFilter = combatType ? "AND c.type = ?2" : "";
-  const query = `SELECT c.id, c.name, c.description, c.participants, c.archived, c.updated_at, c.type,
-      (SELECT COUNT(*) FROM combat_phrases cp WHERE cp.combat_id = c.id) as phrase_count
+  const archiveFilter = includeArchived ? "" : "AND c.archived = 0";
+  const query = `SELECT DISTINCT c.id, c.name, c.description, c.participants, c.archived, c.updated_at, c.created_at, c.type,
+      (SELECT COUNT(*) FROM combat_phrases cp WHERE cp.combat_id = c.id) as phrase_count,
+      CASE WHEN c.user_id = ?1 THEN 1 ELSE 0 END as is_owner
      FROM combats c
-     WHERE c.user_id = ?1 ${includeArchived ? "" : "AND c.archived = 0"} ${typeFilter}
+     LEFT JOIN combat_shares cs ON cs.combat_id = c.id AND cs.shared_user_id = ?1
+     WHERE (c.user_id = ?1 OR cs.shared_user_id = ?1) ${archiveFilter} ${typeFilter}
      ORDER BY c.updated_at DESC`;
   const stmt = combatType
     ? env.DB.prepare(query).bind(userId, combatType)
@@ -250,6 +256,8 @@ export async function listCombats(env, userId, includeArchived = false, combatTy
       description: row.description ?? "",
       type: row.type ?? "classic",
       archived: Boolean(row.archived),
+      isOwner: Boolean(row.is_owner),
+      createdAt: row.created_at,
       updatedAt: row.updated_at,
       phraseCount: Number(row.phrase_count ?? 0),
       participantsCount: participants.length
@@ -302,6 +310,92 @@ export async function archiveCombat(env, userId, combatId, archived) {
     .run();
 }
 
+export async function deleteCombat(env, userId, combatId) {
+  await ensureSchema(env);
+  const row = await env.DB.prepare(
+    "SELECT COUNT(*) as count FROM combat_phrases WHERE combat_id = ?1"
+  )
+    .bind(combatId)
+    .first();
+  const count = Number(row?.count ?? 0);
+  if (count > 1) {
+    await archiveCombat(env, userId, combatId, true);
+    return { mode: "soft" };
+  }
+  await env.DB.prepare("DELETE FROM combat_phrases WHERE combat_id = ?1").bind(combatId).run();
+  await env.DB.prepare("DELETE FROM combat_shares WHERE combat_id = ?1").bind(combatId).run();
+  await env.DB.prepare("DELETE FROM combats WHERE id = ?1 AND user_id = ?2")
+    .bind(combatId, userId)
+    .run();
+  return { mode: "hard" };
+}
+
+export async function listCombatShares(env, ownerId, combatId) {
+  await ensureSchema(env);
+  const rows = await env.DB.prepare(
+    `SELECT cs.shared_user_id as user_id, u.email, u.first_name, u.last_name, cs.created_at, cs.role
+     FROM combat_shares cs
+     JOIN users u ON u.id = cs.shared_user_id
+     WHERE cs.combat_id = ?1 AND cs.owner_id = ?2
+     ORDER BY cs.created_at DESC`
+  )
+    .bind(combatId, ownerId)
+    .all();
+  return rows?.results ?? [];
+}
+
+export async function addCombatShare(env, ownerId, combatId, sharedUserId, role = "read") {
+  await ensureSchema(env);
+  const now = new Date().toISOString();
+  await env.DB.prepare(
+    `INSERT INTO combat_shares (combat_id, owner_id, shared_user_id, role, created_at)
+     VALUES (?1, ?2, ?3, ?4, ?5)
+     ON CONFLICT(combat_id, shared_user_id) DO UPDATE SET role = excluded.role`
+  )
+    .bind(combatId, ownerId, sharedUserId, role, now)
+    .run();
+  return { ok: true };
+}
+
+export async function removeCombatShare(env, ownerId, combatId, sharedUserId) {
+  await ensureSchema(env);
+  await env.DB.prepare(
+    "DELETE FROM combat_shares WHERE combat_id = ?1 AND owner_id = ?2 AND shared_user_id = ?3"
+  )
+    .bind(combatId, ownerId, sharedUserId)
+    .run();
+  return { ok: true };
+}
+
+export async function listShareUsers(env, userId, query) {
+  await ensureSchema(env);
+  const q = `%${query.toLowerCase()}%`;
+  const rows = await env.DB.prepare(
+    `SELECT id, email, first_name, last_name
+     FROM users
+     WHERE id != ?1
+       AND (lower(email) LIKE ?2 OR lower(first_name) LIKE ?2 OR lower(last_name) LIKE ?2)
+     ORDER BY email
+     LIMIT 25`
+  )
+    .bind(userId, q)
+    .all();
+  return rows?.results ?? [];
+}
+
+export async function listShareUsersAll(env, userId) {
+  await ensureSchema(env);
+  const rows = await env.DB.prepare(
+    `SELECT id, email, first_name, last_name
+     FROM users
+     WHERE id != ?1
+     ORDER BY email`
+  )
+    .bind(userId)
+    .all();
+  return rows?.results ?? [];
+}
+
 export async function saveState(env, userId, state) {
   await ensureSchema(env);
   const now = new Date().toISOString();
@@ -316,13 +410,22 @@ export async function saveState(env, userId, state) {
   const requestedId = Number(state.combatId);
 
   let combatId = Number.isFinite(requestedId) ? requestedId : null;
+  let shareRole = null;
   if (combatId) {
     const exists = await env.DB
-      .prepare(`SELECT id FROM combats WHERE id = ?1 AND user_id = ?2 AND archived = 0`)
+      .prepare(
+        `SELECT c.id, c.user_id,
+          CASE WHEN c.user_id = ?2 THEN 'owner' ELSE cs.role END as share_role
+         FROM combats c
+         LEFT JOIN combat_shares cs ON cs.combat_id = c.id AND cs.shared_user_id = ?2
+         WHERE c.id = ?1 AND (c.user_id = ?2 OR cs.shared_user_id = ?2) AND c.archived = 0`
+      )
       .bind(combatId, userId)
       .first();
     if (!exists?.id) {
       combatId = null;
+    } else {
+      shareRole = exists.share_role;
     }
   }
 
@@ -345,6 +448,9 @@ export async function saveState(env, userId, state) {
       .first();
     combatId = inserted?.id;
   } else {
+    if (shareRole === "read") {
+      return combatId;
+    }
     await env.DB
       .prepare(
         `UPDATE combats

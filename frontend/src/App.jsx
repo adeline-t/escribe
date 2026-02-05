@@ -8,6 +8,7 @@ import UsersPage from "./pages/UsersPage.jsx";
 import PhraseCreatePage from "./pages/PhraseCreatePage.jsx";
 import PhraseListPage from "./pages/PhraseListPage.jsx";
 import CombatListPage from "./pages/CombatListPage.jsx";
+import CombatOverviewPage from "./pages/CombatOverviewPage.jsx";
 import {
   FaBookOpen,
   FaHouse,
@@ -61,6 +62,7 @@ export default function App() {
   const [combatName, setCombatName] = useState("Combat sans nom");
   const [combatDescription, setCombatDescription] = useState("");
   const [combatType, setCombatType] = useState("classic");
+  const [combatShareRole, setCombatShareRole] = useState("read");
   const [isHydrated, setIsHydrated] = useState(false);
   const [lexiconData, setLexiconData] = useState(() =>
     normalizeLexicon(DEFAULT_LEXICON),
@@ -184,6 +186,7 @@ export default function App() {
           setCombatName(normalized.combatName ?? "Combat sans nom");
           setCombatDescription(normalized.combatDescription ?? "");
           setCombatType(normalized.combatType ?? "classic");
+          setCombatShareRole(normalized.combatShareRole ?? "read");
           if (normalized.phrases?.length) {
             setActivePhraseId(normalized.phrases[0].id);
           } else {
@@ -245,6 +248,7 @@ export default function App() {
     combatDescription,
     combatId,
     combatType,
+    combatShareRole,
     isHydrated,
     authUser,
   ]);
@@ -263,6 +267,7 @@ export default function App() {
       setCombatName(normalized.combatName ?? "Combat sans nom");
       setCombatDescription(normalized.combatDescription ?? "");
       setCombatType(normalized.combatType ?? "classic");
+      setCombatShareRole(normalized.combatShareRole ?? "read");
       if (normalized.phrases?.length) {
         setActivePhraseId(normalized.phrases[0].id);
       } else {
@@ -289,7 +294,7 @@ export default function App() {
       }),
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok || !data?.combat?.id) return;
+    if (!response.ok || !data?.combat?.id) return null;
     const newId = data.combat.id;
     const initialPhrase = {
       id: crypto.randomUUID(),
@@ -300,11 +305,12 @@ export default function App() {
     setCombatName(data.combat.name ?? "Combat sans nom");
     setCombatDescription(data.combat.description ?? "");
     setCombatType(type);
+    setCombatShareRole("owner");
     setParticipants(defaultParticipants);
     setPhrases([initialPhrase]);
     setActivePhraseId(initialPhrase.id);
     setForm(defaultParticipants.map(() => emptyParticipantState()));
-    setPage(type === "sabre-laser" ? "create-sabre" : "create");
+    return { id: newId, type };
   }
 
   async function handleLogin(event) {
@@ -313,19 +319,23 @@ export default function App() {
     const formData = new FormData(event.currentTarget);
     const email = formData.get("email");
     const password = formData.get("password");
-    const response = await fetch(`${API_BASE}/api/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      setAuthError("Identifiants invalides.");
-      return;
+    try {
+      const response = await fetch(`${API_BASE}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setAuthError(payload?.error || "Identifiants invalides.");
+        return;
+      }
+      setAuthToken(payload.token);
+      localStorage.setItem(TOKEN_KEY, payload.token);
+      setAuthUser(payload.user);
+    } catch {
+      setAuthError("Impossible de se connecter. Vérifie ta connexion.");
     }
-    setAuthToken(payload.token);
-    localStorage.setItem(TOKEN_KEY, payload.token);
-    setAuthUser(payload.user);
   }
 
   async function handleRegister(event) {
@@ -336,28 +346,33 @@ export default function App() {
     const password = formData.get("password");
     const firstName = formData.get("firstName");
     const lastName = formData.get("lastName");
-    const response = await fetch(`${API_BASE}/api/auth/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, firstName, lastName }),
-    });
-    if (!response.ok) {
-      setAuthError("Inscription impossible.");
-      return;
+    try {
+      const response = await fetch(`${API_BASE}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, firstName, lastName }),
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        setAuthError(payload?.error || "Inscription impossible.");
+        return;
+      }
+      const loginResponse = await fetch(`${API_BASE}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const loginPayload = await loginResponse.json().catch(() => ({}));
+      if (!loginResponse.ok) {
+        setAuthError(loginPayload?.error || "Connexion impossible.");
+        return;
+      }
+      setAuthToken(loginPayload.token);
+      localStorage.setItem(TOKEN_KEY, loginPayload.token);
+      setAuthUser(loginPayload.user);
+    } catch {
+      setAuthError("Impossible de créer le compte. Vérifie ta connexion.");
     }
-    const loginResponse = await fetch(`${API_BASE}/api/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    const loginPayload = await loginResponse.json().catch(() => ({}));
-    if (!loginResponse.ok) {
-      setAuthError("Connexion impossible.");
-      return;
-    }
-    setAuthToken(loginPayload.token);
-    localStorage.setItem(TOKEN_KEY, loginPayload.token);
-    setAuthUser(loginPayload.user);
   }
 
   async function handleLogout() {
@@ -581,6 +596,7 @@ export default function App() {
 
   const isSabreList = page === "combats-sabre" || page === "combats-sabre-new";
   const autoOpenSabreCreate = page === "combats-sabre-new";
+  const autoOpenCreate = page === "combats-new";
 
   return (
     <div
@@ -621,8 +637,8 @@ export default function App() {
             <h1>Escribe</h1>
           </div>
           <p className="lead">
-            Archive des phrases d'armes. Décrivez chaque passe avec précision,
-            sans perdre la lecture globale.
+            Décrivez chaque passe avec précision, sans perdre la lecture
+            globale.
           </p>
         </div>
 
@@ -644,7 +660,7 @@ export default function App() {
             type="button"
             className={`menu__item ${page === "combats" ? "is-active" : ""}`}
             onClick={() => {
-              setPage("combats");
+              setPage("combats-new");
               setIsMenuCollapsed(true);
             }}
           >
@@ -671,32 +687,6 @@ export default function App() {
             className={`menu__item ${isSabreList ? "is-active" : ""}`}
             onClick={() => {
               setPage("combats-sabre");
-              setIsMenuCollapsed(true);
-            }}
-          >
-            <span className="menu__icon" aria-hidden="true">
-              <FaPenNib />
-            </span>
-            <span className="menu__label">Combats sabre laser</span>
-          </button>
-          <button
-            type="button"
-            className={`menu__item ${page === "combats-sabre-new" ? "is-active" : ""}`}
-            onClick={() => {
-              setPage("combats-sabre-new");
-              setIsMenuCollapsed(true);
-            }}
-          >
-            <span className="menu__icon" aria-hidden="true">
-              <FaPenNib />
-            </span>
-            <span className="menu__label">Créer un combat sabre laser</span>
-          </button>
-          <button
-            type="button"
-            className={`menu__item ${page === "lexicon" ? "is-active" : ""}`}
-            onClick={() => {
-              setPage("lexicon");
               setIsMenuCollapsed(true);
             }}
           >
@@ -771,14 +761,27 @@ export default function App() {
           />
         ) : null}
 
+        {page === "combats-new" ? (
+          <CombatListPage
+            apiBase={API_BASE}
+            authToken={authToken}
+            combatId={combatId}
+            title="Créer un combat"
+            subtitle="Choisis le type et démarre un combat."
+            autoOpenCreate
+            onSelectCombat={loadCombatById}
+            onCreateCombat={handleCreateCombat}
+            onNavigate={setPage}
+          />
+        ) : null}
+
         {page === "combats" ? (
           <CombatListPage
             apiBase={API_BASE}
             authToken={authToken}
             combatId={combatId}
-            combatType="classic"
-            title="Liste des combats"
-            subtitle="Crée, sélectionne et archive des combats."
+            title="Mes combats"
+            subtitle="Tous les combats, regroupés par type."
             onSelectCombat={loadCombatById}
             onCreateCombat={handleCreateCombat}
             onNavigate={setPage}
@@ -813,6 +816,7 @@ export default function App() {
             participantLabels={participantLabels}
             normalizedLexicon={normalizedLexicon}
             favorites={favorites}
+            isReadOnly={combatShareRole === "read"}
             onParticipantCountChange={updateParticipantCount}
             onParticipantNameChange={updateParticipantName}
             onParticipantWeaponChange={updateParticipantWeapon}
@@ -874,6 +878,7 @@ export default function App() {
             }}
             showParadeNumber={false}
             participantWeaponOptions={normalizedSabreLexicon.armes ?? []}
+            isReadOnly={combatShareRole === "read"}
             onParticipantCountChange={updateParticipantCount}
             onParticipantNameChange={updateParticipantName}
             onParticipantWeaponChange={updateParticipantWeapon}
@@ -896,6 +901,15 @@ export default function App() {
             buildSummaryLine={buildSummaryLine}
             buildSummaryLines={buildSummaryLines}
             toggleAttribute={toggleAttribute}
+          />
+        ) : null}
+
+        {page === "overview" ? (
+          <CombatOverviewPage
+            combatName={combatName}
+            combatDescription={combatDescription}
+            participants={participants}
+            phrases={phrases}
           />
         ) : null}
 

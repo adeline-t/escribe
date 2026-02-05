@@ -55,7 +55,7 @@ export default function HomePage({
           <p className="muted">
             Commencez un nouveau combat pour y ajouter vos phrases d'armes.
           </p>
-          <button type="button" onClick={() => onNavigate("combats")}>
+          <button type="button" onClick={() => onNavigate("combats-new")}>
             Créer un combat
           </button>
         </div>

@@ -1,0 +1,1 @@
+ALTER TABLE combat_shares ADD COLUMN role TEXT NOT NULL DEFAULT 'read';

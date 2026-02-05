@@ -5,7 +5,7 @@ import { handleLexicon, handleLexiconType, handleLexiconPersonal, handleLexiconF
 import { createRouter } from "./router.js";
 import { handleRegister, handleLogin, handleMe, handleProfile, handleChangePassword, handleLogout } from "./handlers/auth.js";
 import { handleUsersList, handleUserRole, handleUserPasswordReset, handleAudit } from "./handlers/users.js";
-import { handleCombats, handleCombat, handleCombatArchive } from "./handlers/combats.js";
+import { handleCombats, handleCombat, handleCombatArchive, handleCombatDelete, handleCombatShares, handleShareUsers, handleShareUsersAll } from "./handlers/combats.js";
 
 const router = createRouter();
 router.add("GET", "/api/state", handleState);
@@ -37,6 +37,12 @@ router.add("POST", "/api/combats", handleCombats);
 router.add("GET", "/api/combats/:id", handleCombat);
 router.add("POST", "/api/combats/:id", handleCombat);
 router.add("POST", "/api/combats/:id/archive", handleCombatArchive);
+router.add("POST", "/api/combats/:id/delete", handleCombatDelete);
+router.add("GET", "/api/combats/:id/shares", handleCombatShares);
+router.add("POST", "/api/combats/:id/shares", handleCombatShares);
+router.add("DELETE", "/api/combats/:id/shares", handleCombatShares);
+router.add("GET", "/api/combats/share-users", handleShareUsers);
+router.add("GET", "/api/combats/share-users/all", handleShareUsersAll);
 
 export default {
   async fetch(request, env) {

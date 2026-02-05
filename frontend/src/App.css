@@ -1136,6 +1136,103 @@ button {
   font-size: 20px;
 }
 
+.lexicon-section {
+  margin-top: 18px;
+  margin-bottom: 8px;
+  border-radius: 14px;
+  border: 1px solid #e2d7c6;
+  background: var(--panel);
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 10px 24px rgba(28, 22, 15, 0.2);
+}
+
+.phrase-stack {
+  display: grid;
+  gap: 18px;
+}
+
+.phrase-block {
+  background: #fffaf3;
+  border-radius: 16px;
+  border: 1px solid #eadfce;
+  padding: 14px;
+}
+
+.combat-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-soft);
+  border: 1px solid #efe5d6;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.combat-details {
+  gap: 6px;
+}
+
+.combat-details:last-child {
+  justify-self: end;
+}
+
+.combat-details__name {
+  font-weight: 600;
+}
+
+.combat-details__id,
+.combat-details__date,
+.combat-details__meta {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.combat-details__actions {
+  justify-self: end;
+  display: inline-flex;
+  gap: 8px;
+}
+
+.icon-button {
+  padding: 6px 8px;
+  min-width: auto;
+}
+
+.share-section {
+  margin-top: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.share-list {
+  display: grid;
+  gap: 8px;
+}
+
+.share-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid #efe5d6;
+  border-radius: 12px;
+  padding: 8px 10px;
+  background: #fff;
+}
+
+.share-name {
+  font-weight: 600;
+}
+
+.share-users {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .lexicon-subtitle {
   color: var(--muted);
   font-size: 13px;
@@ -1186,10 +1283,6 @@ button {
 .lexicon-row.is-active {
   border-color: #c5b59f;
   background: #fff7ea;
-}
-
-.combat-row {
-  grid-template-columns: minmax(0, 1fr) 180px 90px auto auto;
 }
 
 .lexicon-row__label {

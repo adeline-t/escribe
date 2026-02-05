@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
+import { FaTrash, FaShareNodes } from "react-icons/fa6";
 
 export default function CombatListPage({
   apiBase,
   authToken,
   combatId,
-  combatType = "classic",
-  title = "Liste des combats",
+  combatType = null,
+  title = "Mes combats",
   subtitle = "Crée et sélectionne des combats.",
   autoOpenCreate = false,
   onSelectCombat,
@@ -15,12 +16,23 @@ export default function CombatListPage({
   const [combats, setCombats] = useState([]);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("recent");
-  const [includeArchived, setIncludeArchived] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [draftType, setDraftType] = useState("classic");
   const [status, setStatus] = useState("");
   const [accessDenied, setAccessDenied] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [shareCombat, setShareCombat] = useState(null);
+  const [shareList, setShareList] = useState([]);
+  const [shareQuery, setShareQuery] = useState("");
+  const [shareUsers, setShareUsers] = useState([]);
+  const [shareAllUsers, setShareAllUsers] = useState([]);
+  const [shareSelectedUser, setShareSelectedUser] = useState("");
+  const [shareError, setShareError] = useState("");
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareRole, setShareRole] = useState("read");
+
+  // ==================== UTILITY FUNCTIONS ====================
 
   function buildDefaultTitle() {
     const now = new Date();
@@ -38,14 +50,24 @@ export default function CombatListPage({
     return fetch(`${apiBase}${path}`, { ...options, headers });
   }
 
+  function formatDate(value) {
+    if (!value) return "";
+    try {
+      return new Date(value).toLocaleDateString("fr-FR");
+    } catch {
+      return value;
+    }
+  }
+
+  // ==================== DATA LOADING ====================
+
   async function loadCombats(signal) {
     const typeQuery = combatType
       ? `&type=${encodeURIComponent(combatType)}`
       : "";
-    const response = await authFetch(
-      `/api/combats?archived=${includeArchived ? "1" : "0"}${typeQuery}`,
-      { signal },
-    );
+    const response = await authFetch(`/api/combats?archived=0${typeQuery}`, {
+      signal,
+    });
     const payload = await response.json().catch(() => ({}));
     if (response.ok) {
       setAccessDenied(false);
@@ -57,17 +79,52 @@ export default function CombatListPage({
     }
   }
 
+  // ==================== EFFECTS ====================
+
   useEffect(() => {
     const controller = new AbortController();
     loadCombats(controller.signal).catch(() => null);
     return () => controller.abort();
-  }, [includeArchived, combatType]);
+  }, [combatType]);
 
   useEffect(() => {
     if (autoOpenCreate) {
       setIsCreateOpen(true);
     }
   }, [autoOpenCreate]);
+
+  useEffect(() => {
+    if (!shareCombat || !shareQuery.trim()) {
+      setShareUsers([]);
+      return;
+    }
+    const controller = new AbortController();
+    const handle = setTimeout(() => {
+      authFetch(
+        `/api/combats/share-users?query=${encodeURIComponent(shareQuery.trim())}`,
+        {
+          signal: controller.signal,
+        },
+      )
+        .then((response) => (response.ok ? response.json() : null))
+        .then((payload) => {
+          setShareUsers(payload?.users ?? []);
+        })
+        .catch(() => null);
+    }, 250);
+    return () => {
+      clearTimeout(handle);
+      controller.abort();
+    };
+  }, [shareCombat, shareQuery]);
+
+  useEffect(() => {
+    if (combatType) {
+      setDraftType(combatType);
+    }
+  }, [combatType]);
+
+  // ==================== COMPUTED VALUES ====================
 
   const filteredCombats = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -91,6 +148,25 @@ export default function CombatListPage({
     return sorted;
   }, [combats, search, sort]);
 
+  const groupedCombats = useMemo(() => {
+    if (combatType) {
+      return {
+        classic: filteredCombats,
+        sabre: [],
+      };
+    }
+    return {
+      classic: filteredCombats.filter(
+        (combat) => (combat.type ?? "classic") === "classic",
+      ),
+      sabre: filteredCombats.filter(
+        (combat) => (combat.type ?? "classic") === "sabre-laser",
+      ),
+    };
+  }, [filteredCombats, combatType]);
+
+  // ==================== HANDLERS ====================
+
   async function createCombat() {
     const trimmed = name.trim();
     if (!trimmed) {
@@ -99,20 +175,17 @@ export default function CombatListPage({
     }
     if (accessDenied) return;
     setStatus("");
-    await onCreateCombat({ name: trimmed, description, type: combatType });
-    setName("");
-    setDescription("");
-    setIsCreateOpen(false);
-    await loadCombats();
-  }
-
-  async function toggleArchive(id, archived) {
-    await authFetch(`/api/combats/${id}/archive`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ archived }),
+    const created = await onCreateCombat({
+      name: trimmed,
+      description,
+      type: draftType,
     });
-    await loadCombats();
+    if (created?.type && onNavigate) {
+      setIsCreateOpen(false);
+      onNavigate(created.type === "sabre-laser" ? "create-sabre" : "create");
+      return;
+    }
+    setStatus("Création impossible.");
   }
 
   async function openCombat(id, type) {
@@ -122,6 +195,238 @@ export default function CombatListPage({
     }
   }
 
+  async function readCombat(id) {
+    const resolvedType = await onSelectCombat(id);
+    if (resolvedType && onNavigate) {
+      onNavigate("overview");
+    }
+  }
+
+  async function deleteCombat(id) {
+    await authFetch(`/api/combats/${id}/delete`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+    await loadCombats();
+  }
+
+  async function openShareModal(combat) {
+    setShareCombat(combat);
+    setShareError("");
+    setShareQuery("");
+    setShareUsers([]);
+    setShareAllUsers([]);
+    setShareSelectedUser("");
+    setShareRole("read");
+    setShareLoading(true);
+    const response = await authFetch(`/api/combats/${combat.id}/shares`);
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setShareError("Impossible de charger les partages.");
+      setShareList([]);
+    } else {
+      setShareList(payload.shares ?? []);
+    }
+    const usersResponse = await authFetch(`/api/combats/share-users?all=1`);
+    const usersPayload = await usersResponse.json().catch(() => ({}));
+    if (usersResponse.ok) {
+      setShareAllUsers(usersPayload.users ?? []);
+    }
+    setShareLoading(false);
+  }
+
+  async function addShare(userId) {
+    if (!shareCombat) return;
+    if (!userId) return;
+    setShareError("");
+    const response = await authFetch(`/api/combats/${shareCombat.id}/shares`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, role: shareRole }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setShareError("Impossible d'ajouter le partage.");
+      return;
+    }
+    setShareList(payload.shares ?? []);
+    setShareQuery("");
+    setShareUsers([]);
+    setShareSelectedUser("");
+  }
+
+  async function removeShare(userId) {
+    if (!shareCombat) return;
+    const response = await authFetch(`/api/combats/${shareCombat.id}/shares`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setShareError("Impossible de retirer le partage.");
+      return;
+    }
+    setShareList(payload.shares ?? []);
+  }
+
+  // ==================== RENDER HELPERS ====================
+
+  function CombatRow({ combat, layout = "grouped" }) {
+    const isActive = combat.id === combatId;
+
+    if (layout === "simple") {
+      return (
+        <div className={`combat-row ${isActive ? "is-active" : ""}`}>
+          <div className="combat-details">
+            <div className="combat-details__top">
+              <div className="combat-details__id">#{combat.id}</div>
+              <div className="combat-details__name">{combat.name}</div>
+              <div className="combat-details__meta">
+                {combat.participantsCount} combattant
+                {combat.participantsCount > 1 ? "s" : ""}
+              </div>
+            </div>
+            <div className="combat-details">
+              <div className="combat-details__date">
+                {formatDate(combat.createdAt)}
+              </div>
+              <div className="combat-details__meta">
+                {combat.phraseCount} phrase
+                {combat.phraseCount > 1 ? "s" : ""}
+              </div>
+            </div>
+            <div className="combat-details">
+              <div className="combat-details__actions">
+                <button
+                  type="button"
+                  className="chip"
+                  onClick={() => openCombat(combat.id, combat.type)}
+                >
+                  Ouvrir
+                </button>
+                <button
+                  type="button"
+                  className="chip"
+                  onClick={() => readCombat(combat.id)}
+                >
+                  Lire
+                </button>
+                {combat.isOwner ? (
+                  <>
+                    <button
+                      type="button"
+                      className="chip icon-button"
+                      onClick={() => openShareModal(combat)}
+                      aria-label="Partager le combat"
+                      title="Partager"
+                    >
+                      <FaShareNodes />
+                    </button>
+                    <button
+                      type="button"
+                      className="chip chip--danger icon-button"
+                      onClick={() => deleteCombat(combat.id)}
+                      aria-label="Supprimer le combat"
+                      title="Supprimer"
+                    >
+                      <FaTrash />
+                    </button>
+                  </>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className={`combat-row ${isActive ? "is-active" : ""}`}>
+        <div className="combat-details">
+          <div className="combat-details__top">
+            <div className="combat-details__id">#{combat.id}</div>
+            <div className="combat-details__name">{combat.name}</div>
+            <div className="combat-details__meta">
+              {combat.participantsCount} combattant
+              {combat.participantsCount > 1 ? "s" : ""}
+            </div>
+          </div>
+        </div>
+        <div className="combat-details">
+          <div className="combat-details__date">
+            {formatDate(combat.createdAt)}
+          </div>
+          <div className="combat-details__meta">
+            {combat.phraseCount} phrase
+            {combat.phraseCount > 1 ? "s" : ""}
+          </div>
+        </div>
+        <div className="combat-details">
+          <div className="combat-details__actions">
+            <button
+              type="button"
+              className="chip"
+              onClick={() => openCombat(combat.id, combat.type)}
+            >
+              Ouvrir
+            </button>
+            <button
+              type="button"
+              className="chip"
+              onClick={() => readCombat(combat.id)}
+            >
+              Lire
+            </button>
+            {combat.isOwner ? (
+              <>
+                <button
+                  type="button"
+                  className="chip icon-button"
+                  onClick={() => openShareModal(combat)}
+                  aria-label="Partager le combat"
+                  title="Partager"
+                >
+                  <FaShareNodes />
+                </button>
+                <button
+                  type="button"
+                  className="chip chip--danger icon-button"
+                  onClick={() => deleteCombat(combat.id)}
+                  aria-label="Supprimer le combat"
+                  title="Supprimer"
+                >
+                  <FaTrash />
+                </button>
+              </>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function CombatSection({ title, combats }) {
+    return (
+      <>
+        <div className="lexicon-section">
+          <div className="lexicon-title">{title}</div>
+          <div className="lexicon-subtitle">
+            {combats.length} combat{combats.length > 1 ? "s" : ""}
+          </div>
+        </div>
+        {combats.map((combat) => (
+          <CombatRow key={combat.id} combat={combat} layout="grouped" />
+        ))}
+      </>
+    );
+  }
+
+  // ==================== MAIN RENDER ====================
+
+  const creationTypeLabel =
+    combatType === "sabre-laser" ? "sabre laser" : "escrime";
+
   return (
     <section className="panel">
       <div className="panel-header">
@@ -129,7 +434,7 @@ export default function CombatListPage({
           <h2>{title}</h2>
           <p className="muted">{subtitle}</p>
         </div>
-        {!accessDenied ? (
+        {!accessDenied && (
           <button
             type="button"
             onClick={() => {
@@ -139,19 +444,19 @@ export default function CombatListPage({
           >
             Nouveau combat
           </button>
-        ) : null}
+        )}
       </div>
 
       {accessDenied ? (
         <div className="lexicon-empty">
           <div className="lexicon-empty__title">Accès indisponible.</div>
           <div className="lexicon-empty__subtitle">
-            Vous n’avez pas les droits pour voir les combats.
+            Vous n'avez pas les droits pour voir les combats.
           </div>
         </div>
       ) : (
         <>
-          {isCreateOpen ? (
+          {isCreateOpen && (
             <div
               className="modal-backdrop"
               role="presentation"
@@ -165,7 +470,22 @@ export default function CombatListPage({
                 onClick={(event) => event.stopPropagation()}
               >
                 <h3>Créer un combat</h3>
-                <p className="muted">Saisis un nom pour démarrer le combat.</p>
+                <p className="muted">
+                  Saisis un nom pour démarrer le combat
+                  {combatType ? ` (${creationTypeLabel})` : ""}.
+                </p>
+                {!combatType && (
+                  <label>
+                    Type de combat
+                    <select
+                      value={draftType}
+                      onChange={(event) => setDraftType(event.target.value)}
+                    >
+                      <option value="classic">Escrime</option>
+                      <option value="sabre-laser">Sabre laser</option>
+                    </select>
+                  </label>
+                )}
                 <label>
                   Nom du combat
                   <input
@@ -193,7 +513,7 @@ export default function CombatListPage({
                     placeholder="Notes, contexte, etc."
                   />
                 </label>
-                {status ? <div className="lexicon-error">{status}</div> : null}
+                {status && <div className="lexicon-error">{status}</div>}
                 <div className="modal-actions">
                   <button
                     type="button"
@@ -208,28 +528,12 @@ export default function CombatListPage({
                 </div>
               </div>
             </div>
-          ) : null}
+          )}
 
           <div className="panel" style={{ marginTop: "20px" }}>
             <div className="lexicon-header">
-              <div>
-                <div className="lexicon-title">Tous les combats</div>
-                <div className="lexicon-subtitle">
-                  {filteredCombats.length} combat
-                  {filteredCombats.length > 1 ? "s" : ""}
-                </div>
-              </div>
+              <div></div>
               <div className="lexicon-actions">
-                <label className="checkbox">
-                  <input
-                    type="checkbox"
-                    checked={includeArchived}
-                    onChange={(event) =>
-                      setIncludeArchived(event.target.checked)
-                    }
-                  />
-                  Inclure les archivés
-                </label>
                 <input
                   value={search}
                   placeholder="Rechercher un combat..."
@@ -248,49 +552,164 @@ export default function CombatListPage({
             </div>
 
             <div className="lexicon-table">
-              {filteredCombats.map((combat) => (
-                <div
-                  key={combat.id}
-                  className={`lexicon-row combat-row ${combat.id === combatId ? "is-active" : ""}`}
-                >
-                  <div className="lexicon-row__label">{combat.name}</div>
-                  <div className="lexicon-row__meta">
-                    {combat.participantsCount} combattant
-                    {combat.participantsCount > 1 ? "s" : ""} ·{" "}
-                    {combat.phraseCount} phrase
-                    {combat.phraseCount > 1 ? "s" : ""}
-                  </div>
-                  <div className="lexicon-row__meta">
-                    {combat.archived ? "Archivé" : "Actif"}
-                  </div>
-                  <button
-                    type="button"
-                    className="chip"
-                    onClick={() => openCombat(combat.id, combat.type)}
-                  >
-                    Ouvrir
-                  </button>
-                  <button
-                    type="button"
-                    className="chip chip--danger"
-                    onClick={() => toggleArchive(combat.id, !combat.archived)}
-                  >
-                    {combat.archived ? "Désarchiver" : "Archiver"}
-                  </button>
-                </div>
-              ))}
-              {filteredCombats.length === 0 ? (
+              {!combatType ? (
+                <>
+                  <CombatSection
+                    title="Escrime"
+                    combats={groupedCombats.classic}
+                  />
+                  <CombatSection
+                    title="Sabre laser"
+                    combats={groupedCombats.sabre}
+                  />
+                </>
+              ) : (
+                filteredCombats.map((combat) => (
+                  <CombatRow key={combat.id} combat={combat} layout="simple" />
+                ))
+              )}
+              {filteredCombats.length === 0 && (
                 <div className="lexicon-empty">
                   <div className="lexicon-empty__title">Aucun combat.</div>
                   <div className="lexicon-empty__subtitle">
                     Crée un combat pour commencer.
                   </div>
                 </div>
-              ) : null}
+              )}
             </div>
           </div>
         </>
       )}
+      {shareCombat ? (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onClick={() => setShareCombat(null)}
+        >
+          <div
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Partager le combat"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h3>Partager le combat</h3>
+            <p className="muted">{shareCombat.name}</p>
+            {shareLoading ? <div className="muted">Chargement...</div> : null}
+            {shareError ? (
+              <div className="lexicon-error">{shareError}</div>
+            ) : null}
+
+            <div className="share-section">
+              <div className="lexicon-title">Partagé avec</div>
+              <div className="share-list">
+                {shareList.map((item) => (
+                  <div key={item.user_id} className="share-row">
+                    <div>
+                      <div className="share-name">
+                        {item.first_name || item.last_name
+                          ? `${item.first_name || ""} ${item.last_name || ""}`.trim()
+                          : item.email}
+                      </div>
+                      <div className="muted">
+                        {item.email} ·{" "}
+                        {item.role === "write"
+                          ? "Lecture + écriture"
+                          : "Lecture seule"}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="chip chip--danger"
+                      onClick={() => removeShare(item.user_id)}
+                    >
+                      Retirer
+                    </button>
+                  </div>
+                ))}
+                {shareList.length === 0 && !shareLoading ? (
+                  <div className="muted">Aucun partage.</div>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="share-section">
+              <div className="lexicon-title">Ajouter un partage</div>
+              <label>
+                Droits
+                <select
+                  value={shareRole}
+                  onChange={(event) => setShareRole(event.target.value)}
+                >
+                  <option value="read">Lecture seule</option>
+                  <option value="write">Lecture + écriture</option>
+                </select>
+              </label>
+              <label>
+                Utilisateur
+                <select
+                  value={shareSelectedUser}
+                  onChange={(event) => setShareSelectedUser(event.target.value)}
+                >
+                  <option value="">Choisir un utilisateur</option>
+                  {shareAllUsers
+                    .filter(
+                      (user) =>
+                        !shareList.some((item) => item.user_id === user.id),
+                    )
+                    .map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.first_name || user.last_name
+                          ? `${user.first_name || ""} ${user.last_name || ""}`.trim()
+                          : user.email}
+                      </option>
+                    ))}
+                </select>
+              </label>
+              <button
+                type="button"
+                className="chip"
+                onClick={() => addShare(Number(shareSelectedUser))}
+                disabled={!shareSelectedUser}
+              >
+                Ajouter l'utilisateur
+              </button>
+              <input
+                value={shareQuery}
+                onChange={(event) => setShareQuery(event.target.value)}
+                placeholder="Rechercher un utilisateur..."
+              />
+              <div className="share-users">
+                {shareUsers.map((user) => (
+                  <button
+                    key={user.id}
+                    type="button"
+                    className="chip"
+                    onClick={() => addShare(user.id)}
+                  >
+                    {user.first_name || user.last_name
+                      ? `${user.first_name || ""} ${user.last_name || ""}`.trim()
+                      : user.email}
+                  </button>
+                ))}
+                {shareQuery && shareUsers.length === 0 ? (
+                  <div className="muted">Aucun utilisateur.</div>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="chip"
+                onClick={() => setShareCombat(null)}
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
