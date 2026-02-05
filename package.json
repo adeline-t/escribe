@@ -20,6 +20,7 @@
     "db:seed:local": "npx wrangler d1 execute escribe-dev --config backend/worker/wrangler.toml --env=dev --local --file db/lexicon.sql",
     "db:seed:dev": "npx wrangler d1 execute escribe-dev --config backend/worker/wrangler.toml --env=dev --file db/lexicon.sql",
     "db:seed:prod": "npx wrangler d1 execute escribe --config backend/worker/wrangler.toml --env=\"\" --remote --file db/lexicon.sql",
+    "db:seed:from-json": "node scripts/sync-lexicon.mjs",
     "db:migrate:local": "npx wrangler d1 migrations apply escribe-dev --config backend/worker/wrangler.toml --env=dev --local",
     "db:migrate:dev": "npx wrangler d1 migrations apply escribe-dev --config backend/worker/wrangler.toml --env=dev",
     "db:migrate:prod": "npx wrangler d1 migrations apply escribe --config backend/worker/wrangler.toml --env=\"\" --remote",

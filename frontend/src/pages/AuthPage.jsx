@@ -1,12 +1,18 @@
-export default function AuthPage({ authLoading, authError, onLogin, onRegister }) {
+export default function AuthPage({
+  authLoading,
+  authError,
+  onLogin,
+  onRegister,
+}) {
   return (
     <div className="page">
       <header className="hero">
         <div>
-          <p className="kicker">Escribe</p>
-          <h1>Archive vivante des phrases d'armes</h1>
+          <p className="kicker"></p>
+          <h1>Escribe</h1>
           <p className="lead">
-            Décrivez chaque étape avec précision, sans perdre la lecture globale.
+            Archive des phrases d'armes. Décrivez chaque étape avec précision,
+            sans perdre la lecture globale.
           </p>
         </div>
       </header>
@@ -31,7 +37,12 @@ export default function AuthPage({ authLoading, authError, onLogin, onRegister }
                 </label>
                 <label>
                   Mot de passe
-                  <input name="password" type="password" required minLength={12} />
+                  <input
+                    name="password"
+                    type="password"
+                    required
+                    minLength={12}
+                  />
                 </label>
                 <button type="submit">Se connecter</button>
               </form>
@@ -51,7 +62,12 @@ export default function AuthPage({ authLoading, authError, onLogin, onRegister }
                 </label>
                 <label>
                   Mot de passe
-                  <input name="password" type="password" required minLength={12} />
+                  <input
+                    name="password"
+                    type="password"
+                    required
+                    minLength={12}
+                  />
                 </label>
                 <button type="submit">Créer un compte</button>
               </form>

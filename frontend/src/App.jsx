@@ -16,12 +16,12 @@ import {
   FaUser,
   FaUsers,
   FaBars,
-  FaAngleLeft
+  FaAngleLeft,
 } from "react-icons/fa6";
 import {
   DEFAULT_LEXICON,
   DEFAULT_PARTICIPANTS,
-  normalizeLexicon
+  normalizeLexicon,
 } from "./lib/lexicon.js";
 import {
   buildParticipantLabel,
@@ -30,7 +30,7 @@ import {
   normalizeState,
   toggleAttribute,
   buildSummaryLine,
-  buildSummaryLines
+  buildSummaryLines,
 } from "./lib/participants.js";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:4000";
@@ -38,7 +38,9 @@ const TOKEN_KEY = "escribe_token";
 
 export default function App() {
   const [authUser, setAuthUser] = useState(null);
-  const [authToken, setAuthToken] = useState(() => localStorage.getItem(TOKEN_KEY));
+  const [authToken, setAuthToken] = useState(() =>
+    localStorage.getItem(TOKEN_KEY),
+  );
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState("");
   const [page, setPage] = useState("home");
@@ -46,28 +48,35 @@ export default function App() {
   const [participants, setParticipants] = useState(DEFAULT_PARTICIPANTS);
   const [phrases, setPhrases] = useState([]);
   const [activePhraseId, setActivePhraseId] = useState(null);
-  const [form, setForm] = useState(DEFAULT_PARTICIPANTS.map(() => emptyParticipantState()));
+  const [form, setForm] = useState(
+    DEFAULT_PARTICIPANTS.map(() => emptyParticipantState()),
+  );
   const [editingStepId, setEditingStepId] = useState(null);
   const [combatId, setCombatId] = useState(null);
   const [combatName, setCombatName] = useState("Combat sans nom");
   const [combatDescription, setCombatDescription] = useState("");
   const [isHydrated, setIsHydrated] = useState(false);
-  const [lexiconData, setLexiconData] = useState(() => normalizeLexicon(DEFAULT_LEXICON));
+  const [lexiconData, setLexiconData] = useState(() =>
+    normalizeLexicon(DEFAULT_LEXICON),
+  );
   const [favorites, setFavorites] = useState({});
   const saveTimerRef = useRef(null);
   const [isMenuCollapsed, setIsMenuCollapsed] = useState(false);
 
   const participantLabels = useMemo(
     () => participants.map((name, index) => labelForParticipant(name, index)),
-    [participants]
+    [participants],
   );
 
   const activePhrase = useMemo(
     () => phrases.find((phrase) => phrase.id === activePhraseId) ?? null,
-    [phrases, activePhraseId]
+    [phrases, activePhraseId],
   );
 
-  const normalizedLexicon = useMemo(() => normalizeLexicon(lexiconData), [lexiconData]);
+  const normalizedLexicon = useMemo(
+    () => normalizeLexicon(lexiconData),
+    [lexiconData],
+  );
 
   function apiFetch(path, options = {}) {
     const headers = { ...(options.headers || {}) };
@@ -164,12 +173,19 @@ export default function App() {
     if (saveTimerRef.current) {
       clearTimeout(saveTimerRef.current);
     }
-    const payload = { combatId, combatName, combatDescription, participants, phrases, form };
+    const payload = {
+      combatId,
+      combatName,
+      combatDescription,
+      participants,
+      phrases,
+      form,
+    };
     saveTimerRef.current = setTimeout(() => {
       apiFetch("/api/state", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ state: payload })
+        body: JSON.stringify({ state: payload }),
       })
         .then((response) => response?.json?.())
         .then((data) => {
@@ -178,15 +194,24 @@ export default function App() {
           }
         })
         .catch((error) => {
-        console.warn("State save skipped:", error);
-      });
+          console.warn("State save skipped:", error);
+        });
     }, 400);
     return () => {
       if (saveTimerRef.current) {
         clearTimeout(saveTimerRef.current);
       }
     };
-  }, [participants, phrases, form, combatName, combatDescription, combatId, isHydrated, authUser]);
+  }, [
+    participants,
+    phrases,
+    form,
+    combatName,
+    combatDescription,
+    combatId,
+    isHydrated,
+    authUser,
+  ]);
 
   async function loadCombatById(id) {
     if (!id) return;
@@ -218,8 +243,8 @@ export default function App() {
       body: JSON.stringify({
         name: payload?.name,
         description: payload?.description,
-        participants: DEFAULT_PARTICIPANTS
-      })
+        participants: DEFAULT_PARTICIPANTS,
+      }),
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok || !data?.combat?.id) return;
@@ -243,7 +268,7 @@ export default function App() {
     const response = await fetch(`${API_BASE}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ email, password }),
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
@@ -266,7 +291,7 @@ export default function App() {
     const response = await fetch(`${API_BASE}/api/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, firstName, lastName })
+      body: JSON.stringify({ email, password, firstName, lastName }),
     });
     if (!response.ok) {
       setAuthError("Inscription impossible.");
@@ -275,7 +300,7 @@ export default function App() {
     const loginResponse = await fetch(`${API_BASE}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ email, password }),
     });
     const loginPayload = await loginResponse.json().catch(() => ({}));
     if (!loginResponse.ok) {
@@ -346,7 +371,7 @@ export default function App() {
 
     const step = {
       id: crypto.randomUUID(),
-      participants: form.map((item) => ({ ...item }))
+      participants: form.map((item) => ({ ...item })),
     };
 
     if (!activePhraseId) return;
@@ -356,11 +381,15 @@ export default function App() {
           ? editingStepId
             ? {
                 ...phrase,
-                steps: phrase.steps.map((item) => (item.id === editingStepId ? { ...step, id: editingStepId } : item))
+                steps: phrase.steps.map((item) =>
+                  item.id === editingStepId
+                    ? { ...step, id: editingStepId }
+                    : item,
+                ),
               }
             : { ...phrase, steps: [...phrase.steps, step] }
-          : phrase
-      )
+          : phrase,
+      ),
     );
     setEditingStepId(null);
     setForm((prev) =>
@@ -376,8 +405,8 @@ export default function App() {
         paradeAttribute: "",
         defendMove: "",
         note: "",
-        noteOverrides: false
-      }))
+        noteOverrides: false,
+      })),
     );
   }
 
@@ -387,8 +416,8 @@ export default function App() {
       prev.map((phrase) =>
         phrase.id === activePhraseId
           ? { ...phrase, steps: phrase.steps.filter((step) => step.id !== id) }
-          : phrase
-      )
+          : phrase,
+      ),
     );
     if (editingStepId === id) {
       setEditingStepId(null);
@@ -402,7 +431,7 @@ export default function App() {
     if (!step) return;
     const nextForm = participants.map((_, index) => ({
       ...emptyParticipantState(),
-      ...(step.participants?.[index] ?? {})
+      ...(step.participants?.[index] ?? {}),
     }));
     setForm(nextForm);
     setEditingStepId(id);
@@ -418,7 +447,7 @@ export default function App() {
     const newPhrase = {
       id: crypto.randomUUID(),
       name: `Phrase ${nextNumber}`,
-      steps: []
+      steps: [],
     };
     setPhrases((prev) => [...prev, newPhrase]);
     setActivePhraseId(newPhrase.id);
@@ -426,7 +455,7 @@ export default function App() {
 
   function renamePhrase(id, name) {
     setPhrases((prev) =>
-      prev.map((phrase) => (phrase.id === id ? { ...phrase, name } : phrase))
+      prev.map((phrase) => (phrase.id === id ? { ...phrase, name } : phrase)),
     );
   }
 
@@ -476,7 +505,9 @@ export default function App() {
   }
 
   return (
-    <div className={`page layout ${isMenuCollapsed ? "layout--collapsed" : "layout--expanded"}`}>
+    <div
+      className={`page layout ${isMenuCollapsed ? "layout--collapsed" : "layout--expanded"}`}
+    >
       {isMenuCollapsed ? (
         <button
           type="button"
@@ -489,7 +520,10 @@ export default function App() {
         </button>
       ) : null}
       {!isMenuCollapsed ? (
-        <div className="menu-overlay" onClick={() => setIsMenuCollapsed(true)} />
+        <div
+          className="menu-overlay"
+          onClick={() => setIsMenuCollapsed(true)}
+        />
       ) : null}
       <aside className={`sidebar ${isMenuCollapsed ? "is-collapsed" : ""}`}>
         <button
@@ -503,9 +537,12 @@ export default function App() {
         </button>
 
         <div className="brand">
-          <p className="kicker">Escribe</p>
-          <h1>Archive vivante</h1>
-          <p className="lead">Une page par usage pour garder l’édition lisible.</p>
+          <p className="kicker"></p>
+          <h1>Escribe</h1>
+          <p className="lead">
+            Archive des phrases d'armes. Décrivez chaque étape avec précision,
+            sans perdre la lecture globale.
+          </p>
         </div>
 
         <nav className="menu">
@@ -517,7 +554,9 @@ export default function App() {
               setIsMenuCollapsed(true);
             }}
           >
-            <span className="menu__icon" aria-hidden="true"><FaHouse /></span>
+            <span className="menu__icon" aria-hidden="true">
+              <FaHouse />
+            </span>
             <span className="menu__label">Accueil</span>
           </button>
           <button
@@ -528,7 +567,9 @@ export default function App() {
               setIsMenuCollapsed(true);
             }}
           >
-            <span className="menu__icon" aria-hidden="true"><FaPenNib /></span>
+            <span className="menu__icon" aria-hidden="true">
+              <FaPenNib />
+            </span>
             <span className="menu__label">Créer un combat</span>
           </button>
           <button
@@ -539,7 +580,9 @@ export default function App() {
               setIsMenuCollapsed(true);
             }}
           >
-            <span className="menu__icon" aria-hidden="true"><FaBookOpen /></span>
+            <span className="menu__icon" aria-hidden="true">
+              <FaBookOpen />
+            </span>
             <span className="menu__label">Mes combats</span>
           </button>
           <button
@@ -550,7 +593,9 @@ export default function App() {
               setIsMenuCollapsed(true);
             }}
           >
-            <span className="menu__icon" aria-hidden="true"><FaLayerGroup /></span>
+            <span className="menu__icon" aria-hidden="true">
+              <FaLayerGroup />
+            </span>
             <span className="menu__label">Lexique</span>
           </button>
           <button
@@ -561,7 +606,9 @@ export default function App() {
               setIsMenuCollapsed(true);
             }}
           >
-            <span className="menu__icon" aria-hidden="true"><FaUser /></span>
+            <span className="menu__icon" aria-hidden="true">
+              <FaUser />
+            </span>
             <span className="menu__label">Mon compte</span>
           </button>
           {authUser && ["admin", "superadmin"].includes(authUser.role) ? (
@@ -573,7 +620,9 @@ export default function App() {
                 setIsMenuCollapsed(true);
               }}
             >
-              <span className="menu__icon" aria-hidden="true"><FaUsers /></span>
+              <span className="menu__icon" aria-hidden="true">
+                <FaUsers />
+              </span>
               <span className="menu__label">Utilisateurs</span>
             </button>
           ) : null}
