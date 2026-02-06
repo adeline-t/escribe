@@ -171,6 +171,7 @@ export default function CombatFormPage({
       onCancelEditStep={onCancelEditStep}
       buildSummaryLine={buildSummaryLine}
       showParadeNumber={showParadeNumber}
+      formVariant={showPhase && !showParadeNumber ? "sabre" : "classic"}
     />
   );
 

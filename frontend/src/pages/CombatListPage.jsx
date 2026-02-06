@@ -210,6 +210,16 @@ export default function CombatListPage({
     }
   }
 
+  function openFromRow(combat) {
+    const canWrite =
+      combat?.isOwner || combat?.shareRole === "write" || combat?.shareRole === "owner";
+    if (canWrite) {
+      openCombat(combat.id, combat.type);
+    } else {
+      readCombat(combat.id);
+    }
+  }
+
   async function exportCombatPdfFromRow(combat, options = {}) {
     if (!combat || exportingCombatId) return;
     setExportingCombatId(combat.id);
@@ -336,6 +346,7 @@ export default function CombatListPage({
             formatDate={formatDate}
             onOpenCombat={openCombat}
             onReadCombat={readCombat}
+            onRowOpen={openFromRow}
             onExportCombat={exportCombatPdfFromRow}
             onShare={openShareModal}
             onDelete={deleteCombat}
@@ -498,6 +509,7 @@ export default function CombatListPage({
                     formatDate={formatDate}
                     onOpenCombat={openCombat}
                     onReadCombat={readCombat}
+                    onRowOpen={openFromRow}
                     onExportCombat={exportCombatPdfFromRow}
                     onShare={openShareModal}
                     onDelete={deleteCombat}

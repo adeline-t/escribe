@@ -13,15 +13,41 @@ export default function CombatRow({
   formatDate,
   onOpenCombat,
   onReadCombat,
+  onRowOpen,
   onExportCombat,
   onShare,
   onDelete,
   isExporting = false,
 }) {
   const rowClass = `row-card row-grid-3 row-card--soft ${isActive ? "is-active" : ""}`;
+  const rowLabel = `Ouvrir ${combat.name}`;
+
+  function handleRowClick() {
+    if (!onRowOpen) return;
+    onRowOpen(combat);
+  }
+
+  function handleRowKeyDown(event) {
+    if (!onRowOpen) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onRowOpen(combat);
+    }
+  }
+
+  function stopRowClick(event) {
+    event.stopPropagation();
+  }
 
   return (
-    <div className={rowClass}>
+    <div
+      className={rowClass}
+      role="button"
+      tabIndex={0}
+      aria-label={rowLabel}
+      onClick={handleRowClick}
+      onKeyDown={handleRowKeyDown}
+    >
       <div className="stack-1">
         <div className="row-top">
           <div className="meta">#{combat.id}</div>
@@ -43,7 +69,10 @@ export default function CombatRow({
           <button
             type="button"
             className="chip icon-button"
-            onClick={() => onOpenCombat(combat.id, combat.type)}
+            onClick={(event) => {
+              stopRowClick(event);
+              onOpenCombat(combat.id, combat.type);
+            }}
             aria-label="Ouvrir le combat"
             title="Ouvrir"
           >
@@ -52,7 +81,10 @@ export default function CombatRow({
           <button
             type="button"
             className="chip icon-button"
-            onClick={() => onReadCombat(combat.id)}
+            onClick={(event) => {
+              stopRowClick(event);
+              onReadCombat(combat.id);
+            }}
             aria-label="Lire le combat"
             title="Lire"
           >
@@ -61,7 +93,10 @@ export default function CombatRow({
           <button
             type="button"
             className="chip icon-button"
-            onClick={() => onExportCombat?.(combat)}
+            onClick={(event) => {
+              stopRowClick(event);
+              onExportCombat?.(combat);
+            }}
             aria-label="Exporter le combat en PDF"
             title="Exporter PDF"
             disabled={isExporting}
@@ -71,7 +106,10 @@ export default function CombatRow({
           <button
             type="button"
             className="chip icon-button"
-            onClick={() => onExportCombat?.(combat, { theme: "bw" })}
+            onClick={(event) => {
+              stopRowClick(event);
+              onExportCombat?.(combat, { theme: "bw" });
+            }}
             aria-label="Exporter le combat en PDF noir et blanc"
             title="Exporter PDF N&B"
             disabled={isExporting}
@@ -83,7 +121,10 @@ export default function CombatRow({
               <button
                 type="button"
                 className="chip icon-button"
-                onClick={() => onShare(combat)}
+                onClick={(event) => {
+                  stopRowClick(event);
+                  onShare(combat);
+                }}
                 aria-label="Partager le combat"
                 title="Partager"
               >
@@ -92,7 +133,10 @@ export default function CombatRow({
               <button
                 type="button"
                 className="icon-button button-danger"
-                onClick={() => onDelete(combat.id)}
+                onClick={(event) => {
+                  stopRowClick(event);
+                  onDelete(combat.id);
+                }}
                 aria-label="Supprimer le combat"
                 title="Supprimer"
               >

@@ -19,7 +19,398 @@ export default function CombatStepForm({
   onCancelEditStep,
   buildSummaryLine,
   showParadeNumber,
+  formVariant = "classic",
 }) {
+  const isSabre = formVariant === "sabre";
+
+  function renderAttackFields(item, index) {
+    if (item.noteOverrides || item.role !== "attack") return null;
+    if (!isSabre) {
+      return (
+        <>
+          <label>
+            {uiLabels.offensive}
+            <select
+              value={item.offensive}
+              onChange={(event) =>
+                onFormChange(index, {
+                  offensive: event.target.value,
+                })
+              }
+            >
+              <option value="">—</option>
+              {orderOptions(
+                normalizedLexicon.offensive,
+                favoriteKeys.offensive,
+              ).map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            {uiLabels.action}
+            <select
+              value={item.action}
+              onChange={(event) =>
+                onFormChange(index, { action: event.target.value })
+              }
+            >
+              <option value="">—</option>
+              {orderOptions(
+                normalizedLexicon.action,
+                favoriteKeys.action,
+              ).map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            {uiLabels.attackAttribute}
+            <div className="checkbox-row">
+              {orderOptions(
+                normalizedLexicon.attackAttribute,
+                favoriteKeys.attackAttribute,
+              ).map((option) => (
+                <label key={option.value} className="checkbox">
+                  <input
+                    type="checkbox"
+                    checked={item.attackAttribute.includes(option.value)}
+                    onChange={() =>
+                      onFormChange(index, {
+                        attackAttribute: toggleAttribute(
+                          item.attackAttribute,
+                          option.value,
+                        ),
+                      })
+                    }
+                    disabled={isReadOnly}
+                  />
+                  {option.label}
+                </label>
+              ))}
+            </div>
+          </label>
+          <label>
+            {uiLabels.target}
+            <select
+              value={item.target}
+              onChange={(event) =>
+                onFormChange(index, { target: event.target.value })
+              }
+            >
+              <option value="">—</option>
+              {orderOptions(
+                normalizedLexicon.cible,
+                favoriteKeys.target,
+              ).map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            {uiLabels.attackMove}
+            <select
+              value={item.attackMove}
+              onChange={(event) =>
+                onFormChange(index, {
+                  attackMove: event.target.value,
+                })
+              }
+            >
+              <option value="">—</option>
+              {orderOptions(
+                normalizedLexicon.attackMove,
+                favoriteKeys.attackMove,
+              ).map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </>
+      );
+    }
+
+    return (
+      <div className="form-grid">
+        <label>
+          {uiLabels.action}
+          <span className="field-hint">Préparation ou liaison</span>
+          <select
+            value={item.action}
+            onChange={(event) =>
+              onFormChange(index, { action: event.target.value })
+            }
+          >
+            <option value="">—</option>
+            {orderOptions(
+              normalizedLexicon.action,
+              favoriteKeys.action,
+            ).map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+              ))}
+          </select>
+        </label>
+        <label>
+          {uiLabels.offensive}
+          <span className="field-hint">Technique principale</span>
+          <select
+            value={item.offensive}
+            onChange={(event) =>
+              onFormChange(index, {
+                offensive: event.target.value,
+              })
+            }
+          >
+            <option value="">—</option>
+            {orderOptions(
+              normalizedLexicon.offensive,
+              favoriteKeys.offensive,
+            ).map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="col-span-2">
+          {uiLabels.attackAttribute}
+          <select
+            value={item.attackAttribute[0] ?? ""}
+            onChange={(event) =>
+              onFormChange(index, {
+                attackAttribute: event.target.value
+                  ? [event.target.value]
+                  : [],
+              })
+            }
+          >
+            <option value="">—</option>
+            {orderOptions(
+              normalizedLexicon.attackAttribute,
+              favoriteKeys.attackAttribute,
+            ).map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          {uiLabels.target}
+          <select
+            value={item.target}
+            onChange={(event) =>
+              onFormChange(index, { target: event.target.value })
+            }
+          >
+            <option value="">—</option>
+            {orderOptions(
+              normalizedLexicon.cible,
+              favoriteKeys.target,
+            ).map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          {uiLabels.attackMove}
+          <select
+            value={item.attackMove}
+            onChange={(event) =>
+              onFormChange(index, {
+                attackMove: event.target.value,
+              })
+            }
+          >
+            <option value="">—</option>
+            {orderOptions(
+              normalizedLexicon.attackMove,
+              favoriteKeys.attackMove,
+            ).map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+    );
+  }
+
+  function renderDefenseFields(item, index) {
+    if (item.noteOverrides || item.role !== "defense") return null;
+    if (!isSabre) {
+      return (
+        <>
+          <label>
+            {uiLabels.defensive}
+            <select
+              value={item.defense}
+              onChange={(event) =>
+                onFormChange(index, { defense: event.target.value })
+              }
+            >
+              <option value="">—</option>
+              {orderOptions(
+                normalizedLexicon.defensive,
+                favoriteKeys.defensive,
+              ).map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {showParadeNumber ? (
+            <label>
+              {uiLabels.paradeNumber}
+              <select
+                value={item.paradeNumber}
+                onChange={(event) =>
+                  onFormChange(index, {
+                    paradeNumber: event.target.value,
+                  })
+                }
+              >
+                <option value="">—</option>
+                {orderOptions(
+                  normalizedLexicon.paradeNumber,
+                  favoriteKeys.paradeNumber,
+                ).map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          <label>
+            {uiLabels.paradeAttribute}
+            <select
+              value={item.paradeAttribute}
+              onChange={(event) =>
+                onFormChange(index, {
+                  paradeAttribute: event.target.value,
+                })
+              }
+            >
+              <option value="">—</option>
+              {orderOptions(
+                normalizedLexicon.paradeAttribute,
+                favoriteKeys.paradeAttribute,
+              ).map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            {uiLabels.defendMove}
+            <select
+              value={item.defendMove}
+              onChange={(event) =>
+                onFormChange(index, {
+                  defendMove: event.target.value,
+                })
+              }
+            >
+              <option value="">—</option>
+              {orderOptions(
+                normalizedLexicon.defendMove,
+                favoriteKeys.defendMove,
+              ).map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </>
+      );
+    }
+
+    return (
+      <div className="form-grid">
+        <label>
+          {uiLabels.defensive}
+          <span className="field-hint">Protection ou esquive</span>
+          <select
+            value={item.defense}
+            onChange={(event) =>
+              onFormChange(index, { defense: event.target.value })
+            }
+          >
+            <option value="">—</option>
+            {orderOptions(
+              normalizedLexicon.defensive,
+              favoriteKeys.defensive,
+            ).map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          {uiLabels.paradeAttribute}
+          <span className="field-hint field-hint--spacer">.</span>
+          <select
+            value={item.paradeAttribute}
+            onChange={(event) =>
+              onFormChange(index, {
+                paradeAttribute: event.target.value,
+              })
+            }
+          >
+            <option value="">—</option>
+            {orderOptions(
+              normalizedLexicon.paradeAttribute,
+              favoriteKeys.paradeAttribute,
+            ).map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          {uiLabels.defendMove}
+          <select
+            value={item.defendMove}
+            onChange={(event) =>
+              onFormChange(index, {
+                defendMove: event.target.value,
+              })
+            }
+          >
+            <option value="">—</option>
+            {orderOptions(
+              normalizedLexicon.defendMove,
+              favoriteKeys.defendMove,
+            ).map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="summary">
@@ -151,206 +542,8 @@ export default function CombatStepForm({
                     />
                     La note remplace la formulation
                   </label>
-                  {!item.noteOverrides && item.role === "attack" ? (
-                    <>
-                      <label>
-                        {uiLabels.offensive}
-                        <select
-                          value={item.offensive}
-                          onChange={(event) =>
-                            onFormChange(index, {
-                              offensive: event.target.value,
-                            })
-                          }
-                        >
-                          <option value="">—</option>
-                          {orderOptions(
-                            normalizedLexicon.offensive,
-                            favoriteKeys.offensive,
-                          ).map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label>
-                        {uiLabels.action}
-                        <select
-                          value={item.action}
-                          onChange={(event) =>
-                            onFormChange(index, { action: event.target.value })
-                          }
-                        >
-                          <option value="">—</option>
-                          {orderOptions(
-                            normalizedLexicon.action,
-                            favoriteKeys.action,
-                          ).map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label>
-                        {uiLabels.attackAttribute}
-                        <div className="checkbox-row">
-                          {orderOptions(
-                            normalizedLexicon.attackAttribute,
-                            favoriteKeys.attackAttribute,
-                          ).map((option) => (
-                            <label key={option.value} className="checkbox">
-                              <input
-                                type="checkbox"
-                                checked={item.attackAttribute.includes(
-                                  option.value,
-                                )}
-                                onChange={() =>
-                                  onFormChange(index, {
-                                    attackAttribute: toggleAttribute(
-                                      item.attackAttribute,
-                                      option.value,
-                                    ),
-                                  })
-                                }
-                                disabled={isReadOnly}
-                              />
-                              {option.label}
-                            </label>
-                          ))}
-                        </div>
-                      </label>
-                      <label>
-                        {uiLabels.target}
-                        <select
-                          value={item.target}
-                          onChange={(event) =>
-                            onFormChange(index, { target: event.target.value })
-                          }
-                        >
-                          <option value="">—</option>
-                          {orderOptions(
-                            normalizedLexicon.cible,
-                            favoriteKeys.target,
-                          ).map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label>
-                        {uiLabels.attackMove}
-                        <select
-                          value={item.attackMove}
-                          onChange={(event) =>
-                            onFormChange(index, {
-                              attackMove: event.target.value,
-                            })
-                          }
-                        >
-                          <option value="">—</option>
-                          {orderOptions(
-                            normalizedLexicon.attackMove,
-                            favoriteKeys.attackMove,
-                          ).map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                    </>
-                  ) : null}
-                  {!item.noteOverrides && item.role === "defense" ? (
-                    <>
-                      <label>
-                        {uiLabels.defensive}
-                        <select
-                          value={item.defense}
-                          onChange={(event) =>
-                            onFormChange(index, { defense: event.target.value })
-                          }
-                        >
-                          <option value="">—</option>
-                          {orderOptions(
-                            normalizedLexicon.defensive,
-                            favoriteKeys.defensive,
-                          ).map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      {showParadeNumber ? (
-                        <label>
-                          {uiLabels.paradeNumber}
-                          <select
-                            value={item.paradeNumber}
-                            onChange={(event) =>
-                              onFormChange(index, {
-                                paradeNumber: event.target.value,
-                              })
-                            }
-                          >
-                            <option value="">—</option>
-                            {orderOptions(
-                              normalizedLexicon.paradeNumber,
-                              favoriteKeys.paradeNumber,
-                            ).map((option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                      ) : null}
-                      <label>
-                        {uiLabels.paradeAttribute}
-                        <select
-                          value={item.paradeAttribute}
-                          onChange={(event) =>
-                            onFormChange(index, {
-                              paradeAttribute: event.target.value,
-                            })
-                          }
-                        >
-                          <option value="">—</option>
-                          {orderOptions(
-                            normalizedLexicon.paradeAttribute,
-                            favoriteKeys.paradeAttribute,
-                          ).map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label>
-                        {uiLabels.defendMove}
-                        <select
-                          value={item.defendMove}
-                          onChange={(event) =>
-                            onFormChange(index, {
-                              defendMove: event.target.value,
-                            })
-                          }
-                        >
-                          <option value="">—</option>
-                          {orderOptions(
-                            normalizedLexicon.defendMove,
-                            favoriteKeys.defendMove,
-                          ).map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                    </>
-                  ) : null}
+                  {renderAttackFields(item, index)}
+                  {renderDefenseFields(item, index)}
                 </div>
               ) : null}
 
@@ -358,6 +551,11 @@ export default function CombatStepForm({
                 <div className="participant-fields">
                   <label>
                     Phase de chorégraphie
+                    {isSabre ? (
+                      <span className="field-hint">
+                        Mouvement scénique ou intention
+                      </span>
+                    ) : null}
                     <select
                       value={item.chorePhase}
                       onChange={(event) =>
