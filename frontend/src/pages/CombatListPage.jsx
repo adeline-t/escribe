@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { FaTrash, FaShareNodes } from "react-icons/fa6";
+import CombatRow from "../components/combat/CombatRow.jsx";
+import CombatShareModal from "../components/combat/CombatShareModal.jsx";
 
 export default function CombatListPage({
   apiBase,
@@ -272,151 +273,26 @@ export default function CombatListPage({
 
   // ==================== RENDER HELPERS ====================
 
-  function CombatRow({ combat, layout = "grouped" }) {
-    const isActive = combat.id === combatId;
-
-    if (layout === "simple") {
-      return (
-        <div className={`combat-row ${isActive ? "is-active" : ""}`}>
-          <div className="combat-details">
-            <div className="combat-details__top">
-              <div className="combat-details__id">#{combat.id}</div>
-              <div className="combat-details__name">{combat.name}</div>
-              <div className="combat-details__meta">
-                {combat.participantsCount} combattant
-                {combat.participantsCount > 1 ? "s" : ""}
-              </div>
-            </div>
-            <div className="combat-details">
-              <div className="combat-details__date">
-                {formatDate(combat.createdAt)}
-              </div>
-              <div className="combat-details__meta">
-                {combat.phraseCount} phrase
-                {combat.phraseCount > 1 ? "s" : ""}
-              </div>
-            </div>
-            <div className="combat-details">
-              <div className="combat-details__actions">
-                <button
-                  type="button"
-                  className="chip"
-                  onClick={() => openCombat(combat.id, combat.type)}
-                >
-                  Ouvrir
-                </button>
-                <button
-                  type="button"
-                  className="chip"
-                  onClick={() => readCombat(combat.id)}
-                >
-                  Lire
-                </button>
-                {combat.isOwner ? (
-                  <>
-                    <button
-                      type="button"
-                      className="chip icon-button"
-                      onClick={() => openShareModal(combat)}
-                      aria-label="Partager le combat"
-                      title="Partager"
-                    >
-                      <FaShareNodes />
-                    </button>
-                    <button
-                      type="button"
-                      className="chip chip--danger icon-button"
-                      onClick={() => deleteCombat(combat.id)}
-                      aria-label="Supprimer le combat"
-                      title="Supprimer"
-                    >
-                      <FaTrash />
-                    </button>
-                  </>
-                ) : null}
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className={`combat-row ${isActive ? "is-active" : ""}`}>
-        <div className="combat-details">
-          <div className="combat-details__top">
-            <div className="combat-details__id">#{combat.id}</div>
-            <div className="combat-details__name">{combat.name}</div>
-            <div className="combat-details__meta">
-              {combat.participantsCount} combattant
-              {combat.participantsCount > 1 ? "s" : ""}
-            </div>
-          </div>
-        </div>
-        <div className="combat-details">
-          <div className="combat-details__date">
-            {formatDate(combat.createdAt)}
-          </div>
-          <div className="combat-details__meta">
-            {combat.phraseCount} phrase
-            {combat.phraseCount > 1 ? "s" : ""}
-          </div>
-        </div>
-        <div className="combat-details">
-          <div className="combat-details__actions">
-            <button
-              type="button"
-              className="chip"
-              onClick={() => openCombat(combat.id, combat.type)}
-            >
-              Ouvrir
-            </button>
-            <button
-              type="button"
-              className="chip"
-              onClick={() => readCombat(combat.id)}
-            >
-              Lire
-            </button>
-            {combat.isOwner ? (
-              <>
-                <button
-                  type="button"
-                  className="chip icon-button"
-                  onClick={() => openShareModal(combat)}
-                  aria-label="Partager le combat"
-                  title="Partager"
-                >
-                  <FaShareNodes />
-                </button>
-                <button
-                  type="button"
-                  className="chip chip--danger icon-button"
-                  onClick={() => deleteCombat(combat.id)}
-                  aria-label="Supprimer le combat"
-                  title="Supprimer"
-                >
-                  <FaTrash />
-                </button>
-              </>
-            ) : null}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   function CombatSection({ title, combats }) {
     return (
       <>
-        <div className="lexicon-section">
-          <div className="lexicon-title">{title}</div>
-          <div className="lexicon-subtitle">
+        <div className="section-card">
+          <div className="text-bold text-lg">{title}</div>
+          <div className="meta">
             {combats.length} combat{combats.length > 1 ? "s" : ""}
           </div>
         </div>
         {combats.map((combat) => (
-          <CombatRow key={combat.id} combat={combat} layout="grouped" />
+          <CombatRow
+            key={combat.id}
+            combat={combat}
+            isActive={combat.id === combatId}
+            formatDate={formatDate}
+            onOpenCombat={openCombat}
+            onReadCombat={readCombat}
+            onShare={openShareModal}
+            onDelete={deleteCombat}
+          />
         ))}
       </>
     );
@@ -431,8 +307,8 @@ export default function CombatListPage({
     <section className="panel">
       <div className="panel-header">
         <div>
-          <h2>{title}</h2>
-          <p className="muted">{subtitle}</p>
+          <h2 className="title">{title}</h2>
+          <p className="meta text-muted">{subtitle}</p>
         </div>
         {!accessDenied && (
           <button
@@ -448,9 +324,9 @@ export default function CombatListPage({
       </div>
 
       {accessDenied ? (
-        <div className="lexicon-empty">
-          <div className="lexicon-empty__title">Accès indisponible.</div>
-          <div className="lexicon-empty__subtitle">
+        <div className="empty">
+          <div className="text-strong">Accès indisponible.</div>
+          <div className="text-sm text-muted">
             Vous n'avez pas les droits pour voir les combats.
           </div>
         </div>
@@ -469,8 +345,8 @@ export default function CombatListPage({
                 aria-label="Créer un combat"
                 onClick={(event) => event.stopPropagation()}
               >
-                <h3>Créer un combat</h3>
-                <p className="muted">
+                <h3 className="subtitle">Créer un combat</h3>
+                <p className="meta text-muted">
                   Saisis un nom pour démarrer le combat
                   {combatType ? ` (${creationTypeLabel})` : ""}.
                 </p>
@@ -513,7 +389,9 @@ export default function CombatListPage({
                     placeholder="Notes, contexte, etc."
                   />
                 </label>
-                {status && <div className="lexicon-error">{status}</div>}
+                {status && (
+                  <div className="banner banner--error text-sm">{status}</div>
+                )}
                 <div className="modal-actions">
                   <button
                     type="button"
@@ -530,10 +408,10 @@ export default function CombatListPage({
             </div>
           )}
 
-          <div className="panel" style={{ marginTop: "20px" }}>
-            <div className="lexicon-header">
+          <div className="panel mt-6">
+            <div className="row-between">
               <div></div>
-              <div className="lexicon-actions">
+              <div className="row-actions">
                 <input
                   value={search}
                   placeholder="Rechercher un combat..."
@@ -551,7 +429,7 @@ export default function CombatListPage({
               </div>
             </div>
 
-            <div className="lexicon-table">
+            <div className="stack-2">
               {!combatType ? (
                 <>
                   <CombatSection
@@ -565,13 +443,22 @@ export default function CombatListPage({
                 </>
               ) : (
                 filteredCombats.map((combat) => (
-                  <CombatRow key={combat.id} combat={combat} layout="simple" />
+                  <CombatRow
+                    key={combat.id}
+                    combat={combat}
+                    isActive={combat.id === combatId}
+                    formatDate={formatDate}
+                    onOpenCombat={openCombat}
+                    onReadCombat={readCombat}
+                    onShare={openShareModal}
+                    onDelete={deleteCombat}
+                  />
                 ))
               )}
               {filteredCombats.length === 0 && (
-                <div className="lexicon-empty">
-                  <div className="lexicon-empty__title">Aucun combat.</div>
-                  <div className="lexicon-empty__subtitle">
+                <div className="empty">
+                  <div className="text-strong">Aucun combat.</div>
+                  <div className="text-sm text-muted">
                     Crée un combat pour commencer.
                   </div>
                 </div>
@@ -580,136 +467,24 @@ export default function CombatListPage({
           </div>
         </>
       )}
-      {shareCombat ? (
-        <div
-          className="modal-backdrop"
-          role="presentation"
-          onClick={() => setShareCombat(null)}
-        >
-          <div
-            className="modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Partager le combat"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <h3>Partager le combat</h3>
-            <p className="muted">{shareCombat.name}</p>
-            {shareLoading ? <div className="muted">Chargement...</div> : null}
-            {shareError ? (
-              <div className="lexicon-error">{shareError}</div>
-            ) : null}
-
-            <div className="share-section">
-              <div className="lexicon-title">Partagé avec</div>
-              <div className="share-list">
-                {shareList.map((item) => (
-                  <div key={item.user_id} className="share-row">
-                    <div>
-                      <div className="share-name">
-                        {item.first_name || item.last_name
-                          ? `${item.first_name || ""} ${item.last_name || ""}`.trim()
-                          : item.email}
-                      </div>
-                      <div className="muted">
-                        {item.email} ·{" "}
-                        {item.role === "write"
-                          ? "Lecture + écriture"
-                          : "Lecture seule"}
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      className="chip chip--danger"
-                      onClick={() => removeShare(item.user_id)}
-                    >
-                      Retirer
-                    </button>
-                  </div>
-                ))}
-                {shareList.length === 0 && !shareLoading ? (
-                  <div className="muted">Aucun partage.</div>
-                ) : null}
-              </div>
-            </div>
-
-            <div className="share-section">
-              <div className="lexicon-title">Ajouter un partage</div>
-              <label>
-                Droits
-                <select
-                  value={shareRole}
-                  onChange={(event) => setShareRole(event.target.value)}
-                >
-                  <option value="read">Lecture seule</option>
-                  <option value="write">Lecture + écriture</option>
-                </select>
-              </label>
-              <label>
-                Utilisateur
-                <select
-                  value={shareSelectedUser}
-                  onChange={(event) => setShareSelectedUser(event.target.value)}
-                >
-                  <option value="">Choisir un utilisateur</option>
-                  {shareAllUsers
-                    .filter(
-                      (user) =>
-                        !shareList.some((item) => item.user_id === user.id),
-                    )
-                    .map((user) => (
-                      <option key={user.id} value={user.id}>
-                        {user.first_name || user.last_name
-                          ? `${user.first_name || ""} ${user.last_name || ""}`.trim()
-                          : user.email}
-                      </option>
-                    ))}
-                </select>
-              </label>
-              <button
-                type="button"
-                className="chip"
-                onClick={() => addShare(Number(shareSelectedUser))}
-                disabled={!shareSelectedUser}
-              >
-                Ajouter l'utilisateur
-              </button>
-              <input
-                value={shareQuery}
-                onChange={(event) => setShareQuery(event.target.value)}
-                placeholder="Rechercher un utilisateur..."
-              />
-              <div className="share-users">
-                {shareUsers.map((user) => (
-                  <button
-                    key={user.id}
-                    type="button"
-                    className="chip"
-                    onClick={() => addShare(user.id)}
-                  >
-                    {user.first_name || user.last_name
-                      ? `${user.first_name || ""} ${user.last_name || ""}`.trim()
-                      : user.email}
-                  </button>
-                ))}
-                {shareQuery && shareUsers.length === 0 ? (
-                  <div className="muted">Aucun utilisateur.</div>
-                ) : null}
-              </div>
-            </div>
-
-            <div className="modal-actions">
-              <button
-                type="button"
-                className="chip"
-                onClick={() => setShareCombat(null)}
-              >
-                Fermer
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <CombatShareModal
+        combat={shareCombat}
+        shareLoading={shareLoading}
+        shareError={shareError}
+        shareList={shareList}
+        shareRole={shareRole}
+        shareSelectedUser={shareSelectedUser}
+        shareAllUsers={shareAllUsers}
+        shareQuery={shareQuery}
+        shareUsers={shareUsers}
+        onClose={() => setShareCombat(null)}
+        onRemoveShare={removeShare}
+        onRoleChange={setShareRole}
+        onSelectedUserChange={setShareSelectedUser}
+        onAddShare={(userId) => addShare(userId)}
+        onQueryChange={setShareQuery}
+        onQuickAddShare={addShare}
+      />
     </section>
   );
 }

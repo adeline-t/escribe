@@ -48,7 +48,7 @@ export function labelForParticipant(participant, index) {
 export function emptyParticipantState() {
   return {
     mode: "combat",
-    role: "none",
+    role: "attack",
     offensive: "",
     action: "",
     target: "",
@@ -164,7 +164,7 @@ function buildChoregraphieSummary(item, { includeNoteWhenEmpty }) {
 function buildAttackSummary(item) {
   const actionBits = [
     item.action,
-    item.attackAttribute?.length ? item.attackAttribute.join(", ") : ""
+    item.attackAttribute?.length ? item.attackAttribute.join(", ") : "",
   ]
     .filter(Boolean)
     .join(" ");

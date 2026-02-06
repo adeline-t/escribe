@@ -56,24 +56,24 @@ export default function ProfilePage({ apiBase, authToken, authUser, setAuthUser,
   }
 
   return (
-    <section className="panel">
+    <section className="panel stack-3">
       <div className="panel-header">
         <div>
-          <h2>Gestion de mon compte</h2>
-          <p className="muted">Gérez vos informations et votre sécurité.</p>
+          <h2 className="title">Gestion de mon compte</h2>
+          <p className="meta text-muted">Gérez vos informations et votre sécurité.</p>
         </div>
         <button type="button" className="chip chip--ghost" onClick={onLogout}>
           Déconnexion
         </button>
       </div>
 
-      <div className="panel" style={{ marginBottom: "20px" }}>
-        <h3>Informations</h3>
-        <div className="muted">Rôle: {authUser.role}</div>
-        <div className="muted">Email: {authUser.email}</div>
+      <div className="card stack-2">
+        <h3 className="subtitle">Informations</h3>
+        <div className="meta text-muted">Rôle: {authUser.role}</div>
+        <div className="meta text-muted">Email: {authUser.email}</div>
       </div>
 
-      <form className="profile-form" onSubmit={saveProfile}>
+      <form className="card stack-2" onSubmit={saveProfile}>
         <label>
           Prénom
           <input name="firstName" defaultValue={authUser.firstName || ""} />
@@ -87,14 +87,20 @@ export default function ProfilePage({ apiBase, authToken, authUser, setAuthUser,
           <input name="email" defaultValue={authUser.email} disabled />
         </label>
         <button type="submit">Enregistrer</button>
-        {profileStatus ? <div className="success-banner">{profileStatus}</div> : null}
-        {profileError ? <div className="error-banner">{profileError}</div> : null}
+        {profileStatus ? (
+          <div className="banner banner--success">{profileStatus}</div>
+        ) : null}
+        {profileError ? (
+          <div className="banner banner--error">{profileError}</div>
+        ) : null}
       </form>
 
-      <form className="profile-form" onSubmit={changePassword}>
-        <h3>Mot de passe</h3>
+      <form className="card stack-2" onSubmit={changePassword}>
+        <h3 className="subtitle">Mot de passe</h3>
         {authUser.forceReset ? (
-          <div className="lexicon-error">Vous devez définir un nouveau mot de passe.</div>
+          <div className="banner banner--error text-sm">
+            Vous devez définir un nouveau mot de passe.
+          </div>
         ) : (
           <label>
             Mot de passe actuel
@@ -106,8 +112,12 @@ export default function ProfilePage({ apiBase, authToken, authUser, setAuthUser,
           <input name="newPassword" type="password" required minLength={12} />
         </label>
         <button type="submit">Changer le mot de passe</button>
-        {passwordStatus ? <div className="success-banner">{passwordStatus}</div> : null}
-        {passwordError ? <div className="error-banner">{passwordError}</div> : null}
+        {passwordStatus ? (
+          <div className="banner banner--success">{passwordStatus}</div>
+        ) : null}
+        {passwordError ? (
+          <div className="banner banner--error">{passwordError}</div>
+        ) : null}
       </form>
 
     </section>

@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { FaEye, FaEyeSlash } from "react-icons/fa6";
+import { useEffect, useMemo, useState } from "react";
+import { FaArrowRotateLeft, FaEye, FaEyeSlash } from "react-icons/fa6";
 
 function AuditPanel({ apiBase, authToken }) {
   const [logs, setLogs] = useState([]);
@@ -37,26 +37,28 @@ function AuditPanel({ apiBase, authToken }) {
   return (
     <div className="audit-panel">
       <div className="panel-header">
-        <h3>Journal d'audit</h3>
-        <span className="muted">
+        <h3 className="subtitle">Journal d'audit</h3>
+        <span className="meta text-muted">
           {loading ? "Chargement..." : `${logs.length} événements`}
         </span>
       </div>
-      {error ? <div className="lexicon-error">{error}</div> : null}
+      {error ? (
+        <div className="banner banner--error text-sm">{error}</div>
+      ) : null}
       <div className="audit-table">
         {logs.map((log) => (
           <div key={log.id} className="audit-row">
-            <div className="audit-action">{log.action}</div>
-            <div className="audit-meta">
+            <div className="text-strong">{log.action}</div>
+            <div className="meta">
               {log.actor_email || log.actor_id || "system"}
             </div>
-            <div className="audit-time">
+            <div className="meta">
               {new Date(log.created_at).toLocaleString("fr-FR")}
             </div>
           </div>
         ))}
         {logs.length === 0 && !loading ? (
-          <div className="muted">Aucun événement.</div>
+          <div className="meta text-muted">Aucun événement.</div>
         ) : null}
       </div>
     </div>
@@ -76,6 +78,8 @@ export default function UsersPage({ apiBase, authToken }) {
   const [resetError, setResetError] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
+  const [query, setQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
 
   function authFetch(path, options = {}) {
     const headers = { ...(options.headers || {}) };
@@ -167,17 +171,113 @@ export default function UsersPage({ apiBase, authToken }) {
     setShowResetPassword(false);
   }
 
+  const normalizedQuery = useMemo(() => {
+    const text = query.trim();
+    if (!text) return "";
+    return text
+      .normalize("NFD")
+      .replace(/\p{Diacritic}/gu, "")
+      .toLowerCase();
+  }, [query]);
+
+  const filteredUsers = useMemo(() => {
+    const matchesQuery = (value) => {
+      if (!normalizedQuery) return true;
+      return value
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "")
+        .toLowerCase()
+        .includes(normalizedQuery);
+    };
+
+    const matchesRole = (role) => {
+      if (roleFilter === "all") return true;
+      if (roleFilter === "admins")
+        return role === "admin" || role === "superadmin";
+      return role === roleFilter;
+    };
+
+    return users.filter((user) => {
+      if (!matchesRole(user.role)) return false;
+      if (!normalizedQuery) return true;
+
+      const firstName = user.first_name || "";
+      const lastName = user.last_name || "";
+      const email = user.email || "";
+      const fullName = `${firstName} ${lastName}`.trim();
+
+      return matchesQuery(fullName) || matchesQuery(email);
+    });
+  }, [users, normalizedQuery, roleFilter]);
+
+  function resetFilters() {
+    setQuery("");
+    setRoleFilter("all");
+  }
+
   return (
     <section className="panel">
       <div className="panel-header">
-        <h2>Utilisateurs</h2>
-        <span className="muted">
-          {loading ? "Chargement..." : `${users.length} comptes`}
+        <h2 className="title">Utilisateurs</h2>
+        <span className="meta text-muted">
+          {loading
+            ? "Chargement..."
+            : `${filteredUsers.length} / ${users.length} comptes`}
         </span>
       </div>
-      {error ? <div className="lexicon-error">{error}</div> : null}
+      {error ? (
+        <div className="banner banner--error text-sm">{error}</div>
+      ) : null}
+      <div className="row-between">
+        <div className="row-actions row-actions--end">
+          <input
+            value={query}
+            placeholder="Cherche un utilisateur..."
+            onChange={(event) => setQuery(event.target.value)}
+          />
+          <div className="segmented segmented--ghost segmented--compact">
+            <button
+              type="button"
+              className={`segmented-button ${roleFilter === "all" ? "is-active" : ""}`}
+              onClick={() => setRoleFilter("all")}
+            >
+              Tous
+            </button>
+            <button
+              type="button"
+              className={`segmented-button ${roleFilter === "admin" ? "is-active" : ""}`}
+              onClick={() => setRoleFilter("admin")}
+            >
+              Admin
+            </button>
+            <button
+              type="button"
+              className={`segmented-button ${roleFilter === "superadmin" ? "is-active" : ""}`}
+              onClick={() => setRoleFilter("superadmin")}
+            >
+              Super
+            </button>
+            <button
+              type="button"
+              className={`segmented-button ${roleFilter === "user" ? "is-active" : ""}`}
+              onClick={() => setRoleFilter("user")}
+            >
+              Util.
+            </button>
+          </div>
+          <button
+            type="button"
+            className="chip icon-button"
+            onClick={resetFilters}
+            aria-label="Réinitialiser les filtres"
+            title="Réinitialiser les filtres"
+          >
+            <FaArrowRotateLeft />
+          </button>
+        </div>
+      </div>
       <div className="users-table">
-        {users.map((user) => (
+        {filteredUsers.map((user) => (
           <div key={user.id} className="users-row">
             <div className="users-row-group">
               <div className="kicker">#{user.id}</div>
@@ -186,7 +286,7 @@ export default function UsersPage({ apiBase, authToken }) {
                   ? `${user.first_name || ""} ${user.last_name || ""}`.trim()
                   : user.email}
               </div>
-              <div className="muted">{user.email}</div>
+              <div className="meta text-muted">{user.email}</div>
             </div>
             <div className="users-row-inline">
               <div className="users-role">
@@ -204,7 +304,7 @@ export default function UsersPage({ apiBase, authToken }) {
                   <option value="superadmin">Superadmin</option>
                 </select>
                 {roleStatus[user.id] ? (
-                  <div className="muted">{roleStatus[user.id]}</div>
+                  <div className="meta text-muted">{roleStatus[user.id]}</div>
                 ) : null}
               </div>
               <button
@@ -242,8 +342,8 @@ export default function UsersPage({ apiBase, authToken }) {
             </div>
           </div>
         ))}
-        {users.length === 0 && !loading ? (
-          <div className="muted">Aucun utilisateur.</div>
+        {filteredUsers.length === 0 && !loading ? (
+          <div className="meta text-muted">Aucun utilisateur.</div>
         ) : null}
       </div>
       <AuditPanel apiBase={apiBase} authToken={authToken} />
@@ -261,8 +361,8 @@ export default function UsersPage({ apiBase, authToken }) {
             aria-label="Réinitialiser le mot de passe"
             onClick={(event) => event.stopPropagation()}
           >
-            <h3>Réinitialiser le mot de passe</h3>
-            <p className="muted">{resetUser.email}</p>
+            <h3 className="subtitle">Réinitialiser le mot de passe</h3>
+            <p className="meta text-muted">{resetUser.email}</p>
             <label>
               Nouveau mot de passe
               <div className="password-input">
@@ -311,7 +411,7 @@ export default function UsersPage({ apiBase, authToken }) {
               Forcer le changement à la prochaine connexion
             </label>
             {resetError ? (
-              <div className="lexicon-error">{resetError}</div>
+              <div className="banner banner--error text-sm">{resetError}</div>
             ) : null}
             <div className="modal-actions">
               <button

@@ -1,0 +1,55 @@
+:root {
+  /* Surfaces */
+  --surface-base: #f7f2ea;
+  --surface-white: #ffffff;
+  --surface-cream-1: #fffaf3;
+  --surface-cream-2: #f4eadb;
+  --surface-cream-3: #f0e6d9;
+  --surface-cream-4: #efe2d3;
+  --surface-cream-5: #faf3e8;
+  --surface-cream-6: #f7efe6;
+  /* Borders */
+  --border-cream-1: #eadfce;
+  --border-cream-2: #e2d7c6;
+  --border-cream-3: #c5b59f;
+  /* Text */
+  --text-primary: #1c1a17;
+  --text-muted: #887f75;
+  --text-strong: #5b4b36;
+  --text-accent: #7a3d2f;
+  --text-inverse: #ffffff;
+  /* Accents */
+  --accent-attack: #f29b38;
+  --accent-attack-soft: #fff1dc;
+  --accent-defense: #3b7fb6;
+  --accent-defense-soft: #e6f0fb;
+  --accent-move: #3c9c74;
+  --accent-target-soft: #f8dcda;
+  --accent-target: #e2574c;
+  /* Shadows */
+  --shadow-1: 0 6px 14px rgba(32, 24, 12, 0.12);
+  --shadow-2: 0 8px 16px rgba(28, 22, 15, 0.12);
+  --shadow-3: 0 12px 24px rgba(32, 24, 12, 0.12);
+  --shadow-4: 0 24px 60px rgba(24, 18, 8, 0.2);
+  /* Spacing */
+  --space-0: 2px;
+  --space-1: 4px;
+  --space-2: 6px;
+  --space-3: 8px;
+  --space-4: 12px;
+  --space-5: 16px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 48px;
+  /* Controls */
+  --control-height-small: 30px;
+  --button-height: 36px;
+  --control-height: 40px;
+  /* Radii */
+  --radius-1: 6px;
+  --radius-2: 10px;
+  --radius-3: 14px;
+  --radius-4: 18px;
+  --radius-5: 24px;
+  --radius-pill: 999px;
+}

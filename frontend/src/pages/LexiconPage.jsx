@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { LEXICON_TYPES, SABRE_LEXICON_TYPES } from "../lib/lexicon.js";
+import ConfirmDeleteModal from "../components/modals/ConfirmDeleteModal.jsx";
 
 export default function LexiconPage({
   apiBase,
@@ -29,6 +30,7 @@ export default function LexiconPage({
   const [view, setView] = useState("all");
   const [error, setError] = useState("");
   const [localFavorites, setLocalFavorites] = useState({});
+  const [pendingDelete, setPendingDelete] = useState(null);
 
   const activeLabel = useMemo(
     () => lexiconTypes.find((type) => type.key === activeType)?.label ?? "",
@@ -46,7 +48,7 @@ export default function LexiconPage({
   const canEditGlobal =
     authUser && ["admin", "superadmin"].includes(authUser.role);
   const isGlobalScope = scope === "global";
-  const canEdit = isGlobalScope ? canEditGlobal : true;
+  const canEdit = isGlobalScope ? canEditGlobal : scope === "personal";
   const favoritesSource =
     lexiconKey === "classic" ? favorites : (sabreFavorites ?? localFavorites);
   const favoriteSet = useMemo(
@@ -59,13 +61,35 @@ export default function LexiconPage({
     setLoading(true);
     setError("");
     try {
-      const path =
-        scope === "personal"
-          ? `/api/lexicon/personal/${activeType}?lexicon=${lexiconKey}`
-          : `/api/lexicon/${activeType}?lexicon=${lexiconKey}`;
-      const response = await authFetch(path, { signal });
-      const payload = await response.json().catch(() => ({}));
-      setItems(payload.items ?? []);
+      if (scope === "all") {
+        const [globalResponse, personalResponse] = await Promise.all([
+          authFetch(`/api/lexicon/${activeType}?lexicon=${lexiconKey}`, {
+            signal,
+          }),
+          authFetch(
+            `/api/lexicon/personal/${activeType}?lexicon=${lexiconKey}`,
+            { signal },
+          ),
+        ]);
+        const globalPayload = await globalResponse.json().catch(() => ({}));
+        const personalPayload = await personalResponse.json().catch(() => ({}));
+        const merged = new Map();
+        (personalPayload.items ?? []).forEach((item) => {
+          merged.set(item.label, item);
+        });
+        (globalPayload.items ?? []).forEach((item) => {
+          if (!merged.has(item.label)) merged.set(item.label, item);
+        });
+        setItems(Array.from(merged.values()));
+      } else {
+        const path =
+          scope === "personal"
+            ? `/api/lexicon/personal/${activeType}?lexicon=${lexiconKey}`
+            : `/api/lexicon/${activeType}?lexicon=${lexiconKey}`;
+        const response = await authFetch(path, { signal });
+        const payload = await response.json().catch(() => ({}));
+        setItems(payload.items ?? []);
+      }
     } catch (error) {
       if (error?.name !== "AbortError") {
         console.warn("Lexicon load failed:", error);
@@ -224,161 +248,187 @@ export default function LexiconPage({
     <section className="panel">
       <div className="panel-header">
         <div>
-          <h2>Atelier de lexique</h2>
-          <p className="muted">
+          <h2 className="title">Atelier de lexique</h2>
+          <p className="meta text-muted">
             Organise et enrichis les catégories en un clic.
           </p>
         </div>
-        <span className="muted">
+        <span className="meta text-muted">
           {loading ? "Chargement..." : "Données en base D1"}
         </span>
       </div>
 
-      <div className="lexicon-layout">
-        <aside className="lexicon-sidebar">
-          <div className="lexicon-sidebar__title">Lexique</div>
-          <div className="lexicon-switch">
-            <div className="segmented">
-              <button
-                type="button"
-                className={`segmented__item ${lexiconKey === "classic" ? "is-active" : ""}`}
-                onClick={() => setLexiconKey("classic")}
-              >
-                Escrime
-              </button>
-              <button
-                type="button"
-                className={`segmented__item ${lexiconKey === "sabre-laser" ? "is-active" : ""}`}
-                onClick={() => setLexiconKey("sabre-laser")}
-              >
-                Sabre laser
-              </button>
+      <div className="card stack-3">
+        <div className="stack-3 mb-2">
+          <div className="kicker">Base lexicale</div>
+          <div className="segmented segmented--outline segmented--compact">
+            <button
+              type="button"
+              className={`segmented-button ${lexiconKey === "classic" ? "is-active" : ""}`}
+              onClick={() => setLexiconKey("classic")}
+            >
+              Escrime
+            </button>
+            <button
+              type="button"
+              className={`segmented-button ${lexiconKey === "sabre-laser" ? "is-active" : ""}`}
+              onClick={() => setLexiconKey("sabre-laser")}
+            >
+              Sabre laser
+            </button>
+          </div>
+        </div>
+        <div className="split-layout">
+          <aside className="card sidebar-sticky">
+            <div className="kicker">Catégories</div>
+            <div className="stack-2">
+              {lexiconTypes.map((type) => (
+                <button
+                  key={type.key}
+                  type="button"
+                  className={`tab-button ${activeType === type.key ? "is-active" : ""}`}
+                  onClick={() => setActiveType(type.key)}
+                >
+                  <span>{type.label}</span>
+                  <span className="meta">
+                    {type.key === activeType ? items.length : ""}
+                  </span>
+                </button>
+              ))}
             </div>
-          </div>
-          <div className="lexicon-sidebar__title">Catégories</div>
-          <div className="lexicon-sidebar__list">
-            {lexiconTypes.map((type) => (
-              <button
-                key={type.key}
-                type="button"
-                className={`lexicon-tab ${activeType === type.key ? "is-active" : ""}`}
-                onClick={() => setActiveType(type.key)}
-              >
-                <span>{type.label}</span>
-                <span className="lexicon-count">
-                  {type.key === activeType ? items.length : ""}
-                </span>
-              </button>
-            ))}
-          </div>
-        </aside>
+          </aside>
 
-        <div className="lexicon-main">
-          <div className="lexicon-header">
-            <div>
-              <div className="lexicon-title">{activeLabel}</div>
-              <div className="lexicon-subtitle">
-                {items.length} entrée{items.length > 1 ? "s" : ""}
+          <div className="stack-4">
+            <div className="row-between">
+              <div>
+                <div className="text-bold text-lg">{activeLabel}</div>
+                <div className="meta">
+                  {items.length} entrée{items.length > 1 ? "s" : ""}
+                </div>
+              </div>
+              <div className="row-actions">
+                <div className="segmented segmented--ghost">
+                  <button
+                    type="button"
+                    className={`segmented-button ${scope === "all" ? "is-active" : ""}`}
+                    onClick={() => setScope("all")}
+                  >
+                    Tous
+                  </button>
+                  <button
+                    type="button"
+                    className={`segmented-button ${scope === "global" ? "is-active" : ""}`}
+                    onClick={() => setScope("global")}
+                  >
+                    Global
+                  </button>
+                  <button
+                    type="button"
+                    className={`segmented-button ${scope === "personal" ? "is-active" : ""}`}
+                    onClick={() => setScope("personal")}
+                  >
+                    Personnel
+                  </button>
+                </div>
+                <div className="segmented segmented--ghost">
+                  <button
+                    type="button"
+                    className={`segmented-button ${view === "all" ? "is-active" : ""}`}
+                    onClick={() => setView("all")}
+                  >
+                    Tout
+                  </button>
+                  <button
+                    type="button"
+                    className={`segmented-button ${view === "favorites" ? "is-active" : ""}`}
+                    onClick={() => setView("favorites")}
+                  >
+                    Favoris
+                  </button>
+                </div>
+                <input
+                  value={search}
+                  placeholder="Chercher une entrée..."
+                  onChange={(event) => setSearch(event.target.value)}
+                />
+                <select
+                  value={sort}
+                  onChange={(event) => setSort(event.target.value)}
+                >
+                  <option value="az">A → Z</option>
+                  <option value="za">Z → A</option>
+                  <option value="new">Récent</option>
+                  <option value="old">Ancien</option>
+                </select>
               </div>
             </div>
-            <div className="lexicon-actions">
-              <div className="segmented segmented--small">
-                <button
-                  type="button"
-                  className={`segmented__item ${scope === "global" ? "is-active" : ""}`}
-                  onClick={() => setScope("global")}
-                >
-                  Global
-                </button>
-                <button
-                  type="button"
-                  className={`segmented__item ${scope === "personal" ? "is-active" : ""}`}
-                  onClick={() => setScope("personal")}
-                >
-                  Personnel
+
+            {canEdit ? (
+              <div className="input-row">
+                <input
+                  value={draft}
+                  placeholder={`Ajouter ${activeLabel.toLowerCase()}`}
+                  onChange={(event) => setDraft(event.target.value)}
+                />
+                <button type="button" onClick={addItem}>
+                  Ajouter
                 </button>
               </div>
-              <div className="segmented segmented--small">
-                <button
-                  type="button"
-                  className={`segmented__item ${view === "all" ? "is-active" : ""}`}
-                  onClick={() => setView("all")}
-                >
-                  Tout
-                </button>
-                <button
-                  type="button"
-                  className={`segmented__item ${view === "favorites" ? "is-active" : ""}`}
-                  onClick={() => setView("favorites")}
-                >
-                  Favoris
-                </button>
-              </div>
-              <input
-                value={search}
-                placeholder="Filtrer une entrée..."
-                onChange={(event) => setSearch(event.target.value)}
-              />
-              <select
-                value={sort}
-                onChange={(event) => setSort(event.target.value)}
-              >
-                <option value="az">A → Z</option>
-                <option value="za">Z → A</option>
-                <option value="new">Récent</option>
-                <option value="old">Ancien</option>
-              </select>
-            </div>
-          </div>
+            ) : null}
+            {error ? (
+              <div className="banner banner--error text-sm">{error}</div>
+            ) : null}
 
-          {canEdit ? (
-            <div className="lexicon-add">
-              <input
-                value={draft}
-                placeholder={`Ajouter ${activeLabel.toLowerCase()}`}
-                onChange={(event) => setDraft(event.target.value)}
-              />
-              <button type="button" onClick={addItem}>
-                Ajouter
-              </button>
-            </div>
-          ) : null}
-          {error ? <div className="lexicon-error">{error}</div> : null}
-
-          <div className="lexicon-table">
-            {filteredItems.map((item) => (
-              <div key={item.id} className="lexicon-row">
-                <div className="lexicon-row__meta">#{item.id}</div>
-                <div className="lexicon-row__label">{item.label}</div>
-                <button
-                  type="button"
-                  className={`chip ${favoriteSet.has(item.label) ? "chip--active" : ""}`}
-                  onClick={() => toggleFavorite(item.label)}
-                >
-                  {favoriteSet.has(item.label) ? "★ Favori" : "☆ Favori"}
-                </button>
+            <div className="stack-2 lexicon-list">
+              {filteredItems.map((item) => (
+                <div key={item.id} className="row-card row-grid-4">
+                  <div className="meta">#{item.id}</div>
+                  <div className="text-strong">{item.label}</div>
+                  <button
+                    type="button"
+                    className={`chip ${favoriteSet.has(item.label) ? "chip--active" : ""}`}
+                    onClick={() => toggleFavorite(item.label)}
+                  >
+                    {favoriteSet.has(item.label) ? "★ Favori" : "☆ Favori"}
+                  </button>
                 {canEdit ? (
                   <button
                     type="button"
                     className="chip chip--danger"
-                    onClick={() => deleteItem(item.id)}
+                    onClick={() =>
+                      setPendingDelete({ id: item.id, label: item.label })
+                    }
                   >
                     Supprimer
                   </button>
                 ) : null}
               </div>
             ))}
-            {filteredItems.length === 0 ? (
-              <div className="lexicon-empty">
-                <div className="lexicon-empty__title">
-                  Aucune valeur trouvée.
+              {filteredItems.length === 0 ? (
+                <div className="empty">
+                  <div className="text-strong">Aucune valeur trouvée.</div>
+                  <div className="text-sm text-muted">
+                    Essaie un autre filtre ou ajoute une nouvelle entrée.
+                  </div>
                 </div>
-                <div className="lexicon-empty__subtitle">
-                  Essaie un autre filtre ou ajoute une nouvelle entrée.
-                </div>
-              </div>
-            ) : null}
+              ) : null}
+            </div>
           </div>
+          <ConfirmDeleteModal
+            isOpen={!!pendingDelete}
+            title="Supprimer l'entrée"
+            message={
+              pendingDelete
+                ? `Supprimer définitivement « ${pendingDelete.label} » ?`
+                : ""
+            }
+            onCancel={() => setPendingDelete(null)}
+            onConfirm={() => {
+              if (!pendingDelete) return;
+              deleteItem(pendingDelete.id);
+              setPendingDelete(null);
+            }}
+          />
         </div>
       </div>
     </section>

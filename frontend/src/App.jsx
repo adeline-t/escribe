@@ -5,10 +5,9 @@ import HomePage from "./pages/HomePage.jsx";
 import LexiconPage from "./pages/LexiconPage.jsx";
 import ProfilePage from "./pages/ProfilePage.jsx";
 import UsersPage from "./pages/UsersPage.jsx";
-import PhraseCreatePage from "./pages/PhraseCreatePage.jsx";
-import PhraseListPage from "./pages/PhraseListPage.jsx";
+import CombatReaderPage from "./pages/CombatReaderPage.jsx";
+import CombatFormPage from "./pages/CombatFormPage.jsx";
 import CombatListPage from "./pages/CombatListPage.jsx";
-import CombatOverviewPage from "./pages/CombatOverviewPage.jsx";
 import {
   FaBookOpen,
   FaHouse,
@@ -633,11 +632,11 @@ export default function App() {
           {isMenuCollapsed ? <FaBars /> : <FaAngleLeft />}
         </button>
 
-        <div className="brand">
+        <div className="brand stack-2">
           <p className="kicker"></p>
-          <div className="brand-title">
-            <img src="/icon.png" alt="Escribe" />
-            <h1>Escribe</h1>
+          <div className="inline-center">
+            <img className="app-icon" src="/icon.png" alt="Escribe" />
+            <span className="app-title">Escribe</span>
           </div>
           <p className="lead">
             Décrivez chaque passe avec précision, sans perdre la lecture
@@ -645,90 +644,90 @@ export default function App() {
           </p>
         </div>
 
-        <nav className="menu">
+        <nav className="menu stack-4">
           <button
             type="button"
-            className={`menu__item ${page === "home" ? "is-active" : ""}`}
+            className={`menu-item ${page === "home" ? "is-active" : ""}`}
             onClick={() => {
               setPage("home");
               setIsMenuCollapsed(true);
             }}
           >
-            <span className="menu__icon" aria-hidden="true">
+            <span className="menu-icon" aria-hidden="true">
               <FaHouse />
             </span>
-            <span className="menu__label">Accueil</span>
+            <span className="menu-label">Accueil</span>
           </button>
           <button
             type="button"
-            className={`menu__item ${page === "combats" ? "is-active" : ""}`}
+            className={`menu-item ${page === "combats" ? "is-active" : ""}`}
             onClick={() => {
               setPage("combats-new");
               setIsMenuCollapsed(true);
             }}
           >
-            <span className="menu__icon" aria-hidden="true">
+            <span className="menu-icon" aria-hidden="true">
               <FaPenNib />
             </span>
-            <span className="menu__label">Créer un combat</span>
+            <span className="menu-label">Créer un combat</span>
           </button>
           <button
             type="button"
-            className={`menu__item ${page === "phrases" ? "is-active" : ""}`}
+            className={`menu-item ${page === "combats" ? "is-active" : ""}`}
             onClick={() => {
               setPage("combats");
               setIsMenuCollapsed(true);
             }}
           >
-            <span className="menu__icon" aria-hidden="true">
+            <span className="menu-icon" aria-hidden="true">
               <FaBookOpen />
             </span>
-            <span className="menu__label">Mes combats</span>
+            <span className="menu-label">Mes combats</span>
           </button>
           <button
             type="button"
-            className={`menu__item ${isSabreList ? "is-active" : ""}`}
+            className={`menu-item ${isSabreList ? "is-active" : ""}`}
             onClick={() => {
-              setPage("combats-sabre");
+              setPage("lexicon");
               setIsMenuCollapsed(true);
             }}
           >
-            <span className="menu__icon" aria-hidden="true">
+            <span className="menu-icon" aria-hidden="true">
               <FaLayerGroup />
             </span>
-            <span className="menu__label">Lexique</span>
+            <span className="menu-label">Lexique</span>
           </button>
           <button
             type="button"
-            className={`menu__item ${page === "account" ? "is-active" : ""}`}
+            className={`menu-item ${page === "account" ? "is-active" : ""}`}
             onClick={() => {
               setPage("account");
               setIsMenuCollapsed(true);
             }}
           >
-            <span className="menu__icon" aria-hidden="true">
+            <span className="menu-icon" aria-hidden="true">
               <FaUser />
             </span>
-            <span className="menu__label">Mon compte</span>
+            <span className="menu-label">Mon compte</span>
           </button>
           {authUser && ["admin", "superadmin"].includes(authUser.role) ? (
             <button
               type="button"
-              className={`menu__item ${page === "users" ? "is-active" : ""}`}
+              className={`menu-item ${page === "users" ? "is-active" : ""}`}
               onClick={() => {
                 setPage("users");
                 setIsMenuCollapsed(true);
               }}
             >
-              <span className="menu__icon" aria-hidden="true">
+              <span className="menu-icon" aria-hidden="true">
                 <FaUsers />
               </span>
-              <span className="menu__label">Utilisateurs</span>
+              <span className="menu-label">Utilisateurs</span>
             </button>
           ) : null}
           <button
             type="button"
-            className="menu__item menu__item--logout"
+            className="menu-item menu-item--logout"
             onClick={() => {
               handleLogout();
               setIsMenuCollapsed(true);
@@ -736,10 +735,10 @@ export default function App() {
             title="Se déconnecter"
             aria-label="Se déconnecter"
           >
-            <span className="menu__icon" aria-hidden="true">
+            <span className="menu-icon" aria-hidden="true">
               <FaRightFromBracket />
             </span>
-            <span className="menu__label">Déconnexion</span>
+            <span className="menu-label">Déconnexion</span>
           </button>
         </nav>
       </aside>
@@ -807,7 +806,7 @@ export default function App() {
         ) : null}
 
         {page === "create" ? (
-          <PhraseCreatePage
+          <CombatFormPage
             participants={participants}
             form={form}
             combatName={combatName}
@@ -848,7 +847,7 @@ export default function App() {
         ) : null}
 
         {page === "create-sabre" ? (
-          <PhraseCreatePage
+          <CombatFormPage
             participants={participants}
             form={form}
             combatName={combatName}
@@ -914,22 +913,12 @@ export default function App() {
         ) : null}
 
         {page === "overview" ? (
-          <CombatOverviewPage
+          <CombatReaderPage
             combatName={combatName}
             combatDescription={combatDescription}
             participants={participants}
             phrases={phrases}
             onNavigate={setPage}
-          />
-        ) : null}
-
-        {page === "phrases" ? (
-          <PhraseListPage
-            combatName={combatName}
-            combatDescription={combatDescription}
-            participants={participants}
-            steps={activePhrase?.steps ?? []}
-            onRemoveStep={removeStep}
           />
         ) : null}
 
