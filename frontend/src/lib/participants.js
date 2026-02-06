@@ -150,131 +150,103 @@ export function toggleAttribute(current, value) {
   return [...current, value];
 }
 
-export function buildSummaryLine(item, participant, index) {
-  const name = getParticipantName(participant, index);
-  if (item.mode === "choregraphie") {
-    const note = item.note ? ` (${item.note})` : "";
-    return item.chorePhase
-      ? `${name} chorégraphie: ${item.chorePhase}${note}`
-      : item.note
-        ? `${name} note: ${item.note}`
-        : `${name} chorégraphie`;
-  }
-
-  if (item.mode === "note") {
-    return item.note
-      ? `${name} note: ${item.note}`
-      : `${name} note à compléter`;
-  }
-
-  if (item.role === "attack") {
-    if (item.noteOverrides) {
-      return item.note
-        ? `${name} attaque: ${item.note}`
-        : `${name} attaque (note à compléter)`;
-    }
-    const pieces = [
-      `${name} attaque`,
-      item.offensive,
-      item.action,
-      item.attackAttribute?.length
-        ? `(${item.attackAttribute.join(", ")})`
-        : "",
-      item.target ? `sur ${item.target}` : "",
-      item.attackMove ? `en ${item.attackMove}` : "",
-      item.note ? `note: ${item.note}` : "",
-    ];
-    return pieces.filter(Boolean).join(" ");
-  }
-
-  if (item.role === "defense") {
-    if (item.noteOverrides) {
-      return item.note
-        ? `${name} défend: ${item.note}`
-        : `${name} défend (note à compléter)`;
-    }
-    const paradeBits = [item.paradeNumber, item.paradeAttribute]
-      .filter(Boolean)
-      .join(" ");
-    const pieces = [
-      `${name} défend`,
-      item.defense,
-      paradeBits ? `parade ${paradeBits}` : "",
-      item.defendMove ? `en ${item.defendMove}` : "",
-      item.note ? `note: ${item.note}` : "",
-    ];
-    return pieces.filter(Boolean).join(" ");
-  }
-
-  if (item.note) {
-    return `${name} note: ${item.note}`;
-  }
-
-  return `${name} inactif`;
+function buildNoteSummary(item) {
+  return item.note ? `${item.note}` : "note à compléter";
 }
 
-export function buildSummaryLines(item, participant, index) {
-  const name = getParticipantName(participant, index);
+function buildChoregraphieSummary(item, { includeNoteWhenEmpty }) {
+  const note = item.note ? ` (${item.note})` : "";
+  if (item.chorePhase) return `${item.chorePhase}${note}`;
+  if (item.note && includeNoteWhenEmpty) return `${item.note}`;
+  return "chorégraphie";
+}
+
+function buildAttackSummary(item) {
+  const actionBits = [
+    item.action,
+    item.attackAttribute?.length ? item.attackAttribute.join(", ") : ""
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const pieces = [
+    item.offensive,
+    actionBits ? `en ${actionBits}` : "",
+    item.target ? `sur ${item.target}` : "",
+    item.attackMove ? `avec ${item.attackMove}` : "",
+    item.note ? `(${item.note})` : "",
+  ];
+  return pieces.filter(Boolean).join(" ");
+}
+
+function buildDefenseSummary(item) {
+  const paradeBits = [item.paradeNumber, item.paradeAttribute]
+    .filter(Boolean)
+    .join(" ");
+  const pieces = [
+    item.defense,
+    paradeBits ? `de ${paradeBits}` : "",
+    item.defendMove ? `en ${item.defendMove}` : "",
+    item.note ? `(${item.note})` : "",
+  ];
+  return pieces.filter(Boolean).join(" ");
+}
+
+export function buildSummaryLine(item) {
   if (item.mode === "choregraphie") {
-    const note = item.note ? ` (${item.note})` : "";
-    return [
-      item.chorePhase
-        ? `${name} chorégraphie: ${item.chorePhase}${note}`
-        : `${name} chorégraphie`,
-    ];
+    return buildChoregraphieSummary(item, { includeNoteWhenEmpty: true });
   }
 
   if (item.mode === "note") {
-    return [
-      item.note ? `${name} note: ${item.note}` : `${name} note à compléter`,
-    ];
+    return buildNoteSummary(item);
   }
 
   if (item.role === "attack") {
     if (item.noteOverrides) {
-      return [
-        item.note
-          ? `${name} attaque: ${item.note}`
-          : `${name} attaque (note à compléter)`,
-      ];
+      return buildNoteSummary(item);
     }
-    const line1 = [
-      `${name} attaque`,
-      item.offensive,
-      item.action,
-      item.attackAttribute?.length
-        ? `(${item.attackAttribute.join(", ")})`
-        : "",
-    ]
-      .filter(Boolean)
-      .join(" ");
-    return [line1].filter(Boolean);
+    return buildAttackSummary(item);
   }
 
   if (item.role === "defense") {
     if (item.noteOverrides) {
-      return [
-        item.note
-          ? `${name} défend: ${item.note}`
-          : `${name} défend (note à compléter)`,
-      ];
+      return buildNoteSummary(item);
     }
-    const paradeBits = [item.paradeNumber, item.paradeAttribute]
-      .filter(Boolean)
-      .join(" ");
-    const line1 = [
-      `${name} défend en`,
-      item.defense,
-      paradeBits ? `parade ${paradeBits}` : "",
-    ]
-      .filter(Boolean)
-      .join(" ");
-    return [line1].filter(Boolean);
+    return buildDefenseSummary(item);
   }
 
   if (item.note) {
-    return [`${name} note: ${item.note}`];
+    return `${item.note}`;
   }
 
-  return [`${name} inactif`];
+  return "inactif";
+}
+
+export function buildSummaryLines(item) {
+  if (item.mode === "choregraphie") {
+    return [buildChoregraphieSummary(item, { includeNoteWhenEmpty: false })];
+  }
+
+  if (item.mode === "note") {
+    return [buildNoteSummary(item)];
+  }
+
+  if (item.role === "attack") {
+    if (item.noteOverrides) {
+      return [buildNoteSummary(item)];
+    }
+    return [buildAttackSummary(item)].filter(Boolean);
+  }
+
+  if (item.role === "defense") {
+    if (item.noteOverrides) {
+      return [buildNoteSummary(item)];
+    }
+    return [buildDefenseSummary(item)].filter(Boolean);
+  }
+
+  if (item.note) {
+    return [`${item.note}`];
+  }
+
+  return ["inactif"];
 }

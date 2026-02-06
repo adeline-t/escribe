@@ -1,4 +1,5 @@
 import StepCard from "../components/StepCard.jsx";
+import StepSummaryLine from "../components/StepSummaryLine.jsx";
 import { labelForParticipant } from "../lib/participants.js";
 
 export default function PhraseListPage({
@@ -8,120 +9,8 @@ export default function PhraseListPage({
   steps,
   onRemoveStep,
 }) {
-  function badge(label, variant = "note", key) {
-    if (!label) return null;
-    return (
-      <span key={key || label} className={`tag tag--${variant}`}>
-        {label}
-      </span>
-    );
-  }
-
   function buildInlineLine(item, name) {
-    if (item.mode === "choregraphie") {
-      return (
-        <span>
-          {name} chorégraphie{" "}
-          {item.chorePhase ? (
-            <span className="note-inline">{item.chorePhase}</span>
-          ) : (
-            ""
-          )}
-          {item.note ? (
-            <span>
-              {" "}
-              (<span className="note-inline">{item.note}</span>)
-            </span>
-          ) : null}
-        </span>
-      );
-    }
-
-    if (item.mode === "note") {
-      return (
-        <span>
-          {name} note{" "}
-          <span className="note-inline">{item.note || "à compléter"}</span>
-        </span>
-      );
-    }
-
-    if (item.role === "attack") {
-      if (item.noteOverrides) {
-        return (
-          <span>
-            {name} attaque <span className="note-inline">{item.note}</span>
-          </span>
-        );
-      }
-      return (
-        <span>
-          {name} fait une {badge(item.offensive, "offensive", "offensive")}
-          {badge(
-            [
-              item.action,
-              item.attackAttribute?.length
-                ? item.attackAttribute.join(", ")
-                : "",
-            ]
-              .filter(Boolean)
-              .join(" "),
-            "action",
-            "action",
-          )}
-          {item.target ? (
-            <span>sur {badge(item.target, "target", "target")}</span>
-          ) : null}
-          {item.attackMove ? (
-            <span> en {badge(item.attackMove, "move", "move")}</span>
-          ) : null}
-          {item.note ? (
-            <span>
-              {" "}
-              (<span className="note-inline">{item.note}</span>)
-            </span>
-          ) : null}
-        </span>
-      );
-    }
-
-    if (item.role === "defense") {
-      if (item.noteOverrides) {
-        return (
-          <span>
-            {name} défend <span className="note-inline">{item.note}</span>
-          </span>
-        );
-      }
-      const paradeLabel = [item.paradeNumber, item.paradeAttribute]
-        .filter(Boolean)
-        .join(" ");
-      return (
-        <span>
-          {name} défend en {badge("parade", "defensive", "parade")}
-          {badge(paradeLabel, "parade-number", "paradeLabel")}
-          {item.defendMove ? (
-            <span> en {badge(item.defendMove, "move", "move")}</span>
-          ) : null}
-          {item.note ? (
-            <span>
-              {" "}
-              (<span className="note-inline">{item.note}</span>)
-            </span>
-          ) : null}
-        </span>
-      );
-    }
-
-    if (item.note) {
-      return (
-        <span>
-          {name} (<span className="note-inline">{item.note}</span>)
-        </span>
-      );
-    }
-
-    return <span>{name} inactif</span>;
+    return <StepSummaryLine item={item} name={name} inactiveLabel="inactif" />;
   }
   return (
     <section className="panel">
@@ -187,8 +76,6 @@ export default function PhraseListPage({
                         {role === "attack" ? (
                           <StepCard
                             type="action"
-                            title={`Passe ${index + 1}`}
-                            accent="accent-attack"
                             lines={[
                               buildInlineLine(
                                 item,
@@ -220,8 +107,6 @@ export default function PhraseListPage({
                         {role === "defense" ? (
                           <StepCard
                             type="reaction"
-                            title="Réaction"
-                            accent="accent-defense"
                             lines={[
                               buildInlineLine(
                                 item,
@@ -256,12 +141,7 @@ export default function PhraseListPage({
                           />
                         ) : null}
                         {role === "none" && item.note ? (
-                          <StepCard
-                            type="neutral"
-                            title="Note"
-                            accent="accent-neutral"
-                            lines={[item.note]}
-                          />
+                          <StepCard type="neutral" lines={[item.note]} />
                         ) : null}
                       </div>
                     );

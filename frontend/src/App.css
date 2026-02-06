@@ -150,9 +150,9 @@ h2 {
 
 .panel-header {
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
 }
 
 .menu {
@@ -428,7 +428,7 @@ h2 {
 .fold {
   border: 1px solid #eadfce;
   border-radius: 16px;
-  padding: 12px;
+  padding: 10px;
   background: #fffaf3;
 }
 
@@ -436,15 +436,22 @@ h2 {
   cursor: pointer;
   font-weight: 700;
   list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
+.fold-title--spaced {
+  margin-bottom: 10px;
+}
 .fold > summary::-webkit-details-marker {
   display: none;
 }
 
 .fold > summary::after {
   content: "▾";
-  float: right;
+  margin-left: auto;
   font-size: 14px;
   color: var(--muted);
 }
@@ -465,6 +472,13 @@ h2 {
   gap: 10px;
 }
 
+.step-header__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .badge {
   background: #f4eadb;
   color: var(--ink);
@@ -477,8 +491,6 @@ h2 {
 .phrase-list {
   display: grid;
   gap: 10px;
-  position: sticky;
-  top: 16px;
 }
 
 .phrase-row {
@@ -801,6 +813,14 @@ button {
   cursor: pointer;
 }
 
+.button-small {
+  border: none;
+  background: var(--ink);
+  color: #fff;
+  padding: 4px 4px;
+  border-radius: 999px;
+}
+
 .form-actions {
   margin-top: 16px;
 }
@@ -812,12 +832,13 @@ button {
 
 .phrase {
   display: grid;
-  gap: 16px;
+  gap: 12px;
 }
 
 .phrase__header {
   display: grid;
   gap: 12px;
+  align-items: stretch;
 }
 
 .phrase__name {
@@ -826,17 +847,47 @@ button {
   border-radius: 12px;
   text-align: center;
   font-weight: 600;
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+}
+
+.phrase__index {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 8px;
+  align-self: stretch;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+.phrase__index--header {
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.phrase__index-number {
+  min-width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: #efe2d3;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: #5b4b36;
 }
 
 .phrase__body {
   display: grid;
-  gap: 14px;
+  gap: 10px;
 }
 
 .phrase__row {
   display: grid;
-  gap: 12px;
+  gap: 10px;
   position: relative;
+  align-items: stretch;
 }
 
 .phrase__cell {
@@ -864,6 +915,47 @@ button {
 .card-mini.neutral {
   background: #fff7eb;
   border: 1px solid rgba(126, 105, 82, 0.2);
+}
+
+.card-mini {
+  position: relative; /* ancre l'absolu */
+}
+.card-mini__edit {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  padding: 0; /* 👈 important */
+  border: none;
+  border-radius: 50%;
+
+  background: #f7efe6;
+  color: #4b3b2a;
+
+  display: inline-flex; /* 👈 mieux que grid pour icônes */
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+  box-shadow: 0 6px 14px rgba(32, 24, 12, 0.12);
+}
+
+/* 🔑 normalisation de l’icône */
+.card-mini__edit svg {
+  width: 14px;
+  height: 14px;
+  display: block; /* enlève l’alignement inline */
+}
+
+/* états */
+.card-mini__edit:hover:not(:disabled) {
+  background: #efe4d8;
+}
+
+.card-mini__edit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .card-mini__title {
@@ -1578,8 +1670,11 @@ button {
 .summary__line {
   background: #fff;
   border-radius: 10px;
-  padding: 8px 10px;
+  padding: 12px 14px;
   border: 1px solid #efe5d6;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
 }
 
 @media (max-width: 900px) {

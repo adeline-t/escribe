@@ -444,6 +444,31 @@ export default function App() {
     });
   }
 
+  function updateStepParticipant(stepId, participantIndex, updates) {
+    setPhrases((prev) =>
+      prev.map((phrase) => {
+        if (phrase.id !== activePhraseId) return phrase;
+        return {
+          ...phrase,
+          steps: phrase.steps.map((step) => {
+            if (step.id !== stepId) return step;
+            return {
+              ...step,
+              participants: step.participants.map((item, index) =>
+                index === participantIndex ? { ...item, ...updates } : item,
+              ),
+            };
+          }),
+        };
+      }),
+    );
+  }
+
+  function resetForm() {
+    setForm(participants.map(() => emptyParticipantState()));
+    setEditingStepId(null);
+  }
+
   function addStep() {
     const hasContent = form.some((item) => {
       if (item.mode === "combat") {
@@ -468,36 +493,12 @@ export default function App() {
     setPhrases((prev) =>
       prev.map((phrase) =>
         phrase.id === activePhraseId
-          ? editingStepId
-            ? {
-                ...phrase,
-                steps: phrase.steps.map((item) =>
-                  item.id === editingStepId
-                    ? { ...step, id: editingStepId }
-                    : item,
-                ),
-              }
-            : { ...phrase, steps: [...phrase.steps, step] }
+          ? { ...phrase, steps: [...phrase.steps, step] }
           : phrase,
       ),
     );
     setEditingStepId(null);
-    setForm((prev) =>
-      prev.map((item) => ({
-        ...item,
-        offensive: "",
-        action: "",
-        target: "",
-        attackMove: "",
-        attackAttribute: [],
-        defense: "",
-        paradeNumber: "",
-        paradeAttribute: "",
-        defendMove: "",
-        note: "",
-        noteOverrides: false,
-      })),
-    );
+    setForm(participants.map(() => emptyParticipantState()));
   }
 
   function removeStep(id) {
@@ -516,20 +517,18 @@ export default function App() {
 
   function editStep(id) {
     if (!activePhraseId) return;
-    const phrase = phrases.find((item) => item.id === activePhraseId);
-    const step = phrase?.steps?.find((item) => item.id === id);
-    if (!step) return;
-    const nextForm = participants.map((_, index) => ({
-      ...emptyParticipantState(),
-      ...(step.participants?.[index] ?? {}),
-    }));
-    setForm(nextForm);
     setEditingStepId(id);
   }
 
   function cancelEditStep() {
     setEditingStepId(null);
-    setForm(DEFAULT_PARTICIPANTS.map(() => emptyParticipantState()));
+    setForm(participants.map(() => emptyParticipantState()));
+  }
+
+  function selectPhrase(id) {
+    setActivePhraseId(id);
+    setEditingStepId(null);
+    setForm(participants.map(() => emptyParticipantState()));
   }
 
   function createPhrase() {
@@ -541,6 +540,8 @@ export default function App() {
     };
     setPhrases((prev) => [...prev, newPhrase]);
     setActivePhraseId(newPhrase.id);
+    setEditingStepId(null);
+    setForm(participants.map(() => emptyParticipantState()));
   }
 
   function renamePhrase(id, name) {
@@ -580,6 +581,8 @@ export default function App() {
     if (activePhraseId === id) {
       const remaining = phrases.filter((phrase) => phrase.id !== id);
       setActivePhraseId(remaining[0]?.id ?? null);
+      setEditingStepId(null);
+      setForm(participants.map(() => emptyParticipantState()));
     }
   }
 
@@ -825,7 +828,7 @@ export default function App() {
             onCombatNameChange={setCombatName}
             onCombatDescriptionChange={setCombatDescription}
             onCreatePhrase={createPhrase}
-            onSelectPhrase={setActivePhraseId}
+            onSelectPhrase={selectPhrase}
             onRenamePhrase={renamePhrase}
             onMovePhrase={movePhrase}
             onMovePhraseToIndex={movePhraseToIndex}
@@ -838,6 +841,9 @@ export default function App() {
             buildSummaryLine={buildSummaryLine}
             buildSummaryLines={buildSummaryLines}
             toggleAttribute={toggleAttribute}
+            onNavigate={setPage}
+            onUpdateStepParticipant={updateStepParticipant}
+            onResetForm={resetForm}
           />
         ) : null}
 
@@ -887,7 +893,7 @@ export default function App() {
             onCombatNameChange={setCombatName}
             onCombatDescriptionChange={setCombatDescription}
             onCreatePhrase={createPhrase}
-            onSelectPhrase={setActivePhraseId}
+            onSelectPhrase={selectPhrase}
             onRenamePhrase={renamePhrase}
             onMovePhrase={movePhrase}
             onMovePhraseToIndex={movePhraseToIndex}
@@ -901,6 +907,9 @@ export default function App() {
             buildSummaryLine={buildSummaryLine}
             buildSummaryLines={buildSummaryLines}
             toggleAttribute={toggleAttribute}
+            onNavigate={setPage}
+            onUpdateStepParticipant={updateStepParticipant}
+            onResetForm={resetForm}
           />
         ) : null}
 
@@ -910,6 +919,7 @@ export default function App() {
             combatDescription={combatDescription}
             participants={participants}
             phrases={phrases}
+            onNavigate={setPage}
           />
         ) : null}
 

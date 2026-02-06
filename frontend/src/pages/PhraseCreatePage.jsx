@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import StepCard from "../components/StepCard.jsx";
+import StepSummaryLine from "../components/StepSummaryLine.jsx";
+import { FaPlus } from "react-icons/fa6";
+import { emptyParticipantState } from "../lib/participants.js";
 
 export default function PhraseCreatePage({
   participants,
@@ -40,6 +43,9 @@ export default function PhraseCreatePage({
   buildSummaryLine,
   buildSummaryLines,
   toggleAttribute,
+  onNavigate,
+  onUpdateStepParticipant,
+  onResetForm,
 }) {
   const favoriteMap = favorites || {};
   const [activeParticipantIndex, setActiveParticipantIndex] = useState(0);
@@ -47,6 +53,13 @@ export default function PhraseCreatePage({
     Array.isArray(participantWeaponOptions) &&
     participantWeaponOptions.length > 0;
   const showPhase = Array.isArray(phaseOptions) && phaseOptions.length > 0;
+  const [inlineEdit, setInlineEdit] = useState(null);
+  const [inlineItem, setInlineItem] = useState(null);
+  const inlineStepIndex = inlineEdit
+    ? (activePhrase?.steps?.findIndex(
+        (step) => step.id === inlineEdit.stepId,
+      ) ?? -1)
+    : -1;
 
   const uiLabels = {
     offensive: "Offensive",
@@ -114,121 +127,50 @@ export default function PhraseCreatePage({
   const phraseIndex = activePhrase
     ? phrases.findIndex((phrase) => phrase.id === activePhrase.id)
     : -1;
+  const editingStepIndex = editingStepId
+    ? (activePhrase?.steps?.findIndex((step) => step.id === editingStepId) ??
+      -1)
+    : -1;
+  const nextStepIndex = activePhrase?.steps?.length ?? -1;
 
-  function badge(label, variant = "note", key) {
-    if (!label) return null;
+  function buildInlineLine(item, name) {
     return (
-      <span key={key || label} className={`tag tag--${variant}`}>
-        {label}
-      </span>
+      <StepSummaryLine
+        item={item}
+        name={name}
+        variant="compact"
+        inactiveLabel="inactif"
+      />
     );
   }
 
-  function buildInlineLine(item, name) {
-    if (item.mode === "choregraphie") {
-      return (
-        <span>
-          {name} chorégraphie{" "}
-          {item.chorePhase ? (
-            <span className="note-inline">{item.chorePhase}</span>
-          ) : (
-            ""
-          )}
-          {item.note ? (
-            <span>
-              {" "}
-              (<span className="note-inline">{item.note}</span>)
-            </span>
-          ) : null}
-        </span>
-      );
-    }
+  function openInlineEditor(stepId, participantIndex, item) {
+    setInlineEdit({ stepId, participantIndex });
+    setInlineItem({
+      ...item,
+      attackAttribute: Array.isArray(item.attackAttribute)
+        ? item.attackAttribute
+        : [],
+    });
+  }
 
-    if (item.mode === "note") {
-      return (
-        <span>
-          {name} note{" "}
-          <span className="note-inline">{item.note || "à compléter"}</span>
-        </span>
-      );
-    }
+  function closeInlineEditor() {
+    setInlineEdit(null);
+    setInlineItem(null);
+  }
 
-    if (item.role === "attack") {
-      if (item.noteOverrides) {
-        return (
-          <span>
-            {name} attaque <span className="note-inline">{item.note}</span>
-          </span>
-        );
-      }
-      return (
-        <span>
-          {name} fait une {badge(item.offensive, "offensive", "offensive")}
-          {badge(
-            [
-              item.action,
-              item.attackAttribute?.length
-                ? item.attackAttribute.join(", ")
-                : "",
-            ]
-              .filter(Boolean)
-              .join(" "),
-            "action",
-            "action",
-          )}
-          {item.target ? (
-            <span>sur {badge(item.target, "target", "target")}</span>
-          ) : null}
-          {item.attackMove ? (
-            <span> en {badge(item.attackMove, "move", "move")}</span>
-          ) : null}
-          {item.note ? (
-            <span>
-              {" "}
-              (<span className="note-inline">{item.note}</span>)
-            </span>
-          ) : null}
-        </span>
-      );
-    }
+  function updateInlineItem(patch) {
+    setInlineItem((prev) => (prev ? { ...prev, ...patch } : prev));
+  }
 
-    if (item.role === "defense") {
-      if (item.noteOverrides) {
-        return (
-          <span>
-            {name} défend <span className="note-inline">{item.note}</span>
-          </span>
-        );
-      }
-      const paradeLabel = [item.paradeNumber, item.paradeAttribute]
-        .filter(Boolean)
-        .join(" ");
-      return (
-        <span>
-          {name} défend en {badge("parade", "defensive", "parade")}
-          {badge(paradeLabel, "parade-number", "paradeLabel")}
-          {item.defendMove ? (
-            <span> en {badge(item.defendMove, "move", "move")}</span>
-          ) : null}
-          {item.note ? (
-            <span>
-              {" "}
-              (<span className="note-inline">{item.note}</span>)
-            </span>
-          ) : null}
-        </span>
-      );
-    }
-
-    if (item.note) {
-      return (
-        <span>
-          {name} (<span className="note-inline">{item.note}</span>)
-        </span>
-      );
-    }
-
-    return <span>{name} inactif</span>;
+  function saveInlineEditor() {
+    if (!inlineEdit || !inlineItem || !onUpdateStepParticipant) return;
+    onUpdateStepParticipant(
+      inlineEdit.stepId,
+      inlineEdit.participantIndex,
+      inlineItem,
+    );
+    closeInlineEditor();
   }
 
   const combatFull = (
@@ -336,15 +278,12 @@ export default function PhraseCreatePage({
 
   const phraseList = (
     <>
-      <div className="panel-header">
-        <div>
-          <h3>Phrases d'armes</h3>
-          <p className="muted">Crée, sélectionne et réorganise les phrases.</p>
-        </div>
-        <button type="button" onClick={onCreatePhrase}>
-          Ajouter une phrase
+      <summary className="header-with-badge">
+        <h3>Phrases d'armes</h3>
+        <button type="button" className="button-small" onClick={onCreatePhrase}>
+          <FaPlus />
         </button>
-      </div>
+      </summary>
       <div className="phrase-list">
         {phrases.length === 0 ? (
           <div className="lexicon-empty">
@@ -405,76 +344,6 @@ export default function PhraseCreatePage({
       </div>
     </>
   );
-
-  const phraseHeader = null;
-
-  const phraseNavigation = (
-    <div className="phrase-nav">
-      <button
-        type="button"
-        className="chip"
-        onClick={() => {
-          if (phraseIndex > 0) {
-            onSelectPhrase(phrases[phraseIndex - 1].id);
-          }
-        }}
-      >
-        Phrase précédente
-      </button>
-      <button
-        type="button"
-        className="chip"
-        onClick={() => {
-          if (phraseIndex < phrases.length - 1) {
-            onSelectPhrase(phrases[phraseIndex + 1].id);
-          }
-        }}
-      >
-        Phrase suivante
-      </button>
-    </div>
-  );
-
-  const stepsList = activePhrase ? (
-    activePhrase.steps.length > 0 ? (
-      <div className="step-list">
-        {activePhrase.steps.map((step, index) => (
-          <div
-            key={step.id}
-            className={`step-row ${editingStepId === step.id ? "is-active" : ""}`}
-          >
-            <div>
-              <div className="step-row__title">Passe {index + 1}</div>
-              <div className="step-row__meta">
-                {step.participants?.filter(
-                  (item) => item.mode === "combat" && item.role !== "none",
-                ).length || 0}{" "}
-                rôles actifs
-              </div>
-            </div>
-            <div className="step-row__actions">
-              <button
-                type="button"
-                className="chip"
-                onClick={() => onEditStep(step.id)}
-              >
-                Modifier
-              </button>
-              <button
-                type="button"
-                className="chip chip--danger"
-                onClick={() => onRemoveStep(step.id)}
-              >
-                Supprimer
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    ) : (
-      <div className="empty">Aucune passe pour le moment.</div>
-    )
-  ) : null;
 
   const stepForm = (
     <>
@@ -579,7 +448,7 @@ export default function PhraseCreatePage({
                       onClick={() => onFormChange(index, { role: "none" })}
                       disabled={isReadOnly}
                     >
-                      Sans rôle
+                      Inactif
                     </button>
                     <button
                       type="button"
@@ -852,11 +721,24 @@ export default function PhraseCreatePage({
         })}
       </div>
       <div className="form-actions">
+        <button
+          type="button"
+          className="chip"
+          onClick={onResetForm}
+          disabled={isReadOnly}
+        >
+          Réinitialiser
+        </button>
         <button type="button" onClick={onAddStep} disabled={isReadOnly}>
           {editingStepId ? "Mettre à jour la passe" : "Ajouter la passe"}
         </button>
         {editingStepId ? (
-          <button type="button" className="chip" onClick={onCancelEditStep} disabled={isReadOnly}>
+          <button
+            type="button"
+            className="chip"
+            onClick={onCancelEditStep}
+            disabled={isReadOnly}
+          >
             Annuler la modification
           </button>
         ) : null}
@@ -864,14 +746,16 @@ export default function PhraseCreatePage({
     </>
   );
 
+  const readingIndexWidth = "30px";
   const readingBlock = activePhrase ? (
-    <div className="phrase">
+    <div className="phrase phrase--reading">
       <div
         className="phrase__header"
         style={{
-          gridTemplateColumns: `repeat(${participants.length}, minmax(0, 1fr))`,
+          gridTemplateColumns: `${readingIndexWidth} repeat(${participants.length}, minmax(0, 1fr))`,
         }}
       >
+        <div className="phrase__index phrase__index--header">#</div>
         {participantLabels.map((name, index) => (
           <div key={index} className="phrase__name">
             {name}
@@ -880,26 +764,44 @@ export default function PhraseCreatePage({
       </div>
       <div className="phrase__body">
         {activePhrase.steps.length === 0 ? (
-          <div className="empty">Ajoutez une passe pour voir la lecture.</div>
+          <div className="empty">
+            <div>Ajoutez une passe pour voir la lecture.</div>
+            <button
+              type="button"
+              className="empty-add"
+              onClick={() => {
+                onResetForm?.();
+                setActiveParticipantIndex(0);
+              }}
+              disabled={isReadOnly}
+              aria-label="Ajouter une passe"
+              title="Ajouter une passe"
+            >
+              <span className="empty-add__icon">
+                <FaPlus />
+              </span>
+            </button>
+          </div>
         ) : (
           activePhrase.steps.map((step, index) => {
-            const attackers = step.participants
-              .map((item, idx) => ({ ...item, index: idx }))
-              .filter((item) => item.role === "attack");
-            const defenders = step.participants
-              .map((item, idx) => ({ ...item, index: idx }))
-              .filter((item) => item.role === "defense");
-
             return (
               <div
                 key={step.id}
                 className="phrase__row"
                 style={{
-                  gridTemplateColumns: `repeat(${participants.length}, minmax(0, 1fr))`,
+                  gap: `10px`,
+                  gridTemplateColumns: `${readingIndexWidth} repeat(${participants.length}, minmax(0, 1fr))`,
                 }}
               >
+                <div className="phrase__index">
+                  <div className="phrase__index-number">{index + 1}</div>
+                </div>
                 {step.participants.map((item, colIndex) => {
                   const role = item.role;
+                  const hasCard =
+                    role === "attack" ||
+                    role === "defense" ||
+                    (role === "none" && item.note);
                   return (
                     <div
                       key={`${step.id}-${colIndex}`}
@@ -908,58 +810,75 @@ export default function PhraseCreatePage({
                       {role === "attack" ? (
                         <StepCard
                           type="action"
-                          title={`Passe ${index + 1}`}
-                          accent="accent-attack"
                           lines={[
                             buildInlineLine(item, participantLabels[colIndex]),
                           ]}
+                          onEdit={() =>
+                            openInlineEditor(step.id, colIndex, item)
+                          }
+                          onLongPress={() =>
+                            openInlineEditor(step.id, colIndex, item)
+                          }
+                          editLabel={`Modifier la passe ${index + 1}`}
+                          disabled={isReadOnly}
                         />
                       ) : null}
                       {role === "defense" ? (
                         <StepCard
                           type="reaction"
-                          title="Réaction"
-                          accent="accent-defense"
                           lines={[
                             buildInlineLine(item, participantLabels[colIndex]),
                           ]}
+                          onEdit={() =>
+                            openInlineEditor(step.id, colIndex, item)
+                          }
+                          onLongPress={() =>
+                            openInlineEditor(step.id, colIndex, item)
+                          }
+                          editLabel={`Modifier la passe ${index + 1}`}
+                          disabled={isReadOnly}
                         />
                       ) : null}
                       {role === "none" && item.note ? (
                         <StepCard
                           type="neutral"
-                          title="Note"
-                          accent="accent-neutral"
                           lines={[item.note]}
+                          onEdit={() =>
+                            openInlineEditor(step.id, colIndex, item)
+                          }
+                          onLongPress={() =>
+                            openInlineEditor(step.id, colIndex, item)
+                          }
+                          editLabel={`Modifier la passe ${index + 1}`}
+                          disabled={isReadOnly}
                         />
+                      ) : null}
+                      {!hasCard ? (
+                        <button
+                          type="button"
+                          className="card-mini__plus-button"
+                          onClick={() =>
+                            openInlineEditor(
+                              step.id,
+                              colIndex,
+                              {
+                                ...emptyParticipantState(),
+                                ...(item ?? {}),
+                              },
+                            )
+                          }
+                          disabled={isReadOnly}
+                          aria-label={`Ajouter une action pour ${participantLabels[colIndex]}`}
+                          title="Ajouter"
+                        >
+                          <span className="card-mini__plus">
+                            <FaPlus />
+                          </span>
+                        </button>
                       ) : null}
                     </div>
                   );
                 })}
-
-                <div className="arrow-layer">
-                  {attackers.flatMap((attacker) =>
-                    defenders
-                      .filter((defender) => defender.index !== attacker.index)
-                      .map((defender) => {
-                        const isReverse = defender.index < attacker.index;
-                        return (
-                          <div
-                            key={`${step.id}-${attacker.index}-${defender.index}`}
-                            className={`arrow ${isReverse ? "arrow--reverse" : ""}`}
-                            style={{
-                              left: isReverse
-                                ? `calc(${defender.index + 1} * 100% / ${participants.length})`
-                                : `calc(${attacker.index + 1} * 100% / ${participants.length})`,
-                              width: isReverse
-                                ? `calc(${Math.max(0, attacker.index - defender.index - 1)} * 100% / ${participants.length})`
-                                : `calc(${Math.max(0, defender.index - attacker.index - 1)} * 100% / ${participants.length})`,
-                            }}
-                          />
-                        );
-                      }),
-                  )}
-                </div>
               </div>
             );
           })
@@ -978,6 +897,19 @@ export default function PhraseCreatePage({
   return (
     <>
       <section className="panel">
+        <div className="panel-header">
+          <div>
+            <h2>Combat</h2>
+            <p className="muted">Édite les phrases et les passes.</p>
+          </div>
+          <button
+            type="button"
+            className="chip"
+            onClick={() => onNavigate?.("combats")}
+          >
+            Retour à la liste
+          </button>
+        </div>
         <div className="option-grid">
           <div className="option-side">
             <details className="fold" open>
@@ -989,30 +921,403 @@ export default function PhraseCreatePage({
               {participantsBlock}
             </details>
             <details className="fold" open>
-              <summary>Liste des phrases</summary>
               {phraseList}
             </details>
           </div>
           <div className="option-main">
             <details className="fold" open>
-              <summary>Lecture par cartes</summary>
+              <summary className="fold-title fold-title--spaced">
+                Lecture par cartes
+              </summary>
               {readingBlock}
             </details>
             <details className="fold" open>
-              <summary>Édition des passes</summary>
-              <div className="panel-header">
+              <summary className="panel-header">
                 <div className="header-with-badge">
-                  <h3>Passes de la phrase</h3>
-                  <span className="badge">#{phraseIndex + 1}</span>
+                  <h3 className="step-header__title">
+                    Passe{" "}
+                    <span className="badge">
+                      #{nextStepIndex >= 0 ? nextStepIndex + 1 : "—"}
+                    </span>{" "}
+                    de la phrase
+                    <span className="badge">
+                      #{phraseIndex >= 0 ? phraseIndex + 1 : "—"}
+                    </span>
+                  </h3>
                 </div>
-                {phraseNavigation}
-              </div>
-              {stepsList}
+              </summary>
               {stepForm}
             </details>
           </div>
         </div>
       </section>
+      {inlineEdit && inlineItem ? (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onClick={closeInlineEditor}
+        >
+          <div
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Modifier la passe"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h3>
+              Passe {inlineStepIndex >= 0 ? inlineStepIndex + 1 : "—"} ·{" "}
+              {participantLabels[inlineEdit.participantIndex]}
+            </h3>
+
+            <div className="participant-card">
+              <div className="participant-card__header">
+                <div className="participant-name">
+                  {participantLabels[inlineEdit.participantIndex]}
+                </div>
+                <div
+                  className="segmented"
+                  role="radiogroup"
+                  aria-label="Mode de la passe"
+                >
+                  <button
+                    type="button"
+                    className={`segmented__item ${inlineItem.mode === "note" ? "is-active" : ""}`}
+                    aria-pressed={inlineItem.mode === "note"}
+                    onClick={() => updateInlineItem({ mode: "note" })}
+                    disabled={isReadOnly}
+                  >
+                    Note
+                  </button>
+                  {showPhase ? (
+                    <button
+                      type="button"
+                      className={`segmented__item ${inlineItem.mode === "choregraphie" ? "is-active" : ""}`}
+                      aria-pressed={inlineItem.mode === "choregraphie"}
+                      onClick={() => updateInlineItem({ mode: "choregraphie" })}
+                    >
+                      Chorégraphie
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    className={`segmented__item ${inlineItem.mode === "combat" ? "is-active" : ""}`}
+                    aria-pressed={inlineItem.mode === "combat"}
+                    onClick={() => updateInlineItem({ mode: "combat" })}
+                    disabled={isReadOnly}
+                  >
+                    Combat
+                  </button>
+                </div>
+              </div>
+
+              {inlineItem.mode === "combat" ? (
+                <div className="participant-fields">
+                  <div
+                    className="segmented segmented--tight"
+                    role="radiogroup"
+                    aria-label="Rôle"
+                  >
+                    <button
+                      type="button"
+                      className={`segmented__item ${inlineItem.role === "attack" ? "is-active" : ""}`}
+                      aria-pressed={inlineItem.role === "attack"}
+                      onClick={() => updateInlineItem({ role: "attack" })}
+                      disabled={isReadOnly}
+                    >
+                      Attaque
+                    </button>
+                    <button
+                      type="button"
+                      className={`segmented__item ${inlineItem.role === "defense" ? "is-active" : ""}`}
+                      aria-pressed={inlineItem.role === "defense"}
+                      onClick={() => updateInlineItem({ role: "defense" })}
+                      disabled={isReadOnly}
+                    >
+                      Défense
+                    </button>
+                    <button
+                      type="button"
+                      className={`segmented__item ${inlineItem.role === "none" ? "is-active" : ""}`}
+                      aria-pressed={inlineItem.role === "none"}
+                      onClick={() => updateInlineItem({ role: "none" })}
+                      disabled={isReadOnly}
+                    >
+                      Inactif
+                    </button>
+                  </div>
+                  <label className="checkbox">
+                    <input
+                      type="checkbox"
+                      checked={inlineItem.noteOverrides}
+                      onChange={(event) =>
+                        updateInlineItem({
+                          noteOverrides: event.target.checked,
+                        })
+                      }
+                    />
+                    La note remplace la formulation
+                  </label>
+                  {!inlineItem.noteOverrides && inlineItem.role === "attack" ? (
+                    <>
+                      <label>
+                        {uiLabels.offensive}
+                        <select
+                          value={inlineItem.offensive}
+                          onChange={(event) =>
+                            updateInlineItem({
+                              offensive: event.target.value,
+                            })
+                          }
+                        >
+                          <option value="">—</option>
+                          {orderOptions(
+                            normalizedLexicon.offensive,
+                            favoriteKeys.offensive,
+                          ).map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        {uiLabels.action}
+                        <select
+                          value={inlineItem.action}
+                          onChange={(event) =>
+                            updateInlineItem({ action: event.target.value })
+                          }
+                        >
+                          <option value="">—</option>
+                          {orderOptions(
+                            normalizedLexicon.action,
+                            favoriteKeys.action,
+                          ).map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        {uiLabels.attackAttribute}
+                        <div className="checkbox-row">
+                          {orderOptions(
+                            normalizedLexicon.attackAttribute,
+                            favoriteKeys.attackAttribute,
+                          ).map((option) => (
+                            <label key={option.value} className="checkbox">
+                              <input
+                                type="checkbox"
+                                checked={inlineItem.attackAttribute.includes(
+                                  option.value,
+                                )}
+                                onChange={() =>
+                                  updateInlineItem({
+                                    attackAttribute: toggleAttribute(
+                                      inlineItem.attackAttribute,
+                                      option.value,
+                                    ),
+                                  })
+                                }
+                                disabled={isReadOnly}
+                              />
+                              {option.label}
+                            </label>
+                          ))}
+                        </div>
+                      </label>
+                      <label>
+                        {uiLabels.target}
+                        <select
+                          value={inlineItem.target}
+                          onChange={(event) =>
+                            updateInlineItem({ target: event.target.value })
+                          }
+                        >
+                          <option value="">—</option>
+                          {orderOptions(
+                            normalizedLexicon.cible,
+                            favoriteKeys.target,
+                          ).map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        {uiLabels.attackMove}
+                        <select
+                          value={inlineItem.attackMove}
+                          onChange={(event) =>
+                            updateInlineItem({
+                              attackMove: event.target.value,
+                            })
+                          }
+                        >
+                          <option value="">—</option>
+                          {orderOptions(
+                            normalizedLexicon.attackMove,
+                            favoriteKeys.attackMove,
+                          ).map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </>
+                  ) : null}
+                  {!inlineItem.noteOverrides &&
+                  inlineItem.role === "defense" ? (
+                    <>
+                      <label>
+                        {uiLabels.defensive}
+                        <select
+                          value={inlineItem.defense}
+                          onChange={(event) =>
+                            updateInlineItem({
+                              defense: event.target.value,
+                            })
+                          }
+                        >
+                          <option value="">—</option>
+                          {orderOptions(
+                            normalizedLexicon.defensive,
+                            favoriteKeys.defensive,
+                          ).map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      {showParadeNumber ? (
+                        <label>
+                          {uiLabels.paradeNumber}
+                          <select
+                            value={inlineItem.paradeNumber}
+                            onChange={(event) =>
+                              updateInlineItem({
+                                paradeNumber: event.target.value,
+                              })
+                            }
+                          >
+                            <option value="">—</option>
+                            {orderOptions(
+                              normalizedLexicon.paradeNumber,
+                              favoriteKeys.paradeNumber,
+                            ).map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      ) : null}
+                      <label>
+                        {uiLabels.paradeAttribute}
+                        <select
+                          value={inlineItem.paradeAttribute}
+                          onChange={(event) =>
+                            updateInlineItem({
+                              paradeAttribute: event.target.value,
+                            })
+                          }
+                        >
+                          <option value="">—</option>
+                          {orderOptions(
+                            normalizedLexicon.paradeAttribute,
+                            favoriteKeys.paradeAttribute,
+                          ).map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        {uiLabels.defendMove}
+                        <select
+                          value={inlineItem.defendMove}
+                          onChange={(event) =>
+                            updateInlineItem({
+                              defendMove: event.target.value,
+                            })
+                          }
+                        >
+                          <option value="">—</option>
+                          {orderOptions(
+                            normalizedLexicon.defendMove,
+                            favoriteKeys.defendMove,
+                          ).map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {inlineItem.mode === "choregraphie" ? (
+                <div className="participant-fields">
+                  <label>
+                    Phase de chorégraphie
+                    <select
+                      value={inlineItem.chorePhase}
+                      onChange={(event) =>
+                        updateInlineItem({
+                          chorePhase: event.target.value,
+                        })
+                      }
+                    >
+                      <option value="">—</option>
+                      {phaseOptions.map((phase) => (
+                        <option key={phase} value={phase}>
+                          {phase}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              ) : null}
+
+              <div className="participant-fields">
+                <label>
+                  {uiLabels.notes}
+                  <input
+                    value={inlineItem.note}
+                    onChange={(event) =>
+                      updateInlineItem({ note: event.target.value })
+                    }
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="chip"
+                onClick={closeInlineEditor}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={saveInlineEditor}
+                disabled={isReadOnly}
+              >
+                Enregistrer
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }
