@@ -8,6 +8,8 @@ import UsersPage from "./pages/UsersPage.jsx";
 import CombatReaderPage from "./pages/CombatReaderPage.jsx";
 import CombatFormPage from "./pages/CombatFormPage.jsx";
 import CombatListPage from "./pages/CombatListPage.jsx";
+import VersionFooter from "./components/VersionFooter.jsx";
+import frontendVersion from "./version.json";
 import {
   FaBookOpen,
   FaHouse,
@@ -38,6 +40,7 @@ import {
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:4000";
 const TOKEN_KEY = "escribe_token";
+const FRONT_ENV = import.meta.env.VITE_ENVIRONMENT ?? import.meta.env.MODE ?? "";
 
 export default function App() {
   const [authUser, setAuthUser] = useState(null);
@@ -73,6 +76,7 @@ export default function App() {
   const [sabreFavorites, setSabreFavorites] = useState({});
   const saveTimerRef = useRef(null);
   const [isMenuCollapsed, setIsMenuCollapsed] = useState(false);
+  const [backendVersion, setBackendVersion] = useState(null);
 
   const participantLabels = useMemo(
     () => participants.map((name, index) => labelForParticipant(name, index)),
@@ -203,6 +207,21 @@ export default function App() {
       isMounted = false;
     };
   }, [authUser]);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetch(`${API_BASE}/api/version`)
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (isMounted && payload) {
+          setBackendVersion(payload);
+        }
+      })
+      .catch(() => null);
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!isHydrated || !authUser) return;
@@ -587,12 +606,19 @@ export default function App() {
 
   if (!authUser) {
     return (
-      <AuthPage
-        authLoading={authLoading}
-        authError={authError}
-        onLogin={handleLogin}
-        onRegister={handleRegister}
-      />
+      <>
+        <AuthPage
+          authLoading={authLoading}
+          authError={authError}
+          onLogin={handleLogin}
+          onRegister={handleRegister}
+        />
+        <VersionFooter
+          frontend={frontendVersion}
+          backend={backendVersion}
+          frontendEnv={FRONT_ENV}
+        />
+      </>
     );
   }
 
@@ -948,6 +974,11 @@ export default function App() {
           />
         ) : null}
       </main>
+      <VersionFooter
+        frontend={frontendVersion}
+        backend={backendVersion}
+        frontendEnv={FRONT_ENV}
+      />
     </div>
   );
 }

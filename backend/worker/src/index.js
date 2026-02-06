@@ -6,6 +6,7 @@ import { createRouter } from "./router.js";
 import { handleRegister, handleLogin, handleMe, handleProfile, handleChangePassword, handleLogout } from "./handlers/auth.js";
 import { handleUsersList, handleUserRole, handleUserPasswordReset, handleAudit } from "./handlers/users.js";
 import { handleCombats, handleCombat, handleCombatArchive, handleCombatDelete, handleCombatShares, handleShareUsers, handleShareUsersAll } from "./handlers/combats.js";
+import { handleVersion } from "./handlers/version.js";
 
 const router = createRouter();
 router.add("GET", "/api/state", handleState);
@@ -13,6 +14,7 @@ router.add("POST", "/api/state", handleState);
 router.add("GET", "/api", handleHealth);
 router.add("GET", "/api/", handleHealth);
 router.add("GET", "/api/health", handleHealth);
+router.add("GET", "/api/version", handleVersion);
 router.add("GET", "/api/lexicon", handleLexicon);
 router.add("GET", "/api/lexicon/favorites", handleLexiconFavorites);
 router.add("POST", "/api/lexicon/favorites", handleLexiconFavorites);
