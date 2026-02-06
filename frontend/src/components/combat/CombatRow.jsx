@@ -1,5 +1,7 @@
 import {
   FaBookOpen,
+  FaFilePdf,
+  FaPrint,
   FaShareNodes,
   FaTrash,
   FaUpRightFromSquare,
@@ -11,8 +13,10 @@ export default function CombatRow({
   formatDate,
   onOpenCombat,
   onReadCombat,
+  onExportCombat,
   onShare,
   onDelete,
+  isExporting = false,
 }) {
   const rowClass = `row-card row-grid-3 row-card--soft ${isActive ? "is-active" : ""}`;
 
@@ -53,6 +57,26 @@ export default function CombatRow({
             title="Lire"
           >
             <FaBookOpen />
+          </button>
+          <button
+            type="button"
+            className="chip icon-button"
+            onClick={() => onExportCombat?.(combat)}
+            aria-label="Exporter le combat en PDF"
+            title="Exporter PDF"
+            disabled={isExporting}
+          >
+            <FaFilePdf />
+          </button>
+          <button
+            type="button"
+            className="chip icon-button"
+            onClick={() => onExportCombat?.(combat, { theme: "bw" })}
+            aria-label="Exporter le combat en PDF noir et blanc"
+            title="Exporter PDF N&B"
+            disabled={isExporting}
+          >
+            <FaPrint />
           </button>
           {combat.isOwner ? (
             <>

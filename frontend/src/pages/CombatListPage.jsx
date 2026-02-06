@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import CombatRow from "../components/combat/CombatRow.jsx";
 import CombatShareModal from "../components/combat/CombatShareModal.jsx";
+import { exportCombatPdf } from "../lib/combatPdf.jsx";
 
 export default function CombatListPage({
   apiBase,
@@ -32,6 +33,7 @@ export default function CombatListPage({
   const [shareError, setShareError] = useState("");
   const [shareLoading, setShareLoading] = useState(false);
   const [shareRole, setShareRole] = useState("read");
+  const [exportingCombatId, setExportingCombatId] = useState(null);
 
   // ==================== UTILITY FUNCTIONS ====================
 
@@ -209,6 +211,39 @@ export default function CombatListPage({
     }
   }
 
+  async function exportCombatPdfFromRow(combat, options = {}) {
+    if (!combat || exportingCombatId) return;
+    setExportingCombatId(combat.id);
+    try {
+      const response = await authFetch(`/api/combats/${combat.id}`);
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload?.state) {
+        setStatus("Export PDF impossible.");
+        return;
+      }
+      const state = payload.state;
+      const { blob, fileName } = await exportCombatPdf(
+        {
+          name: state.combatName,
+          description: state.combatDescription,
+          participants: state.participants ?? [],
+          phrases: state.phrases ?? []
+        },
+        options
+      );
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExportingCombatId(null);
+    }
+  }
+
   async function deleteCombat(id) {
     await authFetch(`/api/combats/${id}/delete`, {
       method: "POST",
@@ -301,8 +336,10 @@ export default function CombatListPage({
             formatDate={formatDate}
             onOpenCombat={openCombat}
             onReadCombat={readCombat}
+            onExportCombat={exportCombatPdfFromRow}
             onShare={openShareModal}
             onDelete={deleteCombat}
+            isExporting={exportingCombatId === combat.id}
           />
         ))}
       </>
@@ -461,8 +498,10 @@ export default function CombatListPage({
                     formatDate={formatDate}
                     onOpenCombat={openCombat}
                     onReadCombat={readCombat}
+                    onExportCombat={exportCombatPdfFromRow}
                     onShare={openShareModal}
                     onDelete={deleteCombat}
+                    isExporting={exportingCombatId === combat.id}
                   />
                 ))
               )}

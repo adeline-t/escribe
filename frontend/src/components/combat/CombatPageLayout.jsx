@@ -3,6 +3,7 @@ export default function CombatPageLayout({
   subtitle,
   backLabel = "Retour à la liste",
   onBack,
+  actions,
   children,
 }) {
   return (
@@ -18,6 +19,7 @@ export default function CombatPageLayout({
             <h2 className="title">{title}</h2>
             {subtitle ? <p className="subtitle mt-2 mb-2">{subtitle}</p> : null}
           </div>
+          {actions ? <div className="panel-header-actions">{actions}</div> : null}
         </div>
       </div>
       {children}
