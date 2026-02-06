@@ -234,7 +234,8 @@ export async function listCombats(env, userId, includeArchived = false, combatTy
   const archiveFilter = includeArchived ? "" : "AND c.archived = 0";
   const query = `SELECT DISTINCT c.id, c.name, c.description, c.participants, c.archived, c.updated_at, c.created_at, c.type,
       (SELECT COUNT(*) FROM combat_phrases cp WHERE cp.combat_id = c.id) as phrase_count,
-      CASE WHEN c.user_id = ?1 THEN 1 ELSE 0 END as is_owner
+      CASE WHEN c.user_id = ?1 THEN 1 ELSE 0 END as is_owner,
+      CASE WHEN c.user_id = ?1 THEN 'owner' ELSE cs.role END as share_role
      FROM combats c
      LEFT JOIN combat_shares cs ON cs.combat_id = c.id AND cs.shared_user_id = ?1
      WHERE (c.user_id = ?1 OR cs.shared_user_id = ?1) ${archiveFilter} ${typeFilter}
@@ -257,6 +258,7 @@ export async function listCombats(env, userId, includeArchived = false, combatTy
       type: row.type ?? "classic",
       archived: Boolean(row.archived),
       isOwner: Boolean(row.is_owner),
+      shareRole: row.share_role ?? (row.is_owner ? "owner" : "read"),
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       phraseCount: Number(row.phrase_count ?? 0),

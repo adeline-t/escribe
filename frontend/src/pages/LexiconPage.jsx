@@ -1,4 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  FaLayerGroup,
+  FaPlus,
+  FaRegStar,
+  FaSliders,
+  FaStar,
+  FaTrash,
+} from "react-icons/fa6";
 import { LEXICON_TYPES, SABRE_LEXICON_TYPES } from "../lib/lexicon.js";
 import ConfirmDeleteModal from "../components/modals/ConfirmDeleteModal.jsx";
 
@@ -31,6 +39,11 @@ export default function LexiconPage({
   const [error, setError] = useState("");
   const [localFavorites, setLocalFavorites] = useState({});
   const [pendingDelete, setPendingDelete] = useState(null);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [showCategories, setShowCategories] = useState(false);
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const addInputRef = useRef(null);
 
   const activeLabel = useMemo(
     () => lexiconTypes.find((type) => type.key === activeType)?.label ?? "",
@@ -136,12 +149,43 @@ export default function LexiconPage({
   }, [lexiconKey, lexiconTypes]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const media = window.matchMedia("(max-width: 640px)");
+    const update = () => {
+      setIsMobile(media.matches);
+      setShowCategories(!media.matches);
+    };
+    update();
+    if (media.addEventListener) {
+      media.addEventListener("change", update);
+      return () => media.removeEventListener("change", update);
+    }
+    media.addListener(update);
+    return () => media.removeListener(update);
+  }, []);
+
+  useEffect(() => {
     try {
       localStorage.setItem("escribe_lexicon_mode", lexiconKey);
     } catch {
       // ignore
     }
   }, [lexiconKey]);
+
+  useEffect(() => {
+    if (!isAddOpen) return;
+    const timer = setTimeout(() => {
+      addInputRef.current?.focus?.();
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [isAddOpen]);
+
+  useEffect(() => {
+    if (!isMobile) {
+      setIsFiltersOpen(false);
+      setIsAddOpen(false);
+    }
+  }, [isMobile]);
 
   const filteredItems = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -163,6 +207,14 @@ export default function LexiconPage({
     }
     return sorted;
   }, [items, search, sort, view, favoriteSet]);
+
+  function openAddModal() {
+    setIsAddOpen(true);
+  }
+
+  function closeAddModal() {
+    setIsAddOpen(false);
+  }
 
   async function addItem() {
     const label = draft.trim();
@@ -190,6 +242,7 @@ export default function LexiconPage({
     if (payload?.item) {
       setItems((prev) => [...prev, payload.item]);
       setDraft("");
+      setIsAddOpen(false);
     }
   }
 
@@ -258,7 +311,9 @@ export default function LexiconPage({
         </span>
       </div>
 
-      <div className="card stack-3">
+      <div
+        className={`card stack-3 lexicon-shell ${isMobile ? "lexicon-shell--mobile" : ""}`}
+      >
         <div className="stack-3 mb-2">
           <div className="kicker">Base lexicale</div>
           <div className="segmented segmented--outline segmented--compact">
@@ -278,16 +333,31 @@ export default function LexiconPage({
             </button>
           </div>
         </div>
-        <div className="split-layout">
-          <aside className="card sidebar-sticky">
-            <div className="kicker">Catégories</div>
-            <div className="stack-2">
+        <div
+          className={
+            isMobile
+              ? `split-layout split-layout--slider ${showCategories ? "split-layout--show-categories" : "split-layout--show-main"}`
+              : "split-layout"
+          }
+        >
+          <aside
+            className={`card sidebar-sticky lexicon-categories ${showCategories ? "" : "is-hidden"}`}
+          >
+            <div className="lexicon-categories__header">
+              <div className="kicker">Catégories</div>
+            </div>
+            <div className="stack-2 lexicon-categories__list">
               {lexiconTypes.map((type) => (
                 <button
                   key={type.key}
                   type="button"
                   className={`tab-button ${activeType === type.key ? "is-active" : ""}`}
-                  onClick={() => setActiveType(type.key)}
+                  onClick={() => {
+                    setActiveType(type.key);
+                    if (isMobile) {
+                      setShowCategories(false);
+                    }
+                  }}
                 >
                   <span>{type.label}</span>
                   <span className="meta">
@@ -298,54 +368,301 @@ export default function LexiconPage({
             </div>
           </aside>
 
-          <div className="stack-4">
+          <div
+            className={`stack-4 lexicon-main ${showCategories ? "" : "lexicon-main--wide"}`}
+          >
             <div className="row-between">
               <div>
-                <div className="text-bold text-lg">{activeLabel}</div>
+                <div className="header-with-badge">
+                  <div className="text-bold text-lg">{activeLabel}</div>
+                  {isMobile ? (
+                    <button
+                      type="button"
+                      className="chip icon-button"
+                      onClick={() => setShowCategories((prev) => !prev)}
+                      aria-label={
+                        showCategories
+                          ? "Masquer les catégories"
+                          : "Afficher les catégories"
+                      }
+                      title={showCategories ? "Masquer les catégories" : "Catégories"}
+                    >
+                      <FaLayerGroup />
+                    </button>
+                  ) : null}
+                  {canEdit && isMobile ? (
+                    <button
+                      type="button"
+                      className="chip icon-button"
+                      onClick={openAddModal}
+                      aria-label="Ajouter une entrée"
+                      title="Ajouter une entrée"
+                    >
+                      <FaPlus />
+                    </button>
+                  ) : null}
+                </div>
                 <div className="meta">
                   {items.length} entrée{items.length > 1 ? "s" : ""}
                 </div>
               </div>
-              <div className="row-actions">
-                <div className="segmented segmented--ghost">
-                  <button
-                    type="button"
-                    className={`segmented-button ${scope === "all" ? "is-active" : ""}`}
-                    onClick={() => setScope("all")}
+              {isMobile ? (
+                <button
+                  type="button"
+                  className="chip icon-button"
+                  onClick={() => setIsFiltersOpen(true)}
+                  aria-label="Ouvrir les filtres"
+                  title="Filtres"
+                >
+                  <FaSliders />
+                </button>
+              ) : (
+                <div className="row-actions">
+                  <div className="segmented segmented--ghost">
+                    <button
+                      type="button"
+                      className={`segmented-button ${scope === "all" ? "is-active" : ""}`}
+                      onClick={() => setScope("all")}
+                    >
+                      Tous
+                    </button>
+                    <button
+                      type="button"
+                      className={`segmented-button ${scope === "global" ? "is-active" : ""}`}
+                      onClick={() => setScope("global")}
+                    >
+                      Global
+                    </button>
+                    <button
+                      type="button"
+                      className={`segmented-button ${scope === "personal" ? "is-active" : ""}`}
+                      onClick={() => setScope("personal")}
+                    >
+                      Personnel
+                    </button>
+                  </div>
+                  <div className="segmented segmented--ghost">
+                    <button
+                      type="button"
+                      className={`segmented-button ${view === "all" ? "is-active" : ""}`}
+                      onClick={() => setView("all")}
+                    >
+                      Tout
+                    </button>
+                    <button
+                      type="button"
+                      className={`segmented-button ${view === "favorites" ? "is-active" : ""}`}
+                      onClick={() => setView("favorites")}
+                    >
+                      Favoris
+                    </button>
+                  </div>
+                  <input
+                    value={search}
+                    placeholder="Chercher une entrée..."
+                    onChange={(event) => setSearch(event.target.value)}
+                  />
+                  <select
+                    value={sort}
+                    onChange={(event) => setSort(event.target.value)}
                   >
-                    Tous
-                  </button>
-                  <button
-                    type="button"
-                    className={`segmented-button ${scope === "global" ? "is-active" : ""}`}
-                    onClick={() => setScope("global")}
-                  >
-                    Global
-                  </button>
-                  <button
-                    type="button"
-                    className={`segmented-button ${scope === "personal" ? "is-active" : ""}`}
-                    onClick={() => setScope("personal")}
-                  >
-                    Personnel
-                  </button>
+                    <option value="az">A → Z</option>
+                    <option value="za">Z → A</option>
+                    <option value="new">Récent</option>
+                    <option value="old">Ancien</option>
+                  </select>
                 </div>
-                <div className="segmented segmented--ghost">
-                  <button
-                    type="button"
-                    className={`segmented-button ${view === "all" ? "is-active" : ""}`}
-                    onClick={() => setView("all")}
-                  >
-                    Tout
-                  </button>
-                  <button
-                    type="button"
-                    className={`segmented-button ${view === "favorites" ? "is-active" : ""}`}
-                    onClick={() => setView("favorites")}
-                  >
-                    Favoris
-                  </button>
+              )}
+            </div>
+
+            {error ? (
+              <div className="banner banner--error text-sm">{error}</div>
+            ) : null}
+
+            {canEdit && !isMobile ? (
+              <div className="input-row">
+                <input
+                  ref={addInputRef}
+                  value={draft}
+                  placeholder={`Ajouter ${activeLabel.toLowerCase()}`}
+                  onChange={(event) => setDraft(event.target.value)}
+                />
+                <button type="button" onClick={addItem}>
+                  Ajouter
+                </button>
+              </div>
+            ) : null}
+
+            <div className="stack-2 lexicon-list">
+              {filteredItems.map((item) => (
+                <div key={item.id} className="row-card lexicon-row">
+                  <div className="text-strong">{item.label}</div>
+                  <div className="lexicon-row-actions">
+                    <button
+                      type="button"
+                      className={`chip icon-button ${favoriteSet.has(item.label) ? "chip--active" : ""}`}
+                      onClick={() => toggleFavorite(item.label)}
+                      aria-label={
+                        favoriteSet.has(item.label)
+                          ? "Retirer des favoris"
+                          : "Ajouter aux favoris"
+                      }
+                      title={
+                        favoriteSet.has(item.label)
+                          ? "Retirer des favoris"
+                          : "Ajouter aux favoris"
+                      }
+                    >
+                      {favoriteSet.has(item.label) ? <FaStar /> : <FaRegStar />}
+                    </button>
+                    {canEdit ? (
+                      <button
+                        type="button"
+                        className="icon-button button-danger"
+                        onClick={() =>
+                          setPendingDelete({ id: item.id, label: item.label })
+                        }
+                        aria-label="Supprimer"
+                        title="Supprimer"
+                      >
+                        <FaTrash />
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
+              ))}
+              {filteredItems.length === 0 ? (
+                <div className="empty">
+                  <div className="text-strong">Aucune valeur trouvée.</div>
+                  <div className="text-sm text-muted">
+                    Essaie un autre filtre ou ajoute une nouvelle entrée.
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </div>
+      <ConfirmDeleteModal
+        isOpen={!!pendingDelete}
+        title="Supprimer l'entrée"
+        message={
+          pendingDelete
+            ? `Supprimer définitivement « ${pendingDelete.label} » ?`
+            : ""
+        }
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={() => {
+          if (!pendingDelete) return;
+          deleteItem(pendingDelete.id);
+          setPendingDelete(null);
+        }}
+      />
+      {isAddOpen && isMobile ? (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onClick={closeAddModal}
+        >
+          <div
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Ajouter ${activeLabel.toLowerCase()}`}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h3 className="subtitle">Ajouter une entrée</h3>
+            <p className="meta text-muted">
+              Ajoute une nouvelle valeur dans « {activeLabel} ».
+            </p>
+            <label>
+              Nouvelle entrée
+              <input
+                ref={addInputRef}
+                value={draft}
+                placeholder={`Ajouter ${activeLabel.toLowerCase()}`}
+                onChange={(event) => setDraft(event.target.value)}
+              />
+            </label>
+            <div className="modal-actions">
+              <button type="button" className="chip" onClick={closeAddModal}>
+                Annuler
+              </button>
+              <button type="button" onClick={addItem}>
+                Ajouter
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {isFiltersOpen ? (
+        <div className="filters-drawer" role="presentation">
+          <div
+            className="filters-drawer__overlay"
+            onClick={() => setIsFiltersOpen(false)}
+          />
+          <div
+            className="filters-drawer__panel"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Filtres du lexique"
+          >
+            <div className="filters-drawer__header">
+              <div>
+                <div className="text-bold">Filtres</div>
+                <div className="meta text-muted">
+                  Affine l'affichage des entrées.
+                </div>
+              </div>
+              <button
+                type="button"
+                className="chip"
+                onClick={() => setIsFiltersOpen(false)}
+              >
+                Fermer
+              </button>
+            </div>
+            <div className="stack-3">
+              <div className="segmented segmented--ghost segmented--compact">
+                <button
+                  type="button"
+                  className={`segmented-button ${scope === "all" ? "is-active" : ""}`}
+                  onClick={() => setScope("all")}
+                >
+                  Tous
+                </button>
+                <button
+                  type="button"
+                  className={`segmented-button ${scope === "global" ? "is-active" : ""}`}
+                  onClick={() => setScope("global")}
+                >
+                  Global
+                </button>
+                <button
+                  type="button"
+                  className={`segmented-button ${scope === "personal" ? "is-active" : ""}`}
+                  onClick={() => setScope("personal")}
+                >
+                  Personnel
+                </button>
+              </div>
+              <div className="segmented segmented--ghost segmented--compact">
+                <button
+                  type="button"
+                  className={`segmented-button ${view === "all" ? "is-active" : ""}`}
+                  onClick={() => setView("all")}
+                >
+                  Tout
+                </button>
+                <button
+                  type="button"
+                  className={`segmented-button ${view === "favorites" ? "is-active" : ""}`}
+                  onClick={() => setView("favorites")}
+                >
+                  Favoris
+                </button>
+              </div>
+              <div className="filters-drawer__fields">
                 <input
                   value={search}
                   placeholder="Chercher une entrée..."
@@ -362,75 +679,9 @@ export default function LexiconPage({
                 </select>
               </div>
             </div>
-
-            {canEdit ? (
-              <div className="input-row">
-                <input
-                  value={draft}
-                  placeholder={`Ajouter ${activeLabel.toLowerCase()}`}
-                  onChange={(event) => setDraft(event.target.value)}
-                />
-                <button type="button" onClick={addItem}>
-                  Ajouter
-                </button>
-              </div>
-            ) : null}
-            {error ? (
-              <div className="banner banner--error text-sm">{error}</div>
-            ) : null}
-
-            <div className="stack-2 lexicon-list">
-              {filteredItems.map((item) => (
-                <div key={item.id} className="row-card row-grid-4">
-                  <div className="meta">#{item.id}</div>
-                  <div className="text-strong">{item.label}</div>
-                  <button
-                    type="button"
-                    className={`chip ${favoriteSet.has(item.label) ? "chip--active" : ""}`}
-                    onClick={() => toggleFavorite(item.label)}
-                  >
-                    {favoriteSet.has(item.label) ? "★ Favori" : "☆ Favori"}
-                  </button>
-                {canEdit ? (
-                  <button
-                    type="button"
-                    className="chip chip--danger"
-                    onClick={() =>
-                      setPendingDelete({ id: item.id, label: item.label })
-                    }
-                  >
-                    Supprimer
-                  </button>
-                ) : null}
-              </div>
-            ))}
-              {filteredItems.length === 0 ? (
-                <div className="empty">
-                  <div className="text-strong">Aucune valeur trouvée.</div>
-                  <div className="text-sm text-muted">
-                    Essaie un autre filtre ou ajoute une nouvelle entrée.
-                  </div>
-                </div>
-              ) : null}
-            </div>
           </div>
-          <ConfirmDeleteModal
-            isOpen={!!pendingDelete}
-            title="Supprimer l'entrée"
-            message={
-              pendingDelete
-                ? `Supprimer définitivement « ${pendingDelete.label} » ?`
-                : ""
-            }
-            onCancel={() => setPendingDelete(null)}
-            onConfirm={() => {
-              if (!pendingDelete) return;
-              deleteItem(pendingDelete.id);
-              setPendingDelete(null);
-            }}
-          />
         </div>
-      </div>
+      ) : null}
     </section>
   );
 }
