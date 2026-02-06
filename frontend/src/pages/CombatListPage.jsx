@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import CombatRow from "../components/combat/CombatRow.jsx";
 import CombatShareModal from "../components/combat/CombatShareModal.jsx";
-import { exportCombatPdf } from "../lib/combatPdf.jsx";
 
 export default function CombatListPage({
   apiBase,
@@ -222,6 +221,7 @@ export default function CombatListPage({
         return;
       }
       const state = payload.state;
+      const { exportCombatPdf } = await import("../lib/combatPdf.jsx");
       const { blob, fileName } = await exportCombatPdf(
         {
           name: state.combatName,
