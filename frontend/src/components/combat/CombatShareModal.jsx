@@ -56,7 +56,7 @@ export default function CombatShareModal({
                 <button
                   type="button"
                   className="chip chip--danger"
-                  onClick={() => onRequestRemoveShare(item)}
+                  onClick={() => onRequestRemoveShare(item.user_id)}
                 >
                   Retirer
                 </button>

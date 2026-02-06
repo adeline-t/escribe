@@ -1,11 +1,7 @@
 export default function StepSummaryLine({
   item,
-  name,
-  variant = "full",
   inactiveLabel = "inactif",
 }) {
-  const isCompact = variant === "compact";
-  const prefix = !isCompact && name ? `${name} ` : "";
   function badge(label, variant = "note", key) {
     if (!label) return null;
     return (
@@ -18,7 +14,6 @@ export default function StepSummaryLine({
   if (item.mode === "choregraphie") {
     return (
       <span>
-        {!isCompact && name ? `${name} ` : ""}
         chorégraphie{" "}
         {item.chorePhase ? (
           <span className="note-inline">{item.chorePhase}</span>
@@ -38,7 +33,6 @@ export default function StepSummaryLine({
   if (item.mode === "note") {
     return (
       <span>
-        {isCompact ? null : `${name ? `${name} ` : ""}note `}
         <span className="note-inline">{item.note || "à compléter"}</span>
       </span>
     );
@@ -48,7 +42,6 @@ export default function StepSummaryLine({
     if (item.noteOverrides) {
       return (
         <span>
-          {prefix}
           <span className="note-inline">{item.note}</span>
         </span>
       );
@@ -59,7 +52,6 @@ export default function StepSummaryLine({
     const actionBits = [item.action, attackAttribute].filter(Boolean).join(" ");
     return (
       <span>
-        {prefix}
         {badge(item.offensive, "offensive", "offensive")}
         {actionBits ? <> en {badge(actionBits, "action", "action")}</> : null}
         {item.target ? (
@@ -82,7 +74,6 @@ export default function StepSummaryLine({
     if (item.noteOverrides) {
       return (
         <span>
-          {prefix}
           <span className="note-inline">{item.note}</span>
         </span>
       );
@@ -93,7 +84,6 @@ export default function StepSummaryLine({
       .join(" ");
     return (
       <span>
-        {prefix}
         {badge(defenseLabel, "defensive", "parade")}
         {paradeLabel ? (
           <> de {badge(paradeLabel, "parade-number", "paradeLabel")}</>
@@ -114,14 +104,13 @@ export default function StepSummaryLine({
   if (item.note) {
     return (
       <span>
-        {prefix}(<span className="note-inline">{item.note}</span>)
+        (<span className="note-inline">{item.note}</span>)
       </span>
     );
   }
 
   return (
     <span>
-      {prefix}
       {inactiveLabel}
     </span>
   );

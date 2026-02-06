@@ -77,20 +77,12 @@ export default function CombatReading({
                               <StepSummaryCard
                                 type="action"
                                 item={item}
-                                name={labelForParticipant(
-                                  participants[colIndex],
-                                  colIndex,
-                                )}
                               />
                             ) : null}
                             {role === "defense" ? (
                               <StepSummaryCard
                                 type="reaction"
                                 item={item}
-                                name={labelForParticipant(
-                                  participants[colIndex],
-                                  colIndex,
-                                )}
                               />
                             ) : null}
                           </div>
@@ -173,8 +165,6 @@ export default function CombatReading({
                       <StepSummaryCard
                         type="action"
                         item={item}
-                        name={participantLabels[colIndex]}
-                        variant="compact"
                         inactiveLabel="inactif"
                         onEdit={() => onEditCard(step.id, colIndex, item)}
                         onLongPress={() => onEditCard(step.id, colIndex, item)}
@@ -186,8 +176,6 @@ export default function CombatReading({
                       <StepSummaryCard
                         type="reaction"
                         item={item}
-                        name={participantLabels[colIndex]}
-                        variant="compact"
                         inactiveLabel="inactif"
                         onEdit={() => onEditCard(step.id, colIndex, item)}
                         onLongPress={() => onEditCard(step.id, colIndex, item)}

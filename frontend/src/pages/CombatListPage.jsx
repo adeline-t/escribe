@@ -489,7 +489,7 @@ export default function CombatListPage({
         shareQuery={shareQuery}
         shareUsers={shareUsers}
         onClose={() => setShareCombat(null)}
-        onRemoveShare={removeShare}
+        onRequestRemoveShare={removeShare}
         onRoleChange={setShareRole}
         onSelectedUserChange={setShareSelectedUser}
         onAddShare={(userId) => addShare(userId)}

@@ -63,8 +63,6 @@ export default function StepCard({
 export function StepSummaryCard({
   type,
   item,
-  name,
-  variant,
   inactiveLabel,
   onEdit,
   onLongPress,
@@ -76,10 +74,8 @@ export function StepSummaryCard({
       type={type}
       lines={[
         <StepSummaryLine
-          key={`${name}-summary`}
+          key="summary"
           item={item}
-          name={name}
-          variant={variant}
           inactiveLabel={inactiveLabel}
         />,
       ]}
