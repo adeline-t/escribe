@@ -364,22 +364,40 @@ export default function CombatListPage({
 
   return (
     <section className="panel">
-      <div className="panel-header">
-        <div>
-          <h2 className="title">{title}</h2>
+      <div className="panel-header panel-header--stacked">
+        <div className="panel-header-left">
+          <div className="panel-header-top">
+            <h2 className="title">{title}</h2>
+            {!accessDenied ? (
+              <button
+                type="button"
+                className="chip icon-button mobile-only combat-add-fab"
+                onClick={() => {
+                  setStatus("");
+                  setIsCreateOpen(true);
+                }}
+                aria-label="Nouveau combat"
+                title="Nouveau combat"
+              >
+                +
+              </button>
+            ) : null}
+          </div>
           <p className="meta text-muted">{subtitle}</p>
         </div>
-        {!accessDenied && (
-          <button
-            type="button"
-            onClick={() => {
-              setStatus("");
-              setIsCreateOpen(true);
-            }}
-          >
-            Nouveau combat
-          </button>
-        )}
+        {!accessDenied ? (
+          <div className="panel-header-actions desktop-only">
+            <button
+              type="button"
+              onClick={() => {
+                setStatus("");
+                setIsCreateOpen(true);
+              }}
+            >
+              Nouveau combat
+            </button>
+          </div>
+        ) : null}
       </div>
 
       {accessDenied ? (

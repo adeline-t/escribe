@@ -308,6 +308,130 @@
   padding: var(--space-2) var(--space-3);
 }
 
+.combat-row {
+  position: relative;
+}
+
+.combat-row-menu {
+  position: absolute;
+  right: var(--space-3);
+  top: calc(100% + var(--space-2));
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background: var(--surface-cream-1);
+  border: 1px solid var(--border-cream-1);
+  border-radius: var(--radius-3);
+  box-shadow: var(--shadow-3);
+  z-index: 3;
+  animation: combatMenuIn 0.18s ease-out;
+  transform-origin: right top;
+}
+
+.combat-row-menu::before {
+  content: "";
+  position: absolute;
+  right: 18px;
+  top: -8px;
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-bottom: 8px solid var(--border-cream-1);
+}
+
+.combat-row-menu::after {
+  content: "";
+  position: absolute;
+  right: 19px;
+  top: -7px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 7px solid var(--surface-cream-1);
+}
+
+@keyframes combatMenuIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.mobile-only {
+  display: none;
+}
+
+.desktop-only {
+  display: inline-flex;
+}
+
+.combat-add-fab {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-3);
+  box-shadow: var(--shadow-3);
+  font-size: 18px;
+  margin-left: auto;
+  background: var(--text-primary);
+  color: var(--surface-white);
+}
+
+.panel-header-main {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.panel-header--stacked {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.panel-header-left {
+  display: grid;
+  gap: var(--space-1);
+  width: 100%;
+}
+
+.panel-header-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  justify-content: space-between;
+}
+
+.panel-header-top .title {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .panel-header {
+    position: relative;
+    align-items: flex-start;
+  }
+
+  .panel-header--stacked {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .panel-header--stacked .panel-header-actions {
+    display: none;
+  }
+}
+
 .lexicon-row {
   display: flex;
   align-items: center;
@@ -944,6 +1068,40 @@
   .menu-icon {
     width: 24px;
     height: 24px;
+  }
+
+  .combat-id {
+    display: none;
+  }
+
+  .combat-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "title title"
+      "meta actions";
+    align-items: center;
+  }
+
+  .combat-row-title {
+    grid-area: title;
+  }
+
+  .combat-row-meta {
+    grid-area: meta;
+  }
+
+  .combat-row .align-end {
+    grid-area: actions;
+    justify-self: end;
+  }
+
+  .desktop-only {
+    display: none !important;
+  }
+
+  .mobile-only {
+    display: inline-flex !important;
   }
 
   .sidebar {
