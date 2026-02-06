@@ -229,7 +229,7 @@ export default function UsersPage({ apiBase, authToken }) {
         <div className="banner banner--error text-sm">{error}</div>
       ) : null}
       <div className="row-between">
-        <div className="row-actions row-actions--end">
+        <div className="filters-panel">
           <input
             value={query}
             placeholder="Cherche un utilisateur..."

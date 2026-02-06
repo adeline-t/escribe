@@ -163,6 +163,27 @@
   justify-content: flex-end;
 }
 
+.filters-panel {
+  display: grid;
+  gap: var(--space-2);
+  margin-left: auto;
+  justify-items: end;
+}
+
+.filters-panel > * {
+  width: 100%;
+  max-width: 320px;
+}
+
+.filters-panel .segmented {
+  width: 100%;
+  justify-content: space-between;
+}
+
+.filters-panel .icon-button {
+  justify-self: end;
+}
+
 .row-top {
   display: flex;
   flex-direction: column;
