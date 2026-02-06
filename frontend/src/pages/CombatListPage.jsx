@@ -107,9 +107,15 @@ export default function CombatListPage({
           signal: controller.signal,
         },
       )
-        .then((response) => (response.ok ? response.json() : null))
+        .then(async (response) => {
+          if (!response.ok) {
+            setShareError("Impossible de charger les utilisateurs.");
+            return null;
+          }
+          return response.json().catch(() => ({}));
+        })
         .then((payload) => {
-          setShareUsers(payload?.users ?? []);
+          if (payload) setShareUsers(payload?.users ?? []);
         })
         .catch(() => null);
     }, 250);
@@ -228,10 +234,15 @@ export default function CombatListPage({
     } else {
       setShareList(payload.shares ?? []);
     }
-    const usersResponse = await authFetch(`/api/combats/share-users?all=1`);
+    const usersResponse = await authFetch(`/api/combats/share-users/all`);
     const usersPayload = await usersResponse.json().catch(() => ({}));
     if (usersResponse.ok) {
       setShareAllUsers(usersPayload.users ?? []);
+    } else {
+      setShareError(
+        usersPayload?.error ? "Impossible de charger les utilisateurs." : "Erreur lors du chargement des utilisateurs."
+      );
+      setShareAllUsers([]);
     }
     setShareLoading(false);
   }
