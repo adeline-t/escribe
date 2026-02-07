@@ -23,6 +23,64 @@ export default function AuthPage({
             globale.
           </p>
         </header>
+        <div className="card notice-card stack-2">
+          <h3 className="title">Note d’atelier</h3>
+          <p className="text-md">
+            L’application est <strong>en cours de création</strong> :{" "}
+            <em>
+              épées démontées, crayons élimés, costumes en boule dans le placard
+            </em>
+            … et un stagiaire coincé entre deux feuilles A4. Bref, l’atelier
+            tourne.
+          </p>
+          <p className="text-md">
+            C’est une <strong>bêta</strong> : des évolutions et ajustements
+            arrivent (
+            <em>
+              promis, pas de duel au sabre laser pour valider une mise à jour
+            </em>
+            ).
+          </p>
+          <p className="meta text-md">
+            Le <strong>lexique de base</strong> va évoluer :
+          </p>
+          <p className="meta text-md">
+            • Si des termes changent ou disparaissent, tes combats déjà écrits
+            restent <strong>identiques</strong> : rien ne se perd, rien ne
+            s’efface.
+          </p>
+          <p className="meta text-md">
+            • Des escrimeurs planchent sur une notation{" "}
+            <strong>plus efficace</strong> et <strong>plus précise</strong>.
+          </p>
+          <p className="text-md">
+            <p>Pour rejoindre le groupe, envoie une demande à :</p>•{" "}
+            <a href="mailto:touze.adeline@gamil.com" className="text-link">
+              touze.adeline@gamil.com
+            </a>
+            <br />• <strong>Blaise LAPORTE</strong>{" "}
+            <span className="meta">
+              (par n’importe quel moyen — il est plus connu qu’il ne veut
+              l’admettre.)
+            </span>
+          </p>
+          <p className="text-md">
+            <strong>Dépôt GitHub</strong> :{" "}
+            <a
+              href="https://github.com/adeline-t/escribe"
+              target="_blank"
+              rel="noreferrer"
+              className="text-link"
+            >
+              github.com/adeline-t/escribe
+            </a>
+          </p>
+          <p className="subtitle">
+            <br />
+            Tes retours sont précieux, même les <em>“ça marche pas”</em> en
+            majuscules.
+          </p>
+        </div>
         {authLoading ? (
           <div className="meta text-muted">Chargement...</div>
         ) : (
@@ -34,9 +92,7 @@ export default function AuthPage({
             <div className="grid-auto">
               <form className="card stack-2" onSubmit={onLogin}>
                 <div className="stack-1">
-                  <h3 className="text-strong text-lg no-margin">
-                    Connexion
-                  </h3>
+                  <h3 className="text-strong text-lg no-margin">Connexion</h3>
                   <p className="text-sm text-muted">
                     Accédez à vos combats et lexiques.
                   </p>
@@ -80,9 +136,7 @@ export default function AuthPage({
               </form>
               <form className="card stack-2" onSubmit={onRegister}>
                 <div className="stack-1">
-                  <h3 className="text-strong text-lg no-margin">
-                    Inscription
-                  </h3>
+                  <h3 className="text-strong text-lg no-margin">Inscription</h3>
                   <p className="text-sm text-muted">
                     Créez un compte pour partager vos combats.
                   </p>

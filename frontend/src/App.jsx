@@ -979,6 +979,16 @@ export default function App() {
         backend={backendVersion}
         frontendEnv={FRONT_ENV}
       />
+      <div className="app-footer">
+        <a
+          href="https://github.com/adeline-t/escribe"
+          target="_blank"
+          rel="noreferrer"
+          className="text-link"
+        >
+          github.com/adeline-t/escribe
+        </a>
+      </div>
     </div>
   );
 }

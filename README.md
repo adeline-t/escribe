@@ -2,6 +2,21 @@
 
 Escribe est une application pour créer, organiser et relire des phrases d'armes. Elle permet de décrire un combat étape par étape, tout en conservant une lecture globale structurée. Le front est en React + Vite, et la persistance est gérée côté API (Express local ou Cloudflare Workers + D1).
 
+Dépôt GitHub : https://github.com/adeline-t/escribe
+
+## Note d’atelier (bêta)
+
+L’application est en cours de création : épées démontées, crayons élimés, costumes en boule dans le placard… et un stagiaire coincé entre deux feuilles A4. Bref, l’atelier tourne.
+
+- C’est une bêta : des évolutions et ajustements arrivent (promis, pas de duel au sabre laser pour valider une mise à jour).
+- Le lexique de base va évoluer.
+- Si des termes changent ou disparaissent, vos combats déjà écrits restent identiques : rien ne se perd, rien ne s’efface.
+- Des escrimeurs planchent sur une notation plus efficace et précise.
+
+Pour rejoindre le groupe : envoyez une demande à touze.adeline@gamil.com et contactez Blaise LAPORTE (par n’importe quel moyen — il connaît plus de gens qu’un arbitre en finale).
+
+Vos retours sont précieux, même les “ça marche pas” en majuscules.
+
 ## Fonctionnel
 
 ### Parcours principal
