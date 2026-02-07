@@ -34,35 +34,45 @@ export default function HomePage({
         <p className="meta text-muted">
           L’application est <strong>en cours de création</strong> : <em>épées
           démontées, crayons élimés, costumes en boule dans le placard</em>…
-          et un stagiaire coincé entre deux feuilles A4. Bref, l’atelier
-          tourne.
+          et un stagiaire coincé entre deux feuilles A4. Bref, l’atelier tourne.
         </p>
-        <p className="meta text-muted">
+        <p className="meta text-md">
           C’est une <strong>bêta</strong> : des évolutions et ajustements
-          arrivent (<em>promis, pas de duel au sabre laser pour valider une
-          mise à jour</em>).
+          arrivent (
+          <em>
+            promis, pas de duel au sabre laser pour valider une mise à jour
+          </em>
+          ).
         </p>
-        <p className="meta text-muted">
-          Le <strong>lexique de base</strong> va évoluer.
+        <p className="meta text-md">
+          Le <strong>lexique de base</strong> va évoluer :
         </p>
-        <p className="meta text-muted">
-          Si des termes changent ou disparaissent, tes combats déjà écrits
+        <p className="meta text-md">
+          • Si des termes changent ou disparaissent, tes combats déjà écrits
           restent <strong>identiques</strong> : rien ne se perd, rien ne
           s’efface.
         </p>
-        <p className="meta text-muted">
-          Des escrimeurs planchent sur une notation <strong>plus efficace</strong>
-          {" "}et <strong>plus précise</strong>.
+        <p className="meta text-md">
+          • Des escrimeurs planchent sur une notation{" "}
+          <strong>plus efficace</strong> et <strong>plus précise</strong>.
         </p>
-        <p className="meta text-muted">
-          Pour rejoindre le groupe : envoie une demande à{" "}
-          <a href="mailto:touze.adeline@gamil.com" className="text-link">
-            touze.adeline@gamil.com
-          </a>{" "}
-          et contacte <strong>Blaise LAPORTE</strong> (par n’importe quel
-          moyen — <em>il est plus connu qu’il ne veut l’admettre</em>).
-        </p>
-        <p className="meta text-muted">
+        <div className="text-md notice-join">
+          <div>Pour rejoindre le groupe, envoie une demande à :</div>
+          <div>
+            •{" "}
+            <a href="mailto:touze.adeline@gamil.com" className="text-link">
+              touze.adeline@gamil.com
+            </a>
+          </div>
+          <div>
+            • <strong>Blaise LAPORTE</strong>{" "}
+            <span className="meta">
+              (par n’importe quel moyen — il est plus connu qu’il ne veut
+              l’admettre.)
+            </span>
+          </div>
+        </div>
+        <p className="text-md">
           <strong>Dépôt GitHub</strong> :{" "}
           <a
             href="https://github.com/adeline-t/escribe"
@@ -73,9 +83,21 @@ export default function HomePage({
             github.com/adeline-t/escribe
           </a>
         </p>
-        <p className="meta text-muted">
+        <p className="subtitle">
+          <br />
           Tes retours sont précieux, même les <em>“ça marche pas”</em> en
           majuscules.
+        </p>
+        <p className="text-sm text-muted">
+          Et pour ceux qui sont intéressés par la notation en compétition, voici la grande sœur :{" "}
+          <a
+            href="https://balestra-bkf.pages.dev"
+            target="_blank"
+            rel="noreferrer"
+            className="text-link"
+          >
+            Balestra
+          </a>
         </p>
       </div>
       <div className="grid-auto-sm">

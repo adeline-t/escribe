@@ -53,17 +53,22 @@ export default function AuthPage({
             • Des escrimeurs planchent sur une notation{" "}
             <strong>plus efficace</strong> et <strong>plus précise</strong>.
           </p>
-          <p className="text-md">
-            <p>Pour rejoindre le groupe, envoie une demande à :</p>•{" "}
-            <a href="mailto:touze.adeline@gamil.com" className="text-link">
-              touze.adeline@gamil.com
-            </a>
-            <br />• <strong>Blaise LAPORTE</strong>{" "}
-            <span className="meta">
-              (par n’importe quel moyen — il est plus connu qu’il ne veut
-              l’admettre.)
-            </span>
-          </p>
+          <div className="text-md notice-join">
+            <div>Pour rejoindre le groupe, envoie une demande à :</div>
+            <div>
+              •{" "}
+              <a href="mailto:touze.adeline@gamil.com" className="text-link">
+                touze.adeline@gamil.com
+              </a>
+            </div>
+            <div>
+              • <strong>Blaise LAPORTE</strong>{" "}
+              <span className="meta">
+                (par n’importe quel moyen — il est plus connu qu’il ne veut
+                l’admettre.)
+              </span>
+            </div>
+          </div>
           <p className="text-md">
             <strong>Dépôt GitHub</strong> :{" "}
             <a
@@ -79,6 +84,17 @@ export default function AuthPage({
             <br />
             Tes retours sont précieux, même les <em>“ça marche pas”</em> en
             majuscules.
+          </p>
+          <p className="text-sm text-muted">
+            Et pour ceux qui sont intéressés par la notation en compétition, voici la grande sœur :{" "}
+            <a
+              href="https://balestra-bkf.pages.dev"
+              target="_blank"
+              rel="noreferrer"
+              className="text-link"
+            >
+              Balestra
+            </a>
           </p>
         </div>
         {authLoading ? (

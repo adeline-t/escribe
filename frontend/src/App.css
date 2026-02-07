@@ -462,6 +462,12 @@
 
 .notice-card p {
   margin: var(--space-1);
+  line-height: 1.35;
+}
+
+.notice-join {
+  display: grid;
+  gap: var(--space-1);
 }
 
 .text-link {
