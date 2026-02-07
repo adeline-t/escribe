@@ -15,6 +15,7 @@ export default function CombatStepForm({
   isReadOnly,
   onResetForm,
   onAddStep,
+  insertStepIndex,
   editingStepId,
   onCancelEditStep,
   buildSummaryLine,
@@ -418,7 +419,12 @@ export default function CombatStepForm({
         <div className="text-md stack-1">
           {form.map((item, index) => (
             <div key={`${index}-summary`} className="summary-line">
-              {buildSummaryLine(item, participants[index], index)}
+              <span className="summary-name">
+                {participantLabels[index] ?? participants[index]}
+              </span>
+              <span className="summary-text">
+                {buildSummaryLine(item, participants[index], index)}
+              </span>
             </div>
           ))}
         </div>
@@ -591,19 +597,28 @@ export default function CombatStepForm({
       <div className="form-actions">
         <button
           type="button"
-          className="chip"
+          className="button-secondary"
           onClick={onResetForm}
           disabled={isReadOnly}
         >
           Réinitialiser
         </button>
-        <button type="button" onClick={onAddStep} disabled={isReadOnly}>
-          {editingStepId ? "Mettre à jour la passe" : "Ajouter la passe"}
+        <button
+          type="button"
+          className="button-primary"
+          onClick={onAddStep}
+          disabled={isReadOnly}
+        >
+          {editingStepId
+            ? "Mettre à jour la passe"
+            : insertStepIndex != null
+              ? "Insérer la passe"
+              : "Ajouter la passe"}
         </button>
         {editingStepId ? (
           <button
             type="button"
-            className="chip"
+            className="button-ghost"
             onClick={onCancelEditStep}
             disabled={isReadOnly}
           >

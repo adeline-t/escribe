@@ -10,7 +10,11 @@ export default function CombatPageLayout({
     <section className="panel">
       <div className="stack-2">
         {onBack ? (
-          <button type="button" className="chip inline-fit" onClick={onBack}>
+          <button
+            type="button"
+            className="button-secondary inline-fit"
+            onClick={onBack}
+          >
             {backLabel}
           </button>
         ) : null}

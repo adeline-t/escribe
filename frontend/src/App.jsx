@@ -60,6 +60,9 @@ export default function App() {
     DEFAULT_PARTICIPANTS.map(() => emptyParticipantState()),
   );
   const [editingStepId, setEditingStepId] = useState(null);
+  const [insertStepIndex, setInsertStepIndex] = useState(null);
+  const [insertionMode, setInsertionMode] = useState(false);
+  const [deletionMode, setDeletionMode] = useState(false);
   const [combatId, setCombatId] = useState(null);
   const [combatName, setCombatName] = useState("Combat sans nom");
   const [combatDescription, setCombatDescription] = useState("");
@@ -485,6 +488,9 @@ export default function App() {
   function resetForm() {
     setForm(participants.map(() => emptyParticipantState()));
     setEditingStepId(null);
+    setInsertStepIndex(null);
+    setInsertionMode(false);
+    setDeletionMode(false);
   }
 
   function addStep() {
@@ -509,14 +515,54 @@ export default function App() {
 
     if (!activePhraseId) return;
     setPhrases((prev) =>
-      prev.map((phrase) =>
-        phrase.id === activePhraseId
-          ? { ...phrase, steps: [...phrase.steps, step] }
-          : phrase,
-      ),
+      prev.map((phrase) => {
+        if (phrase.id !== activePhraseId) return phrase;
+        if (insertStepIndex == null) {
+          return { ...phrase, steps: [...phrase.steps, step] };
+        }
+        const nextSteps = [...phrase.steps];
+        const index = Math.max(0, Math.min(insertStepIndex, nextSteps.length));
+        nextSteps.splice(index, 0, step);
+        return { ...phrase, steps: nextSteps };
+      }),
     );
     setEditingStepId(null);
     setForm(participants.map(() => emptyParticipantState()));
+    setInsertStepIndex(null);
+    setInsertionMode(false);
+    setDeletionMode(false);
+  }
+
+  function insertEmptyStep(index) {
+    if (!activePhraseId) return;
+    const step = {
+      id: crypto.randomUUID(),
+      participants: participants.map(() => ({
+        mode: "note",
+        role: "none",
+        offensive: "",
+        action: "",
+        target: "",
+        attackMove: "",
+        attackAttribute: [],
+        defense: "",
+        paradeNumber: "",
+        paradeAttribute: "",
+        defendMove: "",
+        chorePhase: "",
+        note: "",
+        noteOverrides: true,
+      })),
+    };
+    setPhrases((prev) =>
+      prev.map((phrase) => {
+        if (phrase.id !== activePhraseId) return phrase;
+        const nextSteps = [...phrase.steps];
+        const insertAt = Math.max(0, Math.min(index, nextSteps.length));
+        nextSteps.splice(insertAt, 0, step);
+        return { ...phrase, steps: nextSteps };
+      }),
+    );
   }
 
   function removeStep(id) {
@@ -531,22 +577,34 @@ export default function App() {
     if (editingStepId === id) {
       setEditingStepId(null);
     }
+    setInsertStepIndex(null);
+    setInsertionMode(false);
+    setDeletionMode(false);
   }
 
   function editStep(id) {
     if (!activePhraseId) return;
     setEditingStepId(id);
+    setInsertStepIndex(null);
+    setInsertionMode(false);
+    setDeletionMode(false);
   }
 
   function cancelEditStep() {
     setEditingStepId(null);
     setForm(participants.map(() => emptyParticipantState()));
+    setInsertStepIndex(null);
+    setInsertionMode(false);
+    setDeletionMode(false);
   }
 
   function selectPhrase(id) {
     setActivePhraseId(id);
     setEditingStepId(null);
     setForm(participants.map(() => emptyParticipantState()));
+    setInsertStepIndex(null);
+    setInsertionMode(false);
+    setDeletionMode(false);
   }
 
   function createPhrase() {
@@ -869,6 +927,26 @@ export default function App() {
             onNavigate={setPage}
             onUpdateStepParticipant={updateStepParticipant}
             onResetForm={resetForm}
+            insertStepIndex={insertStepIndex}
+            onInsertStep={(index) => {
+              setInsertStepIndex(index);
+              setEditingStepId(null);
+              setForm(participants.map(() => emptyParticipantState()));
+              setInsertionMode(false);
+              setDeletionMode(false);
+            }}
+            insertionMode={insertionMode}
+            onToggleInsertionMode={() => {
+              setInsertionMode((prev) => !prev);
+              setDeletionMode(false);
+            }}
+            onInsertEmptyStep={insertEmptyStep}
+            deletionMode={deletionMode}
+            onToggleDeletionMode={() => {
+              setDeletionMode((prev) => !prev);
+              setInsertionMode(false);
+            }}
+            onDeleteStep={removeStep}
           />
         ) : null}
 
@@ -935,6 +1013,26 @@ export default function App() {
             onNavigate={setPage}
             onUpdateStepParticipant={updateStepParticipant}
             onResetForm={resetForm}
+            insertStepIndex={insertStepIndex}
+            onInsertStep={(index) => {
+              setInsertStepIndex(index);
+              setEditingStepId(null);
+              setForm(participants.map(() => emptyParticipantState()));
+              setInsertionMode(false);
+              setDeletionMode(false);
+            }}
+            insertionMode={insertionMode}
+            onToggleInsertionMode={() => {
+              setInsertionMode((prev) => !prev);
+              setDeletionMode(false);
+            }}
+            onInsertEmptyStep={insertEmptyStep}
+            deletionMode={deletionMode}
+            onToggleDeletionMode={() => {
+              setDeletionMode((prev) => !prev);
+              setInsertionMode(false);
+            }}
+            onDeleteStep={removeStep}
           />
         ) : null}
 

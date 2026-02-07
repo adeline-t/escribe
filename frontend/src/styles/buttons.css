@@ -10,6 +10,23 @@ button {
   cursor: pointer;
 }
 
+.button-primary {
+  background: var(--text-primary);
+  color: var(--surface-white);
+}
+
+.button-secondary {
+  background: var(--surface-cream-1);
+  color: var(--text-primary);
+  border: 1px solid var(--border-cream-2);
+}
+
+.button-ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px dashed var(--border-cream-2);
+}
+
 .button-light {
   background: var(--border-cream-3);
   color: var(--text-strong);
@@ -92,6 +109,17 @@ button {
   cursor: pointer;
 }
 
+.button-icon {
+  width: var(--control-height);
+  height: var(--control-height);
+  border-radius: var(--radius-2);
+  padding: var(--space-3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
 /* Segmented controls */
 .segmented {
   display: inline-flex;
@@ -101,17 +129,28 @@ button {
   justify-self: start;
   width: fit-content;
   border: 1px solid var(--border-cream-1);
-  background: var(--surface-white);
+  background: var(--surface-cream-1);
 }
 
 .segmented-button {
   border: none;
   background: transparent;
   color: var(--text-muted);
-  padding: var(--space-1) var(--space-3);
+  padding: 0 var(--space-3);
   border-radius: var(--radius-pill);
   font-weight: 600;
   cursor: pointer;
+  height: var(--control-height-small);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+}
+
+.segmented-button.is-active {
+  background: var(--surface-white);
+  color: var(--text-primary);
+  border-color: var(--border-cream-2);
 }
 
 .segmented--solid {

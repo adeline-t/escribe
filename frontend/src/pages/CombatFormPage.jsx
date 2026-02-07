@@ -49,6 +49,14 @@ export default function CombatFormPage({
   onNavigate,
   onUpdateStepParticipant,
   onResetForm,
+  insertStepIndex,
+  onInsertStep,
+  insertionMode,
+  onToggleInsertionMode,
+  onInsertEmptyStep,
+  deletionMode,
+  onToggleDeletionMode,
+  onDeleteStep,
 }) {
   const favoriteMap = favorites || {};
   const [activeParticipantIndex, setActiveParticipantIndex] = useState(0);
@@ -167,6 +175,7 @@ export default function CombatFormPage({
       isReadOnly={isReadOnly}
       onResetForm={onResetForm}
       onAddStep={onAddStep}
+      insertStepIndex={insertStepIndex}
       editingStepId={editingStepId}
       onCancelEditStep={onCancelEditStep}
       buildSummaryLine={buildSummaryLine}
@@ -220,10 +229,18 @@ export default function CombatFormPage({
                 setActiveParticipantIndex,
                 isReadOnly,
                 onEditCard: openInlineEditor,
+                onInsertStep,
+                insertionMode,
+                onToggleInsertionMode,
+                onInsertEmptyStep,
+                deletionMode,
+                onToggleDeletionMode,
+                onDeleteStep,
               }}
               stepForm={stepForm}
               nextStepIndex={nextStepIndex}
               phraseIndex={phraseIndex}
+              insertStepIndex={insertStepIndex}
             />
           }
         />

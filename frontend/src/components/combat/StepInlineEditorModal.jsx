@@ -368,10 +368,19 @@ export default function StepInlineEditorModal({
         </div>
 
         <div className="modal-actions">
-          <button type="button" className="chip" onClick={onClose}>
+          <button
+            type="button"
+            className="button-secondary"
+            onClick={onClose}
+          >
             Annuler
           </button>
-          <button type="button" onClick={onSave} disabled={isReadOnly}>
+          <button
+            type="button"
+            className="button-primary"
+            onClick={onSave}
+            disabled={isReadOnly}
+          >
             Enregistrer
           </button>
         </div>

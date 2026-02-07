@@ -40,7 +40,7 @@ export default function StepCard({
       {onEdit ? (
         <button
           type="button"
-          className="card-mini-edit button-small"
+          className="card-mini-edit button-icon"
           onClick={onEdit}
           aria-label={editLabel || "Modifier la passe"}
           title={editLabel || "Modifier"}

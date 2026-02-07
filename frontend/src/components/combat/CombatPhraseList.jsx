@@ -39,7 +39,7 @@ export default function CombatPhraseList({
           <span className="kicker">Phrases d'armes</span>
           <button
             type="button"
-            className="button-small"
+            className="button-icon button-secondary"
             onClick={onCreatePhrase}
           >
             <FaPlus />
@@ -80,7 +80,7 @@ export default function CombatPhraseList({
                 <>
                   <button
                     type="button"
-                    className="chip chip--ghost chip--plain button-block align-left-center"
+                    className="button-secondary button-block align-left-center"
                     onClick={() => onSelectPhrase(phrase.id)}
                   >
                     <div className="text-strong">
@@ -94,21 +94,21 @@ export default function CombatPhraseList({
                   <div className="row-actions">
                     <button
                       type="button"
-                      className="chip"
+                      className="button-icon button-secondary"
                       onClick={() => onMovePhrase(phrase.id, "up")}
                     >
                       ↑
                     </button>
                     <button
                       type="button"
-                      className="chip"
+                      className="button-icon button-secondary"
                       onClick={() => onMovePhrase(phrase.id, "down")}
                     >
                       ↓
                     </button>
                     <button
                       type="button"
-                      className="chip chip--danger"
+                      className="button-danger"
                       onClick={() =>
                         onRequestDeletePhrase({
                           id: phrase.id,
