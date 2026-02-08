@@ -42,6 +42,28 @@ const CLASSIC_USER_TYPE_MAP = {
   "attaque-attribut": "user_attaque_attribut"
 };
 
+const NEW_TYPE_MAP = {
+  offensive: "nl_offensive",
+  action: "nl_action",
+  defensive: "nl_defensive",
+  cible: "nl_cible",
+  deplacement: "nl_deplacement",
+  "parade-numero": "nl_parade_numero",
+  "parade-attribut": "nl_parade_attribut",
+  "attaque-attribut": "nl_attaque_attribut"
+};
+
+const NEW_USER_TYPE_MAP = {
+  offensive: "user_nl_offensive",
+  action: "user_nl_action",
+  defensive: "user_nl_defensive",
+  cible: "user_nl_cible",
+  deplacement: "user_nl_deplacement",
+  "parade-numero": "user_nl_parade_numero",
+  "parade-attribut": "user_nl_parade_attribut",
+  "attaque-attribut": "user_nl_attaque_attribut"
+};
+
 const SABRE_TYPE_MAP = {
   armes: "sl_armes",
   phases_choregraphie: "sl_phases_choregraphie",
@@ -68,6 +90,7 @@ const SABRE_USER_TYPE_MAP = {
 
 const FAVORITE_TYPES = {
   classic: new Set(Object.keys(CLASSIC_TYPE_MAP)),
+  "classic-v2": new Set(Object.keys(NEW_TYPE_MAP)),
   "sabre-laser": new Set(Object.keys(SABRE_TYPE_MAP))
 };
 
@@ -77,6 +100,9 @@ function getLexiconKey(request, body = null) {
 }
 
 function getTypeMaps(lexiconKey) {
+  if (lexiconKey === "classic-v2") {
+    return { typeMap: NEW_TYPE_MAP, userTypeMap: NEW_USER_TYPE_MAP };
+  }
   if (lexiconKey === "sabre-laser") {
     return { typeMap: SABRE_TYPE_MAP, userTypeMap: SABRE_USER_TYPE_MAP };
   }
@@ -221,6 +247,13 @@ export async function handleLexiconFavorites(request, env) {
     const rows = await getFavorites(env, session.user.id);
     const favorites = rows.reduce((acc, row) => {
       const type = row.type || "";
+      if (lexiconKey === "classic-v2") {
+        if (!type.startsWith("classic-v2:")) return acc;
+        const cleanType = type.replace("classic-v2:", "");
+        if (!acc[cleanType]) acc[cleanType] = [];
+        acc[cleanType].push(row.label);
+        return acc;
+      }
       if (lexiconKey === "sabre-laser") {
         if (!type.startsWith("sabre-laser:")) return acc;
         const cleanType = type.replace("sabre-laser:", "");
@@ -247,7 +280,12 @@ export async function handleLexiconFavorites(request, env) {
     if (!favoriteSet.has(type) || !label) {
       return jsonResponse({ error: "invalid_favorite" }, 400, corsHeaders);
     }
-    const favoriteType = lexiconKey === "sabre-laser" ? `sabre-laser:${type}` : type;
+    const favoriteType =
+      lexiconKey === "sabre-laser"
+        ? `sabre-laser:${type}`
+        : lexiconKey === "classic-v2"
+          ? `classic-v2:${type}`
+          : type;
     const exists = await isFavorite(env, session.user.id, favoriteType, label);
     if (favorite && !exists) {
       await addFavorite(env, session.user.id, favoriteType, label);

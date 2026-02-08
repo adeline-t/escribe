@@ -1978,6 +1978,11 @@ select {
   border: 1px solid rgba(59, 127, 182, 0.35);
 }
 
+.card-mini.preparation {
+  background: rgba(117, 169, 76, 0.14);
+  border: 1px solid rgba(86, 133, 50, 0.36);
+}
+
 .card-mini.neutral {
   background: var(--surface-cream-6);
   border: 1px solid rgba(126, 105, 82, 0.2);
@@ -2020,24 +2025,25 @@ select {
   width: 22px;
   height: 22px;
   padding: 0;
-  border-radius: 50%;
-  background: var(--surface-cream-6);
-  color: var(--text-accent);
-
+  border-radius: var(--radius-pill);
+  border: 1px dashed var(--border-cream-2);
+  background: transparent;
+  color: var(--text-muted);
   cursor: pointer;
-  box-shadow: var(--shadow-1);
+  box-shadow: none;
 }
 
 /* 🔑 normalisation de l’icône */
 .card-mini-edit svg {
-  width: 12px;
-  height: 12px;
+  width: 11px;
+  height: 11px;
   display: block; /* enlève l’alignement inline */
 }
 
 /* états */
 .card-mini-edit:hover:not(:disabled) {
-  background: var(--surface-cream-4);
+  background: var(--surface-cream-1);
+  border-color: var(--border-cream-3);
 }
 
 .card-mini-edit:disabled {
@@ -2400,6 +2406,10 @@ select {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
 }
 
+.preparation-position-row {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
 .button-with-icon {
   display: inline-flex;
   align-items: center;
@@ -2418,5 +2428,8 @@ select {
   }
   .action-row {
     grid-template-columns: 1fr;
+  }
+  .preparation-position-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 }

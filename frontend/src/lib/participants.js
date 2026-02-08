@@ -68,7 +68,7 @@ export function emptyParticipantState() {
 
 export function normalizeParticipant(item) {
   const base = emptyParticipantState();
-  const role = ["none", "attack", "defense"].includes(item?.role)
+  const role = ["none", "attack", "defense", "preparation"].includes(item?.role)
     ? item.role
     : base.role;
   const mode = ["combat", "note", "choregraphie"].includes(item?.mode)
@@ -128,6 +128,7 @@ export function normalizeState(raw, defaultParticipants) {
         : [];
       return {
         ...step,
+        lexicon: typeof step?.lexicon === "string" ? step.lexicon : "classic",
         participants: participants.map((_, index) =>
           normalizeParticipant(participantsRaw[index] ?? {}),
         ),
@@ -169,6 +170,15 @@ function buildNoteSummary(item) {
   return item.note ? `${item.note}` : "note à compléter";
 }
 
+function formatDelimitedBits(value) {
+  if (!value) return "";
+  return value
+    .split(" · ")
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .join(" · ");
+}
+
 function buildChoregraphieSummary(item, { includeNoteWhenEmpty }) {
   const note = item.note ? ` (${item.note})` : "";
   if (item.chorePhase) return `${item.chorePhase}${note}`;
@@ -193,18 +203,39 @@ function buildAttackSummary(item) {
     .filter(Boolean)
     .join(" ");
   const actionBits = actionBitsFromDetails || actionBitsFallback;
-  const moveBits = item.attackMove
-    ? item.attackMove
-        .split(" · ")
-        .map((entry) => entry.trim())
-        .filter(Boolean)
-        .join(" · ")
-    : "";
+  const moveBits = formatDelimitedBits(item.attackMove);
   const pieces = [
     item.offensive,
     actionBits ? `en ${actionBits}` : "",
     item.target ? `sur ${item.target}` : "",
     moveBits ? `avec ${moveBits}` : "",
+    item.note ? `(${item.note})` : "",
+  ];
+  return pieces.filter(Boolean).join(" ");
+}
+
+function buildPreparationSummary(item) {
+  const actionDetails = Array.isArray(item.actionDetails)
+    ? item.actionDetails
+    : [];
+  const actionBitsFromDetails = actionDetails
+    .map((detail) => detail?.action)
+    .filter(Boolean)
+    .join(" · ");
+  const actionBitsFallback = [item.action].filter(Boolean).join(" ");
+  const actionBits = actionBitsFromDetails || actionBitsFallback;
+  const position = actionDetails[0]?.attribute ?? "";
+  const complements = Array.isArray(item.attackAttribute)
+    ? item.attackAttribute
+    : [];
+  const positionBits = [position, ...complements.filter((entry) => entry !== position)]
+    .filter(Boolean)
+    .join(" · ");
+  const pieces = [
+    "préparation",
+    actionBits ? actionBits : "",
+    item.target ? `sur ${item.target}` : "",
+    positionBits ? `en ${positionBits}` : "",
     item.note ? `(${item.note})` : "",
   ];
   return pieces.filter(Boolean).join(" ");
@@ -234,19 +265,33 @@ function buildDefenseSummary(item) {
     .filter(Boolean)
     .join(" ");
   const defenseBits = defenseBitsFromDetails || defenseBitsFallback;
-  const moveBits = item.defendMove
-    ? item.defendMove
-        .split(" · ")
-        .map((entry) => entry.trim())
-        .filter(Boolean)
-        .join(" · ")
-    : "";
+  const moveBits = formatDelimitedBits(item.defendMove);
   const pieces = [
     defenseBits,
     moveBits ? `en ${moveBits}` : "",
     item.note ? `(${item.note})` : "",
   ];
   return pieces.filter(Boolean).join(" ");
+}
+
+function buildCombatSummary(item) {
+  if (item.role === "attack") {
+    if (item.noteOverrides) return buildNoteSummary(item);
+    return buildAttackSummary(item);
+  }
+
+  if (item.role === "preparation") {
+    if (item.noteOverrides) return buildNoteSummary(item);
+    return buildPreparationSummary(item);
+  }
+
+  if (item.role === "defense") {
+    if (item.noteOverrides) return buildNoteSummary(item);
+    return buildDefenseSummary(item);
+  }
+
+  if (item.note) return `${item.note}`;
+  return "inactif";
 }
 
 export function buildSummaryLine(item) {
@@ -258,25 +303,7 @@ export function buildSummaryLine(item) {
     return buildNoteSummary(item);
   }
 
-  if (item.role === "attack") {
-    if (item.noteOverrides) {
-      return buildNoteSummary(item);
-    }
-    return buildAttackSummary(item);
-  }
-
-  if (item.role === "defense") {
-    if (item.noteOverrides) {
-      return buildNoteSummary(item);
-    }
-    return buildDefenseSummary(item);
-  }
-
-  if (item.note) {
-    return `${item.note}`;
-  }
-
-  return "inactif";
+  return buildCombatSummary(item);
 }
 
 export function buildSummaryLines(item) {
@@ -288,23 +315,5 @@ export function buildSummaryLines(item) {
     return [buildNoteSummary(item)];
   }
 
-  if (item.role === "attack") {
-    if (item.noteOverrides) {
-      return [buildNoteSummary(item)];
-    }
-    return [buildAttackSummary(item)].filter(Boolean);
-  }
-
-  if (item.role === "defense") {
-    if (item.noteOverrides) {
-      return [buildNoteSummary(item)];
-    }
-    return [buildDefenseSummary(item)].filter(Boolean);
-  }
-
-  if (item.note) {
-    return [`${item.note}`];
-  }
-
-  return ["inactif"];
+  return [buildCombatSummary(item)].filter(Boolean);
 }

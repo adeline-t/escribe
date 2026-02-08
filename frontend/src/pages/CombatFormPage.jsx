@@ -7,6 +7,10 @@ import CombatStepForm from "../components/combat/CombatStepForm.jsx";
 import StepInlineEditorModal from "../components/combat/StepInlineEditorModal.jsx";
 import CombatLeftPanels from "../components/combat/CombatLeftPanels.jsx";
 import CombatRightPanels from "../components/combat/CombatRightPanels.jsx";
+import {
+  COMBAT_FAVORITE_TYPE_KEYS,
+  COMBAT_UI_LABELS,
+} from "../lib/combats.js";
 
 export default function CombatFormPage({
   participants,
@@ -19,7 +23,10 @@ export default function CombatFormPage({
   activePhrase,
   participantLabels,
   normalizedLexicon,
+  lexiconByKey,
   favorites,
+  favoritesByLexicon,
+  lexiconKey,
   labels,
   favoriteTypeKeys,
   showParadeNumber = true,
@@ -49,6 +56,7 @@ export default function CombatFormPage({
   toggleAttribute,
   onNavigate,
   onUpdateStepParticipant,
+  onUpdateStepLexicon,
   onResetForm,
   insertStepIndex,
   onInsertStep,
@@ -59,14 +67,20 @@ export default function CombatFormPage({
   onToggleDeletionMode,
   onDeleteStep,
 }) {
-  const favoriteMap = favorites || {};
   const [activeParticipantIndex, setActiveParticipantIndex] = useState(0);
   const showWeapons =
     Array.isArray(participantWeaponOptions) &&
     participantWeaponOptions.length > 0;
   const showPhase = Array.isArray(phaseOptions) && phaseOptions.length > 0;
+  const availableLexiconKeys = lexiconByKey ? Object.keys(lexiconByKey) : [];
+  const activeLexiconKey = lexiconKey ?? availableLexiconKeys[0];
+  const resolvedLexicon =
+    lexiconByKey && activeLexiconKey && lexiconByKey[activeLexiconKey]
+      ? lexiconByKey[activeLexiconKey]
+      : normalizedLexicon;
   const [inlineEdit, setInlineEdit] = useState(null);
   const [inlineItem, setInlineItem] = useState(null);
+  const [inlineLexiconKey, setInlineLexiconKey] = useState(null);
   const [pendingPhraseDelete, setPendingPhraseDelete] = useState(null);
   const [pendingPhraseRename, setPendingPhraseRename] = useState(null);
   const [renameValue, setRenameValue] = useState("");
@@ -76,33 +90,22 @@ export default function CombatFormPage({
       ) ?? -1)
     : -1;
 
-  const uiLabels = {
-    offensive: "Offensive",
-    action: "Action d'arme",
-    attackAttribute: "Attribut attaque",
-    target: "Cible",
-    attackMove: "Déplacement",
-    defensive: "Défensive",
-    paradeNumber: "Position de parade",
-    paradeAttribute: "Attribut parade",
-    defendMove: "Déplacement",
-    notes: "Notes",
-    weapon: "Arme",
-    ...labels,
-  };
+  const favoriteMap =
+    favoritesByLexicon && activeLexiconKey
+      ? (favoritesByLexicon[activeLexiconKey] ?? {})
+      : favorites || {};
+  const inlineFavoriteMap =
+    favoritesByLexicon && inlineLexiconKey
+      ? (favoritesByLexicon[inlineLexiconKey] ?? {})
+      : favoriteMap;
+  const inlineLexicon =
+    lexiconByKey && inlineLexiconKey
+      ? (lexiconByKey[inlineLexiconKey] ?? resolvedLexicon)
+      : resolvedLexicon;
 
-  const favoriteKeys = {
-    offensive: "offensive",
-    action: "action",
-    attackAttribute: "attaque-attribut",
-    target: "cible",
-    attackMove: "deplacement",
-    defensive: "defensive",
-    paradeNumber: "parade-numero",
-    paradeAttribute: "parade-attribut",
-    defendMove: "deplacement",
-    ...favoriteTypeKeys,
-  };
+  const uiLabels = { ...COMBAT_UI_LABELS, ...labels };
+
+  const favoriteKeys = { ...COMBAT_FAVORITE_TYPE_KEYS, ...favoriteTypeKeys };
 
   useEffect(() => {
     if (participants.length === 0) return;
@@ -111,16 +114,21 @@ export default function CombatFormPage({
     }
   }, [participants.length, activeParticipantIndex]);
 
-  function orderOptions(list, typeKey) {
-    const favs = new Set(favoriteMap[typeKey] ?? []);
-    const favoriteItems = list
-      .filter((item) => favs.has(item))
-      .map((item) => ({ value: item, label: `★ ${item}` }));
-    const others = list
-      .filter((item) => !favs.has(item))
-      .map((item) => ({ value: item, label: item }));
-    return [...favoriteItems, ...others];
+  function createOrderOptions(map) {
+    return (list, typeKey) => {
+      const favs = new Set(map[typeKey] ?? []);
+      const favoriteItems = list
+        .filter((item) => favs.has(item))
+        .map((item) => ({ value: item, label: `★ ${item}` }));
+      const others = list
+        .filter((item) => !favs.has(item))
+        .map((item) => ({ value: item, label: item }));
+      return [...favoriteItems, ...others];
+    };
   }
+
+  const orderOptions = createOrderOptions(favoriteMap);
+  const inlineOrderOptions = createOrderOptions(inlineFavoriteMap);
 
   const phraseIndex = activePhrase
     ? phrases.findIndex((phrase) => phrase.id === activePhrase.id)
@@ -132,7 +140,13 @@ export default function CombatFormPage({
   const nextStepIndex = activePhrase?.steps?.length ?? -1;
 
   function openInlineEditor(stepId, participantIndex, item) {
-    setInlineEdit({ stepId, participantIndex });
+    const step = activePhrase?.steps?.find((entry) => entry.id === stepId);
+    const stepKey =
+      typeof step?.lexicon === "string"
+        ? step.lexicon
+        : (activeLexiconKey ?? "classic");
+    setInlineEdit({ stepId, participantIndex, lexiconKey: stepKey });
+    setInlineLexiconKey(stepKey);
     setInlineItem({
       ...item,
       attackAttribute: Array.isArray(item.attackAttribute)
@@ -144,6 +158,7 @@ export default function CombatFormPage({
   function closeInlineEditor() {
     setInlineEdit(null);
     setInlineItem(null);
+    setInlineLexiconKey(null);
   }
 
   function updateInlineItem(patch) {
@@ -157,6 +172,9 @@ export default function CombatFormPage({
       inlineEdit.participantIndex,
       inlineItem,
     );
+    if (onUpdateStepLexicon && inlineLexiconKey) {
+      onUpdateStepLexicon(inlineEdit.stepId, inlineLexiconKey);
+    }
     closeInlineEditor();
   }
 
@@ -179,7 +197,6 @@ export default function CombatFormPage({
     closeRenamePhraseModal();
   }
 
-
   const stepForm = (
     <CombatStepForm
       form={form}
@@ -191,7 +208,8 @@ export default function CombatFormPage({
       phaseOptions={phaseOptions}
       uiLabels={uiLabels}
       favoriteKeys={favoriteKeys}
-      normalizedLexicon={normalizedLexicon}
+      normalizedLexicon={resolvedLexicon}
+      lexiconKey={activeLexiconKey}
       orderOptions={orderOptions}
       onFormChange={onFormChange}
       toggleAttribute={toggleAttribute}
@@ -286,10 +304,11 @@ export default function CombatFormPage({
         phaseOptions={phaseOptions}
         uiLabels={uiLabels}
         favoriteKeys={favoriteKeys}
-        normalizedLexicon={normalizedLexicon}
-        orderOptions={orderOptions}
+        normalizedLexicon={inlineLexicon}
+        orderOptions={inlineOrderOptions}
         showParadeNumber={showParadeNumber}
         isReadOnly={isReadOnly}
+        lexiconKey={inlineLexiconKey}
         onClose={closeInlineEditor}
         onSave={saveInlineEditor}
         onUpdateInlineItem={updateInlineItem}

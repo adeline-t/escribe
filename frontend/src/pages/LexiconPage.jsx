@@ -16,6 +16,8 @@ export default function LexiconPage({
   authUser,
   favorites,
   setFavorites,
+  newFavorites,
+  setNewFavorites,
   sabreFavorites,
   setSabreFavorites,
 }) {
@@ -63,7 +65,11 @@ export default function LexiconPage({
   const isGlobalScope = scope === "global";
   const canEdit = isGlobalScope ? canEditGlobal : scope === "personal";
   const favoritesSource =
-    lexiconKey === "classic" ? favorites : (sabreFavorites ?? localFavorites);
+    lexiconKey === "classic"
+      ? favorites
+      : lexiconKey === "classic-v2"
+        ? newFavorites ?? localFavorites
+        : sabreFavorites ?? localFavorites;
   const favoriteSet = useMemo(
     () => new Set(favoritesSource?.[activeType] ?? []),
     [favoritesSource, activeType],
@@ -131,6 +137,8 @@ export default function LexiconPage({
         if (!payload?.favorites) return;
         if (lexiconKey === "classic") {
           setFavorites?.(payload.favorites);
+        } else if (lexiconKey === "classic-v2") {
+          setNewFavorites?.(payload.favorites);
         } else if (setSabreFavorites) {
           setSabreFavorites(payload.favorites);
         } else {
@@ -139,7 +147,7 @@ export default function LexiconPage({
       })
       .catch(() => null);
     return () => controller.abort();
-  }, [apiBase, authUser, lexiconKey, setFavorites]);
+  }, [apiBase, authUser, lexiconKey, setFavorites, setNewFavorites, setSabreFavorites]);
 
   useEffect(() => {
     setActiveType(lexiconTypes[0]?.key ?? "");
@@ -319,8 +327,8 @@ export default function LexiconPage({
           <div className="segmented segmented--outline segmented--compact">
             <button
               type="button"
-              className={`segmented-button ${lexiconKey === "classic" ? "is-active" : ""}`}
-              onClick={() => setLexiconKey("classic")}
+              className={`segmented-button ${lexiconKey === "classic-v2" ? "is-active" : ""}`}
+              onClick={() => setLexiconKey("classic-v2")}
             >
               Escrime
             </button>

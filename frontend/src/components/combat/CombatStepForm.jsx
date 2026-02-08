@@ -1,5 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
-import { FaPlus, FaXmark, FaTrash } from "react-icons/fa6";
+import { FaXmark } from "react-icons/fa6";
+import { COMBAT_STEP_LABELS } from "../../lib/combats.js";
+import {
+  useClassicCombatStepFormLogic,
+  useSabreCombatStepFormLogic,
+} from "../../hooks/useCombatFormLogic.js";
 
 export default function CombatStepForm({
   form,
@@ -12,6 +16,7 @@ export default function CombatStepForm({
   uiLabels,
   favoriteKeys,
   normalizedLexicon,
+  lexiconKey,
   orderOptions,
   onFormChange,
   toggleAttribute,
@@ -26,340 +31,69 @@ export default function CombatStepForm({
   formVariant = "classic",
 }) {
   const isSabre = formVariant === "sabre";
-  const [builderSelections, setBuilderSelections] = useState(() =>
-    participants.map(() => ({
-      attackMove: "",
-      defendMove: "",
-      paradeAttribute: "",
-    })),
-  );
-  const [actionFeedback, setActionFeedback] = useState(() =>
-    participants.map(() => false),
-  );
-
-  useEffect(() => {
-    setBuilderSelections((prev) =>
-      participants.map(
-        (_, index) =>
-          prev[index] ?? {
-            attackMove: "",
-            defendMove: "",
-            paradeAttribute: "",
-          },
-      ),
-    );
-    setActionFeedback((prev) =>
-      participants.map((_, index) => prev[index] ?? false),
-    );
-  }, [participants.length]);
-
-  const actionsOptions = useMemo(
-    () => orderOptions(normalizedLexicon.action ?? [], favoriteKeys.action),
-    [normalizedLexicon, favoriteKeys, orderOptions],
-  );
-  const offensiveOptions = useMemo(
-    () =>
-      orderOptions(normalizedLexicon.offensive ?? [], favoriteKeys.offensive),
-    [normalizedLexicon, favoriteKeys, orderOptions],
-  );
-  const attackAttributeOptions = useMemo(
-    () =>
-      orderOptions(
-        normalizedLexicon.attackAttribute ?? [],
-        favoriteKeys.attackAttribute,
-      ),
-    [normalizedLexicon, favoriteKeys, orderOptions],
-  );
-  const targetOptions = useMemo(
-    () => orderOptions(normalizedLexicon.cible ?? [], favoriteKeys.target),
-    [normalizedLexicon, favoriteKeys, orderOptions],
-  );
-  const attackMoveOptions = useMemo(
-    () =>
-      orderOptions(normalizedLexicon.attackMove ?? [], favoriteKeys.attackMove),
-    [normalizedLexicon, favoriteKeys, orderOptions],
-  );
-  const defensiveOptions = useMemo(
-    () =>
-      orderOptions(normalizedLexicon.defensive ?? [], favoriteKeys.defensive),
-    [normalizedLexicon, favoriteKeys, orderOptions],
-  );
-  const paradeNumberOptions = useMemo(
-    () =>
-      orderOptions(
-        normalizedLexicon.paradeNumber ?? [],
-        favoriteKeys.paradeNumber,
-      ),
-    [normalizedLexicon, favoriteKeys, orderOptions],
-  );
-  const paradeAttributeOptions = useMemo(
-    () =>
-      orderOptions(
-        normalizedLexicon.paradeAttribute ?? [],
-        favoriteKeys.paradeAttribute,
-      ),
-    [normalizedLexicon, favoriteKeys, orderOptions],
-  );
-  const defendMoveOptions = useMemo(
-    () =>
-      orderOptions(normalizedLexicon.defendMove ?? [], favoriteKeys.defendMove),
-    [normalizedLexicon, favoriteKeys, orderOptions],
-  );
-
-  function splitTokens(value) {
-    if (!value) return [];
-    return value
-      .split(" · ")
-      .map((item) => item.trim())
-      .filter(Boolean);
-  }
-
-  function joinTokens(values) {
-    return values.join(" · ");
-  }
-
-  function getTokenList(item, key) {
-    return splitTokens(item[key]);
-  }
-
-  function updateTokenList(index, key, nextList) {
-    onFormChange(index, { [key]: joinTokens(nextList) });
-  }
-
-  function addToken(index, key, value) {
-    if (!value) return;
-    const list = getTokenList(form[index], key);
-    if (list.includes(value)) return;
-    updateTokenList(index, key, [...list, value]);
-  }
-
-  function removeToken(index, key, value) {
-    const list = getTokenList(form[index], key);
-    updateTokenList(
-      index,
-      key,
-      list.filter((item) => item !== value),
-    );
-  }
-
-  function updateBuilderSelection(index, patch) {
-    setBuilderSelections((prev) =>
-      prev.map((item, idx) => (idx === index ? { ...item, ...patch } : item)),
-    );
-  }
-
-  function getActionDetails(item) {
-    if (Array.isArray(item.actionDetails) && item.actionDetails.length) {
-      return item.actionDetails.map((detail) => ({
-        action: detail?.action ?? "",
-        attribute: detail?.attribute ?? "",
-      }));
-    }
-    if (item.action || (item.attackAttribute && item.attackAttribute.length)) {
-      return [
-        {
-          action: item.action ?? "",
-          attribute: item.attackAttribute?.[0] ?? "",
-        },
-      ];
-    }
-    return [];
-  }
-
-  function getDefenseDetails(item) {
-    if (Array.isArray(item.defenseDetails) && item.defenseDetails.length) {
-      return item.defenseDetails.map((detail) => ({
-        defense: detail?.defense ?? "",
-        position: detail?.position ?? "",
-        attribute: detail?.attribute ?? "",
-      }));
-    }
-    if (item.defense || item.paradeNumber || item.paradeAttribute) {
-      return [
-        {
-          defense: item.defense ?? "",
-          position: item.paradeNumber ?? "",
-          attribute: item.paradeAttribute ?? "",
-        },
-      ];
-    }
-    return [];
-  }
-
-  function updateDefenseDetails(index, nextDetails) {
-    onFormChange(index, {
-      defenseDetails: nextDetails,
-      defense: nextDetails[0]?.defense ?? "",
-      paradeNumber: nextDetails[0]?.position ?? "",
-      paradeAttribute: nextDetails[0]?.attribute ?? "",
-    });
-  }
-
-  function addDefenseDetail(index) {
-    const list = getDefenseDetails(form[index]);
-    updateDefenseDetails(index, [
-      ...list,
-      { defense: "", position: "", attribute: "" },
-    ]);
-  }
-
-  function updateDefenseDetail(index, detailIndex, patch) {
-    const list = getDefenseDetails(form[index]);
-    const next = list.map((detail, idx) =>
-      idx === detailIndex ? { ...detail, ...patch } : detail,
-    );
-    updateDefenseDetails(index, next);
-  }
-
-  function removeDefenseDetail(index, detailIndex) {
-    const list = getDefenseDetails(form[index]);
-    updateDefenseDetails(
-      index,
-      list.filter((_, idx) => idx !== detailIndex),
-    );
-  }
-
-  function updateActionDetails(index, nextDetails) {
-    onFormChange(index, {
-      actionDetails: nextDetails,
-      action: nextDetails[0]?.action ?? "",
-      attackAttribute: nextDetails[0]?.attribute
-        ? [nextDetails[0].attribute]
-        : [],
-    });
-  }
-
-  function addActionDetail(index) {
-    const list = getActionDetails(form[index]);
-    updateActionDetails(index, [...list, { action: "", attribute: "" }]);
-    setActionFeedback((prev) =>
-      prev.map((flag, idx) => (idx === index ? true : flag)),
-    );
-    setTimeout(() => {
-      setActionFeedback((prev) =>
-        prev.map((flag, idx) => (idx === index ? false : flag)),
-      );
-    }, 1200);
-  }
-
-  function updateActionDetail(index, detailIndex, patch) {
-    const list = getActionDetails(form[index]);
-    const next = list.map((detail, idx) =>
-      idx === detailIndex ? { ...detail, ...patch } : detail,
-    );
-    updateActionDetails(index, next);
-  }
-
-  function removeActionDetail(index, detailIndex) {
-    const list = getActionDetails(form[index]);
-    updateActionDetails(
-      index,
-      list.filter((_, idx) => idx !== detailIndex),
-    );
-  }
-
-  function renderTokenField({
-    index,
-    item,
-    label,
-    fieldKey,
-    options,
-    selectionKey,
-    emptyLabel,
-    autoAddOnSelect = false,
-  }) {
-    const tokens = getTokenList(item, fieldKey);
-    const selection = builderSelections[index]?.[selectionKey] ?? "";
-
-    return (
-      <div className="builder builder--compact">
-        <div className="builder-header">
-          <div className="text-strong">{label}</div>
-          <div className="text-sm text-muted">{emptyLabel}</div>
-        </div>
-        <div className="builder-controls">
-          <label>
-            Sélection
-            <select
-              value={selection}
-              onChange={(event) =>
-                autoAddOnSelect
-                  ? (() => {
-                      const value = event.target.value;
-                      if (!value) {
-                        updateBuilderSelection(index, { [selectionKey]: "" });
-                        return;
-                      }
-                      addToken(index, fieldKey, value);
-                      updateBuilderSelection(index, { [selectionKey]: "" });
-                    })()
-                  : updateBuilderSelection(index, {
-                      [selectionKey]: event.target.value,
-                    })
-              }
-            >
-              <option value="">—</option>
-              {options.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          {!autoAddOnSelect ? (
-            <button
-              type="button"
-              className="button-icon button-secondary"
-              onClick={() => {
-                if (!selection) return;
-                addToken(index, fieldKey, selection);
-                updateBuilderSelection(index, { [selectionKey]: "" });
-              }}
-              disabled={!selection}
-              aria-label={`Ajouter ${label}`}
-              title="Ajouter"
-            >
-              <FaPlus />
-            </button>
-          ) : null}
-        </div>
-        {tokens.length ? (
-          <div className="builder-tags">
-            {tokens.map((token) => (
-              <span key={token} className="builder-tag">
-                <span className="builder-tag-value">{token}</span>
-                <button
-                  type="button"
-                  className="button-icon button-ghost builder-tag-remove"
-                  onClick={() => removeToken(index, fieldKey, token)}
-                  aria-label={`Retirer ${token}`}
-                  title="Retirer"
-                >
-                  <FaXmark />
-                </button>
-              </span>
-            ))}
-          </div>
-        ) : (
-          <div className="text-sm text-muted">Aucun mot sélectionné.</div>
-        )}
-      </div>
-    );
-  }
-
-  const summaryLines = form.map((item, index) => ({
-    name: participantLabels[index] ?? participants[index],
-    text: buildSummaryLine(item, participants[index], index),
-  }));
-  const hasAnySummary = summaryLines.some(
-    (line) => line.text && line.text !== "inactif",
-  );
+  const showModeToggle = lexiconKey === "sabre-laser";
+  // Les deux wrappers pointent vers le même core de logique.
+  // On garde cette sélection explicite pour que le composant reste lisible.
+  const classicLogic = useClassicCombatStepFormLogic({
+    form,
+    participants,
+    participantLabels,
+    buildSummaryLine,
+    normalizedLexicon,
+    favoriteKeys,
+    orderOptions,
+    onFormChange,
+  });
+  const sabreLogic = useSabreCombatStepFormLogic({
+    form,
+    participants,
+    participantLabels,
+    buildSummaryLine,
+    normalizedLexicon,
+    favoriteKeys,
+    orderOptions,
+    onFormChange,
+  });
+  const logic = isSabre ? sabreLogic : classicLogic;
+  // Toute la logique UI/métier (options, compléments, modes, sync des champs)
+  // vient du hook pour éviter les divergences entre écrans.
+  const {
+    builderSelections,
+    updateBuilderSelection,
+    getMoveParts,
+    updateMoveBase,
+    addMoveComplement,
+    removeMoveComplement,
+    getDefenseAttributeTokens,
+    setDefenseAttributeTokens,
+    getActionDetails,
+    getDefenseDetails,
+    updateDefenseDetails,
+    updateDefenseDetail,
+    updatePrepDetails,
+    addAttackComplement,
+    removeAttackComplement,
+    getV2Mode,
+    resolveDefenseType,
+    summaryLines,
+    hasAnySummary,
+    offensiveOptions,
+    attackAttributeOptions,
+    targetOptions,
+    defensiveOptions,
+    paradeNumberOptions,
+    attackMoveBaseOptions,
+    attackMoveComplementOptions,
+    paradeComplementOptions,
+    prepTypeList,
+    attackMoveBaseValues,
+  } = logic;
 
   return (
     <>
       {hasAnySummary ? (
         <div className="summary">
-          <h3 className="subtitle">Phrase résumée</h3>
+          <h3 className="subtitle">{COMBAT_STEP_LABELS.summaryTitle}</h3>
           <div className="text-md stack-1">
             {summaryLines.map((line, index) => (
               <div key={`${index}-summary`} className="summary-line">
@@ -373,7 +107,7 @@ export default function CombatStepForm({
       <div
         className="participant-selector"
         role="tablist"
-        aria-label="Choisir un combattant"
+        aria-label={COMBAT_STEP_LABELS.chooseFighterAria}
       >
         {participants.map((_, index) => {
           const name = participantLabels[index];
@@ -397,6 +131,11 @@ export default function CombatStepForm({
         {participants.map((_, index) => {
           const item = form[index];
           const name = participantLabels[index];
+          // v2Mode est dérivé du role + des données existantes (compat legacy).
+          const v2Mode = getV2Mode(item, index);
+          const defenseDetail = getDefenseDetails(item)[0] ?? {};
+          // Le type de défense peut venir du builder local ou des données persistées.
+          const defenseType = resolveDefenseType(item, index);
           return (
             <div
               key={`${name}-${index}`}
@@ -404,415 +143,778 @@ export default function CombatStepForm({
             >
               <div className="participant-card-header">
                 <div className="text-strong">{name}</div>
-                <div
-                  className="segmented segmented--solid"
-                  role="radiogroup"
-                  aria-label={`Mode de ${name}`}
-                >
-                  <button
-                    type="button"
-                    className={`segmented-button ${item.mode === "note" ? "is-active" : ""}`}
-                    aria-pressed={item.mode === "note"}
-                    onClick={() => onFormChange(index, { mode: "note" })}
-                    disabled={isReadOnly}
+                {showModeToggle ? (
+                  <div
+                    className="segmented segmented--solid"
+                    role="radiogroup"
+                    aria-label={COMBAT_STEP_LABELS.modeLabel(name)}
                   >
-                    Note
-                  </button>
-                  {showPhase ? (
-                  <button
-                    type="button"
-                    className={`segmented-button ${item.mode === "choregraphie" ? "is-active" : ""}`}
-                    aria-pressed={item.mode === "choregraphie"}
-                    onClick={() =>
-                      onFormChange(index, { mode: "choregraphie" })
-                    }
-                  >
-                    Chorégraphie
-                  </button>
-                  ) : null}
-                  <button
-                    type="button"
-                    className={`segmented-button ${item.mode === "combat" ? "is-active" : ""}`}
-                    aria-pressed={item.mode === "combat"}
-                    onClick={() =>
-                      onFormChange(index, {
-                        mode: "combat",
-                        noteOverrides: false,
-                      })
-                    }
-                    disabled={isReadOnly}
-                  >
-                    Combat
-                  </button>
-                </div>
+                    <button
+                      type="button"
+                      className={`segmented-button ${item.mode === "note" ? "is-active" : ""}`}
+                      aria-pressed={item.mode === "note"}
+                      onClick={() => onFormChange(index, { mode: "note" })}
+                      disabled={isReadOnly}
+                    >
+                      {COMBAT_STEP_LABELS.modeNote}
+                    </button>
+                    {showPhase ? (
+                      <button
+                        type="button"
+                        className={`segmented-button ${item.mode === "choregraphie" ? "is-active" : ""}`}
+                        aria-pressed={item.mode === "choregraphie"}
+                        onClick={() =>
+                          onFormChange(index, { mode: "choregraphie" })
+                        }
+                      >
+                      {COMBAT_STEP_LABELS.modeChoregraphie}
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      className={`segmented-button ${item.mode === "combat" ? "is-active" : ""}`}
+                      aria-pressed={item.mode === "combat"}
+                      onClick={() =>
+                        onFormChange(index, {
+                          mode: "combat",
+                          noteOverrides: false,
+                        })
+                      }
+                      disabled={isReadOnly}
+                    >
+                      {COMBAT_STEP_LABELS.modeCombat}
+                    </button>
+                  </div>
+                ) : null}
               </div>
 
               {item.mode === "combat" ? (
                 <div className="participant-fields">
-                  <div
-                    className="segmented segmented--outline segmented--compact"
-                    role="radiogroup"
-                    aria-label={`Rôle de ${name}`}
-                  >
-                    <button
-                      type="button"
-                      className={`segmented-button ${item.role === "attack" ? "is-active" : ""}`}
-                      aria-pressed={item.role === "attack"}
-                      onClick={() =>
-                        onFormChange(index, {
-                          role: "attack",
-                          noteOverrides: false,
-                        })
-                      }
-                      disabled={isReadOnly}
+                  <>
+                    <div
+                      className="segmented segmented--outline segmented--compact"
+                      role="radiogroup"
+                        aria-label={COMBAT_STEP_LABELS.roleLabel(name)}
                     >
-                      Attaque
-                    </button>
-                    <button
-                      type="button"
-                      className={`segmented-button ${item.role === "defense" ? "is-active" : ""}`}
-                      aria-pressed={item.role === "defense"}
-                      onClick={() =>
-                        onFormChange(index, {
-                          role: "defense",
-                          noteOverrides: false,
-                        })
-                      }
-                      disabled={isReadOnly}
-                    >
-                      Défense
-                    </button>
-                    <button
-                      type="button"
-                      className={`segmented-button ${item.role === "none" ? "is-active" : ""}`}
-                      aria-pressed={item.role === "none"}
-                      onClick={() => onFormChange(index, { role: "none" })}
-                      disabled={isReadOnly}
-                    >
-                      Inactif
-                    </button>
-                  </div>
+                      <button
+                        type="button"
+                        className={`segmented-button ${v2Mode === "attack" ? "is-active" : ""}`}
+                        aria-pressed={v2Mode === "attack"}
+                        onClick={() =>
+                          onFormChange(index, {
+                            role: "attack",
+                            noteOverrides: false,
+                            actionDetails: [],
+                            action: "",
+                          })
+                        }
+                        disabled={isReadOnly}
+                      >
+                          {COMBAT_STEP_LABELS.roleAttack}
+                      </button>
+                      <button
+                        type="button"
+                        className={`segmented-button ${v2Mode === "defense" ? "is-active" : ""}`}
+                        aria-pressed={v2Mode === "defense"}
+                        onClick={() =>
+                          onFormChange(index, {
+                            role: "defense",
+                            noteOverrides: false,
+                          })
+                        }
+                        disabled={isReadOnly}
+                      >
+                          {COMBAT_STEP_LABELS.roleDefense}
+                      </button>
+                      <button
+                        type="button"
+                        className={`segmented-button ${v2Mode === "preparation" ? "is-active" : ""}`}
+                        aria-pressed={v2Mode === "preparation"}
+                        onClick={() =>
+                          onFormChange(index, {
+                            role: "preparation",
+                            noteOverrides: false,
+                            offensive: "",
+                            attackMove: "",
+                            attackAttribute: [],
+                            actionDetails: [{ action: "", attribute: "" }],
+                            action: "",
+                          })
+                        }
+                        disabled={isReadOnly}
+                      >
+                          {COMBAT_STEP_LABELS.rolePreparation}
+                      </button>
+                      <button
+                        type="button"
+                        className={`segmented-button ${v2Mode === "note" ? "is-active" : ""}`}
+                        aria-pressed={v2Mode === "note"}
+                        onClick={() => onFormChange(index, { role: "none" })}
+                        disabled={isReadOnly}
+                      >
+                          {COMBAT_STEP_LABELS.roleNote}
+                      </button>
+                    </div>
 
-                  {!item.noteOverrides && item.role === "attack" ? (
-                    <div className="form-section">
-                      <label>
-                        {uiLabels.offensive}
-                        <select
-                          value={item.offensive}
-                          onChange={(event) =>
-                            onFormChange(index, {
-                              offensive: event.target.value,
-                            })
-                          }
-                        >
-                          <option value="">—</option>
-                          {offensiveOptions.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-
-                      <div className="form-section form-section--soft">
-                        <div className="text-strong">Action d&apos;arme</div>
-                        <div className="text-sm text-muted">
-                          Ajoute une ou plusieurs actions, chacune avec son
-                          attribut.
-                        </div>
-                        {actionFeedback[index] ? (
-                          <div className="text-sm text-muted">
-                            Action ajoutée.
-                          </div>
-                        ) : null}
-                        <div className="action-list">
-                          {getActionDetails(item).map((detail, detailIndex) => (
-                            <div
-                              key={`action-${detailIndex}`}
-                              className="action-row action-row--two"
-                            >
-                              <label>
-                                Action
-                                <select
-                                  value={detail.action}
-                                  onChange={(event) =>
-                                    updateActionDetail(index, detailIndex, {
-                                      action: event.target.value,
-                                    })
-                                  }
-                                >
-                                  <option value="">—</option>
-                                  {actionsOptions.map((option) => (
-                                    <option
-                                      key={option.value}
-                                      value={option.value}
-                                    >
-                                      {option.label}
-                                    </option>
-                                  ))}
-                                </select>
-                              </label>
-                              <label>
-                                Attribut
-                                <select
-                                  value={detail.attribute}
-                                  onChange={(event) =>
-                                    updateActionDetail(index, detailIndex, {
-                                      attribute: event.target.value,
-                                    })
-                                  }
-                                >
-                                  <option value="">—</option>
-                                  {attackAttributeOptions.map((option) => (
-                                    <option
-                                      key={option.value}
-                                      value={option.value}
-                                    >
-                                      {option.label}
-                                    </option>
-                                  ))}
-                                </select>
-                              </label>
-                              <button
-                                type="button"
-                                className="button-icon button-ghost"
-                                onClick={() =>
-                                  removeActionDetail(index, detailIndex)
-                                }
-                                aria-label="Retirer l'action"
-                                title="Retirer"
-                              >
-                                <FaTrash />
-                              </button>
-                            </div>
-                          ))}
-                          <button
-                            type="button"
-                            className="button-secondary button-with-icon"
-                            onClick={() => addActionDetail(index)}
-                          >
-                            <FaPlus />
-                            Ajouter une action
-                          </button>
-                        </div>
-                      </div>
-
-                      {getActionDetails(item).some(
-                        (detail) => detail.action,
-                      ) ? (
-                        <>
+                    {!item.noteOverrides && v2Mode === "attack" ? (
+                      <div className="form-section">
+                        <div className="action-row action-row--two preparation-position-row">
                           <label>
-                            {uiLabels.target}
+                            {uiLabels.offensive}
                             <select
-                              value={item.target}
+                              value={item.offensive}
                               onChange={(event) =>
                                 onFormChange(index, {
-                                  target: event.target.value,
+                                  offensive: event.target.value,
                                 })
                               }
                             >
                               <option value="">—</option>
-                              {targetOptions.map((option) => (
+                              {offensiveOptions.map((option) => (
                                 <option key={option.value} value={option.value}>
                                   {option.label}
                                 </option>
                               ))}
                             </select>
                           </label>
-                          {renderTokenField({
-                            index,
-                            item,
-                            label: uiLabels.attackMove,
-                            fieldKey: "attackMove",
-                            options: attackMoveOptions,
-                            selectionKey: "attackMove",
-                            emptyLabel: "Ajoute un ou plusieurs déplacements.",
-                            autoAddOnSelect: true,
-                          })}
-                        </>
-                      ) : null}
-                    </div>
-                  ) : null}
 
-                  {!item.noteOverrides && item.role === "defense" ? (
-                    <div className="form-section">
-                      <div className="form-section form-section--soft">
-                        <div className="text-strong">Défensive</div>
-                        <div className="text-sm text-muted">
-                          Ajoute une ou plusieurs défensives, chacune avec sa
-                          position et son attribut.
-                        </div>
-                        <div className="action-list">
-                          {getDefenseDetails(item).map(
-                            (detail, detailIndex) => (
-                              <div
-                                key={`defense-${detailIndex}`}
-                                className="action-row"
+                          <label>
+                            {uiLabels.attackAttributeLabel ??
+                              COMBAT_STEP_LABELS.complement}
+                            <div className="input-row">
+                              <select
+                                value={
+                                  builderSelections[index]?.attackComplement ??
+                                  ""
+                                }
+                                onChange={(event) => {
+                                  const value = event.target.value;
+                                  if (!value) {
+                                    updateBuilderSelection(index, {
+                                      attackComplement: "",
+                                    });
+                                    return;
+                                  }
+                                  addAttackComplement(index, value);
+                                  updateBuilderSelection(index, {
+                                    attackComplement: "",
+                                  });
+                                }}
                               >
-                                <label>
-                                  {uiLabels.defensive}
-                                  <select
-                                    value={detail.defense}
-                                    onChange={(event) =>
-                                      updateDefenseDetail(index, detailIndex, {
-                                        defense: event.target.value,
-                                      })
-                                    }
+                                <option value="">—</option>
+                                {attackAttributeOptions.map((option) => (
+                                  <option
+                                    key={option.value}
+                                    value={option.value}
                                   >
-                                    <option value="">—</option>
-                                    {defensiveOptions.map((option) => (
-                                      <option
-                                        key={option.value}
-                                        value={option.value}
-                                      >
-                                        {option.label}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </label>
-                                {showParadeNumber ? (
-                                  <label>
-                                    {uiLabels.paradeNumber}
-                                    <select
-                                      value={detail.position}
-                                      onChange={(event) =>
-                                        updateDefenseDetail(
-                                          index,
-                                          detailIndex,
-                                          {
-                                            position: event.target.value,
-                                          },
-                                        )
-                                      }
-                                    >
-                                      <option value="">—</option>
-                                      {paradeNumberOptions.map((option) => (
-                                        <option
-                                          key={option.value}
-                                          value={option.value}
-                                        >
-                                          {option.label}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </label>
-                                ) : null}
-                                <label>
-                                  {uiLabels.paradeAttribute}
-                                  <select
-                                    value={detail.attribute}
-                                    onChange={(event) =>
-                                      updateDefenseDetail(index, detailIndex, {
-                                        attribute: event.target.value,
-                                      })
-                                    }
-                                  >
-                                    <option value="">—</option>
-                                    {paradeAttributeOptions.map((option) => (
-                                      <option
-                                        key={option.value}
-                                        value={option.value}
-                                      >
-                                        {option.label}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </label>
+                                    {option.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </label>
+                        </div>
+                        {Array.isArray(item.attackAttribute) &&
+                        item.attackAttribute.length ? (
+                          <div className="builder-tags">
+                            {item.attackAttribute.map((token) => (
+                              <span key={token} className="builder-tag">
+                                <span className="builder-tag-value">
+                                  {token}
+                                </span>
                                 <button
                                   type="button"
-                                  className="button-icon button-ghost"
+                                  className="button-icon button-ghost builder-tag-remove"
                                   onClick={() =>
-                                    removeDefenseDetail(index, detailIndex)
+                                    removeAttackComplement(index, token)
                                   }
-                                  aria-label="Retirer la défensive"
+                                  aria-label={`Retirer ${token}`}
                                   title="Retirer"
                                 >
-                                  <FaTrash />
+                                  <FaXmark />
                                 </button>
-                              </div>
-                            ),
-                          )}
-                          <button
-                            type="button"
-                            className="button-secondary button-with-icon"
-                            onClick={() => addDefenseDetail(index)}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
+
+                        <label>
+                          {uiLabels.target}
+                          <select
+                            value={item.target}
+                            onChange={(event) =>
+                              onFormChange(index, {
+                                target: event.target.value,
+                              })
+                            }
                           >
-                            <FaPlus />
-                            Ajouter une défensive
-                          </button>
+                            <option value="">—</option>
+                            {targetOptions.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <div className="action-row action-row--two">
+                          <label>
+                            {COMBAT_STEP_LABELS.movementLabel}
+                            <select
+                              value={
+                                getMoveParts(
+                                  item.attackMove,
+                                  attackMoveBaseValues,
+                                ).base
+                              }
+                              onChange={(event) =>
+                                updateMoveBase(
+                                  index,
+                                  "attackMove",
+                                  event.target.value,
+                                  attackMoveBaseValues,
+                                )
+                              }
+                            >
+                              <option value="">—</option>
+                              {attackMoveBaseOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label>
+                            {COMBAT_STEP_LABELS.attributeLabel}
+                            <div className="input-row">
+                              <select
+                                value={
+                                  builderSelections[index]
+                                    ?.attackMoveComplement ?? ""
+                                }
+                                onChange={(event) => {
+                                  const value = event.target.value;
+                                  if (!value) {
+                                    updateBuilderSelection(index, {
+                                      attackMoveComplement: "",
+                                    });
+                                    return;
+                                  }
+                                  addMoveComplement(
+                                    index,
+                                    "attackMove",
+                                    value,
+                                    attackMoveBaseValues,
+                                  );
+                                  updateBuilderSelection(index, {
+                                    attackMoveComplement: "",
+                                  });
+                                }}
+                              >
+                                <option value="">—</option>
+                                {attackMoveComplementOptions.map((value) => (
+                                  <option key={value} value={value}>
+                                    {value}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </label>
                         </div>
+                        {getMoveParts(item.attackMove, attackMoveBaseValues)
+                          .complements.length > 0 && (
+                          <div className="builder-tags">
+                            {getMoveParts(
+                              item.attackMove,
+                              attackMoveBaseValues,
+                            ).complements.map((token) => (
+                              <span key={token} className="builder-tag">
+                                <span className="builder-tag-value">
+                                  {token}
+                                </span>
+                                <button
+                                  type="button"
+                                  className="button-icon button-ghost builder-tag-remove"
+                                  onClick={() =>
+                                    removeMoveComplement(
+                                      index,
+                                      "attackMove",
+                                      token,
+                                      attackMoveBaseValues,
+                                    )
+                                  }
+                                  aria-label={`Retirer ${token}`}
+                                  title="Retirer"
+                                >
+                                  <FaXmark />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
+                    ) : null}
 
-                      {getDefenseDetails(item).some((detail) => detail.defense)
-                        ? renderTokenField({
-                            index,
-                            item,
-                            label: uiLabels.defendMove,
-                            fieldKey: "defendMove",
-                            options: defendMoveOptions,
-                            selectionKey: "defendMove",
-                            emptyLabel: "Ajoute un ou plusieurs déplacements.",
-                            autoAddOnSelect: true,
-                          })
-                        : null}
-                    </div>
-                  ) : null}
+                    {!item.noteOverrides && v2Mode === "defense" ? (
+                      <div className="form-section">
+                        <label>
+                          {COMBAT_STEP_LABELS.defenseType}
+                          <select
+                            value={defenseType}
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              if (!value) {
+                                updateBuilderSelection(index, {
+                                  defenseType: "",
+                                });
+                                updateDefenseDetails(index, []);
+                                return;
+                              }
+                              if (value === "parade") {
+                                updateBuilderSelection(index, {
+                                  defenseType: "parade",
+                                });
+                                updateDefenseDetails(index, [
+                                  {
+                                    defense: "parade",
+                                    position: "",
+                                    attribute: "",
+                                  },
+                                ]);
+                              } else {
+                                updateBuilderSelection(index, {
+                                  defenseType: "esquive",
+                                });
+                                updateDefenseDetails(index, [
+                                  {
+                                    defense:
+                                      defenseDetail?.defense &&
+                                      defenseDetail.defense !== "parade"
+                                        ? defenseDetail.defense
+                                        : "",
+                                    position: "",
+                                    attribute: "",
+                                  },
+                                ]);
+                              }
+                            }}
+                          >
+                            <option value="">—</option>
+                            <option value="parade">
+                              {COMBAT_STEP_LABELS.defenseParade}
+                            </option>
+                            <option value="esquive">
+                              {COMBAT_STEP_LABELS.defenseEsquive}
+                            </option>
+                          </select>
+                        </label>
 
-                  {item.role === "none" ? (
-                    <label>
-                      {uiLabels.notes}
-                      <div className="input-with-clear">
-                        <input
-                          value={item.note}
-                          onChange={(event) =>
-                            onFormChange(index, { note: event.target.value })
-                          }
-                        />
-                        {item.note ? (
-                          <button
-                            type="button"
-                            className="input-clear"
-                            onClick={() => onFormChange(index, { note: "" })}
-                            aria-label="Effacer la note"
-                            title="Effacer"
-                          />
+                        {defenseType === "parade" ? (
+                          <div className="form-section form-section--soft">
+                            <div className="action-row action-row--two">
+                              <label>
+                                {uiLabels.paradeNumber}
+                                <select
+                                  value={defenseDetail?.position ?? ""}
+                                  onChange={(event) =>
+                                    updateDefenseDetail(index, 0, {
+                                      position: event.target.value,
+                                    })
+                                  }
+                                >
+                                  <option value="">—</option>
+                                  {paradeNumberOptions.map((option) => (
+                                    <option
+                                      key={option.value}
+                                      value={option.value}
+                                    >
+                                      {option.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                              <label>
+                                {COMBAT_STEP_LABELS.attributeLabel}
+                                <div className="input-row">
+                                  <select
+                                    value={
+                                      builderSelections[index]
+                                        ?.paradeComplement ?? ""
+                                    }
+                                    onChange={(event) => {
+                                      const value = event.target.value;
+                                      if (!value) {
+                                        updateBuilderSelection(index, {
+                                          paradeComplement: "",
+                                        });
+                                        return;
+                                      }
+                                      const list =
+                                        getDefenseAttributeTokens(item);
+                                      if (!list.includes(value)) {
+                                        setDefenseAttributeTokens(index, [
+                                          ...list,
+                                          value,
+                                        ]);
+                                      }
+                                      updateBuilderSelection(index, {
+                                        paradeComplement: "",
+                                      });
+                                    }}
+                                  >
+                                    <option value="">—</option>
+                                    {paradeComplementOptions.map((value) => (
+                                      <option key={value} value={value}>
+                                        {value}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </label>
+                            </div>
+                            {getDefenseAttributeTokens(item).length > 0 && (
+                              <div className="builder-tags">
+                                {getDefenseAttributeTokens(item).map(
+                                  (token) => (
+                                    <span key={token} className="builder-tag">
+                                      <span className="builder-tag-value">
+                                        {token}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        className="button-icon button-ghost builder-tag-remove"
+                                        onClick={() => {
+                                          const next =
+                                            getDefenseAttributeTokens(
+                                              item,
+                                            ).filter(
+                                              (entry) => entry !== token,
+                                            );
+                                          setDefenseAttributeTokens(
+                                            index,
+                                            next,
+                                          );
+                                        }}
+                                        aria-label={`Retirer ${token}`}
+                                        title="Retirer"
+                                      >
+                                        <FaXmark />
+                                      </button>
+                                    </span>
+                                  ),
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ) : null}
+
+                        {defenseType === "esquive" ? (
+                          <label>
+                            {uiLabels.defensive}
+                            <select
+                              value={defenseDetail?.defense ?? ""}
+                              onChange={(event) =>
+                                updateDefenseDetail(index, 0, {
+                                  defense: event.target.value,
+                                })
+                              }
+                            >
+                              <option value="">—</option>
+                              {defensiveOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        ) : null}
+
+                        {defenseType === "parade" ||
+                        defenseType === "esquive" ? (
+                          <div className="form-section form-section--soft">
+                            <div className="action-row action-row--two">
+                              <label>
+                                {COMBAT_STEP_LABELS.movementLabel}
+                                <select
+                                  value={
+                                    getMoveParts(
+                                      item.defendMove,
+                                      attackMoveBaseValues,
+                                    ).base
+                                  }
+                                  onChange={(event) =>
+                                    updateMoveBase(
+                                      index,
+                                      "defendMove",
+                                      event.target.value,
+                                      attackMoveBaseValues,
+                                    )
+                                  }
+                                >
+                                  <option value="">—</option>
+                                  {attackMoveBaseOptions.map((option) => (
+                                    <option
+                                      key={option.value}
+                                      value={option.value}
+                                    >
+                                      {option.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                              <label>
+                                {COMBAT_STEP_LABELS.attributeLabel}
+                                <div className="input-row">
+                                  <select
+                                    value={
+                                      builderSelections[index]
+                                        ?.defendMoveComplement ?? ""
+                                    }
+                                    onChange={(event) => {
+                                      const value = event.target.value;
+                                      if (!value) {
+                                        updateBuilderSelection(index, {
+                                          defendMoveComplement: "",
+                                        });
+                                        return;
+                                      }
+                                      addMoveComplement(
+                                        index,
+                                        "defendMove",
+                                        value,
+                                        attackMoveBaseValues,
+                                      );
+                                      updateBuilderSelection(index, {
+                                        defendMoveComplement: "",
+                                      });
+                                    }}
+                                  >
+                                    <option value="">—</option>
+                                    {attackMoveComplementOptions.map(
+                                      (value) => (
+                                        <option key={value} value={value}>
+                                          {value}
+                                        </option>
+                                      ),
+                                    )}
+                                  </select>
+                                </div>
+                              </label>
+                            </div>
+                            {getMoveParts(item.defendMove, attackMoveBaseValues)
+                              .complements.length > 0 && (
+                              <div className="builder-tags">
+                                {getMoveParts(
+                                  item.defendMove,
+                                  attackMoveBaseValues,
+                                ).complements.map((token) => (
+                                  <span key={token} className="builder-tag">
+                                    <span className="builder-tag-value">
+                                      {token}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      className="button-icon button-ghost builder-tag-remove"
+                                      onClick={() =>
+                                        removeMoveComplement(
+                                          index,
+                                          "defendMove",
+                                          token,
+                                          attackMoveBaseValues,
+                                        )
+                                      }
+                                      aria-label={`Retirer ${token}`}
+                                      title="Retirer"
+                                    >
+                                      <FaXmark />
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         ) : null}
                       </div>
-                    </label>
-                  ) : null}
+                    ) : null}
 
-                  {item.role !== "none" ? (
-                    <label>
-                      {uiLabels.notes}
-                      <div className="input-with-clear">
-                        <input
-                          value={item.note}
-                          onChange={(event) =>
-                            onFormChange(index, { note: event.target.value })
-                          }
-                        />
-                        {item.note ? (
-                          <button
-                            type="button"
-                            className="input-clear"
-                            onClick={() => onFormChange(index, { note: "" })}
-                            aria-label="Effacer la note"
-                            title="Effacer"
-                          />
-                        ) : null}
+                    {!item.noteOverrides && v2Mode === "preparation" ? (
+                      <div className="form-section">
+                        <label>
+                          {COMBAT_STEP_LABELS.preparationType}
+                          <select
+                            value={getActionDetails(item)[0]?.action ?? ""}
+                            onChange={(event) =>
+                              updatePrepDetails(index, event.target.value, "")
+                            }
+                          >
+                            <option value="">—</option>
+                            {prepTypeList.map((value) => (
+                              <option key={value} value={value}>
+                                {value}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <label>
+                          {COMBAT_STEP_LABELS.target}
+                          <select
+                            value={item.target ?? ""}
+                            onChange={(event) =>
+                              onFormChange(index, {
+                                role: "preparation",
+                                target: event.target.value,
+                              })
+                            }
+                          >
+                            <option value="">—</option>
+                            {targetOptions.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <div className="action-row action-row--two">
+                          <label>
+                            {uiLabels.paradeNumber}
+                            <select
+                              value={getActionDetails(item)[0]?.attribute ?? ""}
+                              onChange={(event) =>
+                                updatePrepDetails(
+                                  index,
+                                  getActionDetails(item)[0]?.action ?? "",
+                                  event.target.value,
+                                )
+                              }
+                            >
+                              <option value="">—</option>
+                              {paradeNumberOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label>
+                            {COMBAT_STEP_LABELS.positionComplement}
+                            <div className="input-row">
+                              <select
+                                value={
+                                  builderSelections[index]
+                                    ?.prepPositionComplement ?? ""
+                                }
+                                onChange={(event) => {
+                                  const value = event.target.value;
+                                  if (!value) {
+                                    updateBuilderSelection(index, {
+                                      prepPositionComplement: "",
+                                    });
+                                    return;
+                                  }
+                                  addAttackComplement(index, value);
+                                  updateBuilderSelection(index, {
+                                    prepPositionComplement: "",
+                                  });
+                                }}
+                              >
+                                <option value="">—</option>
+                                {paradeComplementOptions.map((value) => (
+                                  <option key={value} value={value}>
+                                    {value}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </label>
+                        </div>
+                        {Array.isArray(item.attackAttribute) &&
+                          item.attackAttribute.length > 0 && (
+                            <div className="builder-tags">
+                              {item.attackAttribute.map((token) => (
+                                <span key={token} className="builder-tag">
+                                  <span className="builder-tag-value">
+                                    {token}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    className="button-icon button-ghost builder-tag-remove"
+                                    onClick={() =>
+                                      removeAttackComplement(index, token)
+                                    }
+                                    aria-label={`Retirer ${token}`}
+                                    title="Retirer"
+                                  >
+                                    <FaXmark />
+                                  </button>
+                                </span>
+                              ))}
+                            </div>
+                          )}
                       </div>
-                    </label>
-                  ) : null}
+                    ) : null}
+
+                    {v2Mode === "note" ? (
+                      <label>
+                        {uiLabels.notes}
+                        <div className="input-with-clear">
+                          <input
+                            value={item.note}
+                            onChange={(event) =>
+                              onFormChange(index, {
+                                note: event.target.value,
+                              })
+                            }
+                          />
+                          {item.note ? (
+                            <button
+                              type="button"
+                              className="input-clear"
+                              onClick={() => onFormChange(index, { note: "" })}
+                                aria-label={COMBAT_STEP_LABELS.noteClear}
+                              title="Effacer"
+                            />
+                          ) : null}
+                        </div>
+                      </label>
+                    ) : null}
+
+                    {v2Mode !== "note" ? (
+                      <label>
+                        {uiLabels.notes}
+                        <div className="input-with-clear">
+                          <input
+                            value={item.note}
+                            onChange={(event) =>
+                              onFormChange(index, {
+                                note: event.target.value,
+                              })
+                            }
+                          />
+                          {item.note ? (
+                            <button
+                              type="button"
+                              className="input-clear"
+                              onClick={() => onFormChange(index, { note: "" })}
+                                aria-label={COMBAT_STEP_LABELS.noteClear}
+                              title="Effacer"
+                            />
+                          ) : null}
+                        </div>
+                      </label>
+                    ) : null}
+                  </>
                 </div>
               ) : null}
 
               {item.mode === "choregraphie" ? (
                 <div className="participant-fields">
                   <label>
-                    Phase de chorégraphie
+                    {COMBAT_STEP_LABELS.chorePhase}
                     {isSabre ? (
                       <span className="field-hint">
-                        Mouvement scénique ou intention
+                        {COMBAT_STEP_LABELS.choreHint}
                       </span>
                     ) : null}
                     <select
@@ -844,7 +946,7 @@ export default function CombatStepForm({
                             type="button"
                             className="input-clear"
                             onClick={() => onFormChange(index, { note: "" })}
-                            aria-label="Effacer la note"
+                            aria-label={COMBAT_STEP_LABELS.noteClear}
                             title="Effacer"
                           />
                         ) : null}
@@ -870,7 +972,7 @@ export default function CombatStepForm({
                           type="button"
                           className="input-clear"
                           onClick={() => onFormChange(index, { note: "" })}
-                          aria-label="Effacer la note"
+                          aria-label={COMBAT_STEP_LABELS.noteClear}
                           title="Effacer"
                         />
                       ) : null}
@@ -889,7 +991,7 @@ export default function CombatStepForm({
           onClick={onResetForm}
           disabled={isReadOnly}
         >
-          Réinitialiser
+          {COMBAT_STEP_LABELS.reset}
         </button>
         <button
           type="button"
@@ -898,10 +1000,10 @@ export default function CombatStepForm({
           disabled={isReadOnly}
         >
           {editingStepId
-            ? "Mettre à jour la passe"
+            ? COMBAT_STEP_LABELS.updateStep
             : insertStepIndex != null
-              ? "Insérer la passe"
-              : "Ajouter la passe"}
+              ? COMBAT_STEP_LABELS.insertStep
+              : COMBAT_STEP_LABELS.addStep}
         </button>
         {editingStepId ? (
           <button
@@ -910,7 +1012,7 @@ export default function CombatStepForm({
             onClick={onCancelEditStep}
             disabled={isReadOnly}
           >
-            Annuler la modification
+            {COMBAT_STEP_LABELS.cancelEdit}
           </button>
         ) : null}
       </div>

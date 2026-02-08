@@ -1,8 +1,15 @@
-import { Document, Page, Text, View, StyleSheet, pdf } from "@react-pdf/renderer";
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  StyleSheet,
+  pdf,
+} from "@react-pdf/renderer";
 import { buildSummaryLine, formatParticipantSummary } from "./participants.js";
 
 function sanitizeFileName(value) {
-  return value
+  return String(value ?? "")
     .replace(/[\\/:*?"<>|]/g, "-")
     .replace(/\s+/g, " ")
     .trim();
@@ -11,8 +18,9 @@ function sanitizeFileName(value) {
 function getCardVariant(item) {
   if (!item) return "empty";
   if (item.mode === "note") return "neutral";
-  if (item.mode === "choregraphie") return "action";
+  if (item.mode === "choregraphie") return "neutral";
   if (item.role === "attack") return "action";
+  if (item.role === "preparation") return "preparation";
   if (item.role === "defense") return "reaction";
   if (item.note) return "neutral";
   return "empty";
@@ -28,8 +36,9 @@ function getPalette(theme) {
       surface: "#ffffff",
       surfaceSoft: "#f5f5f5",
       attack: "#111111",
+      preparation: "#555555",
       defense: "#444444",
-      neutral: "#8a8a8a"
+      neutral: "#8a8a8a",
     };
   }
   return {
@@ -40,8 +49,9 @@ function getPalette(theme) {
     surface: "#fffaf3",
     surfaceSoft: "#f7efe6",
     attack: "#f2cfa5",
+    preparation: "#d2e5b8",
     defense: "#bcd3e6",
-    neutral: "#eadfce"
+    neutral: "#eadfce",
   };
 }
 
@@ -52,17 +62,17 @@ function createStyles(theme) {
       padding: 32,
       fontSize: 11,
       color: palette.text,
-      fontFamily: "Helvetica"
+      fontFamily: "Helvetica",
     },
     title: {
       fontSize: 18,
       fontWeight: 700,
-      marginBottom: 6
+      marginBottom: 6,
     },
     subtitle: {
       fontSize: 12,
       color: palette.muted,
-      marginBottom: 12
+      marginBottom: 12,
     },
     summaryBlock: {
       borderWidth: 1,
@@ -70,67 +80,67 @@ function createStyles(theme) {
       borderRadius: 10,
       padding: 12,
       backgroundColor: palette.surface,
-      marginBottom: 16
+      marginBottom: 16,
     },
     summaryRow: {
       flexDirection: "row",
       flexWrap: "wrap",
-      marginBottom: 8
+      marginBottom: 8,
     },
     summaryItem: {
       fontSize: 11,
       marginRight: 12,
       lineHeight: 1.5,
-      marginBottom: 4
+      marginBottom: 4,
     },
     participantsList: {
-      marginTop: 8
+      marginTop: 8,
     },
     participantItem: {
       fontSize: 11,
       lineHeight: 1.5,
-      marginBottom: 4
+      marginBottom: 4,
     },
     phraseBlock: {
       borderWidth: 1,
       borderColor: palette.border,
       borderRadius: 10,
       padding: 12,
-      marginBottom: 16
+      marginBottom: 16,
     },
     phraseHeaderBlock: {
-      marginBottom: 8
+      marginBottom: 8,
     },
     phraseHeader: {
-      marginBottom: 10
+      marginBottom: 10,
     },
     phraseTitle: {
       fontSize: 13,
       fontWeight: 700,
       lineHeight: 1.4,
-      marginBottom: 4
+      marginBottom: 4,
     },
     phraseMeta: {
       fontSize: 10,
       color: palette.muted,
       lineHeight: 1.4,
-      marginBottom: 8
+      marginBottom: 8,
     },
     gridHeader: {
       flexDirection: "row",
       marginTop: 6,
-      marginBottom: 6
+      marginBottom: 6,
     },
     indexCell: {
       width: 26,
       textAlign: "center",
       fontWeight: 700,
       color: palette.muted,
-      alignSelf: "center"
+      alignSelf: "center",
     },
     participantCell: {
       flex: 1,
-      paddingHorizontal: 3
+      paddingHorizontal: 3,
     },
     participantLabel: {
       backgroundColor: palette.surfaceSoft,
@@ -139,110 +149,169 @@ function createStyles(theme) {
       textAlign: "center",
       fontSize: 10,
       fontWeight: 600,
-      color: palette.text
+      color: palette.text,
     },
     row: {
       flexDirection: "row",
       alignItems: "flex-start",
-      marginBottom: 6
+      marginBottom: 6,
     },
     card: {
       borderRadius: 10,
       padding: 6,
       minHeight: 36,
-      borderWidth: 1
+      borderWidth: 1,
     },
     cardStack: {
       display: "flex",
       flexDirection: "column",
-      gap: 4
+      gap: 4,
     },
     cardLine: {
       display: "flex",
       flexDirection: "row",
       flexWrap: "wrap",
       alignItems: "center",
-      gap: 3
+      gap: 3,
     },
     cardAction: {
       backgroundColor: theme === "bw" ? "#f2f2f2" : "#fff1dc",
       borderColor: palette.attack,
       borderLeftWidth: theme === "bw" ? 6 : 3,
       borderLeftColor: palette.attack,
-      borderStyle: "solid"
+      borderStyle: "solid",
+    },
+    cardPreparation: {
+      backgroundColor: theme === "bw" ? "#f7f7f7" : "#eef6e4",
+      borderColor: palette.preparation,
+      borderLeftWidth: theme === "bw" ? 3 : 3,
+      borderLeftColor: palette.preparation,
+      borderStyle: "solid",
     },
     cardReaction: {
       backgroundColor: theme === "bw" ? "#ffffff" : "#e6f0fb",
       borderColor: palette.defense,
       borderLeftWidth: 1,
       borderLeftColor: palette.defense,
-      borderStyle: theme === "bw" ? "dashed" : "solid"
+      borderStyle: theme === "bw" ? "dashed" : "solid",
     },
     cardNeutral: {
       backgroundColor: theme === "bw" ? "#f2f2f2" : "#f7efe6",
       borderColor: palette.neutral,
       borderLeftWidth: 1,
       borderLeftColor: palette.border,
-      borderStyle: "solid"
+      borderStyle: "solid",
     },
     cardEmpty: {
       backgroundColor: "#ffffff",
-      borderColor: palette.border
+      borderColor: palette.border,
     },
     cardText: {
       fontSize: 10,
       lineHeight: 1.4,
-      color: palette.text
+      color: palette.text,
     },
     cardNote: {
       fontSize: 9,
       color: palette.muted,
-      lineHeight: 1.3
+      lineHeight: 1.3,
     },
     badge: {
       fontSize: 9,
       paddingVertical: 1,
       paddingHorizontal: 5,
       borderRadius: 12,
-      borderWidth: 1
-    },
-    badgeOffensive: {
-      backgroundColor: theme === "bw" ? "#ffffff" : "#ffe9c2",
-      borderColor: palette.attack,
-      color: palette.text
+      borderWidth: 1,
     },
     badgeAction: {
-      backgroundColor: theme === "bw" ? "#ffffff" : "#f6e0c7",
+      backgroundColor: theme === "bw" ? "#ffffff" : "#ffe9c2",
       borderColor: palette.attack,
-      color: palette.text
+      color: palette.text,
+    },
+    badgePreparation: {
+      backgroundColor: theme === "bw" ? "#ffffff" : "#e5f1d2",
+      borderColor: palette.preparation,
+      color: palette.text,
     },
     badgeTarget: {
       backgroundColor: theme === "bw" ? "#ffffff" : "#fde3e1",
       borderColor: palette.neutral,
-      color: palette.text
+      color: palette.text,
     },
     badgeDefensive: {
       backgroundColor: theme === "bw" ? "#ffffff" : "#e6f0fb",
       borderColor: palette.defense,
-      color: palette.text
+      color: palette.text,
     },
     badgeParade: {
       backgroundColor: theme === "bw" ? "#ffffff" : "#efe7ff",
       borderColor: palette.defense,
-      color: palette.text
+      color: palette.text,
     },
     badgeMove: {
       backgroundColor: theme === "bw" ? "#ffffff" : "#e9f7ef",
       borderColor: palette.neutral,
-      color: palette.text
-    }
+      color: palette.text,
+    },
   });
 }
 
-function createHelpers(styles, theme) {
+function createHelpers(styles) {
+  function formatDelimitedBits(value) {
+    if (!value) return "";
+    return value
+      .split(" · ")
+      .map((entry) => entry.trim())
+      .filter(Boolean)
+      .join(" · ");
+  }
+
+  function getActionLabel(item) {
+    const actionDetails = Array.isArray(item.actionDetails)
+      ? item.actionDetails
+      : [];
+    const actionFromDetails = actionDetails
+      .map((detail) =>
+        [detail?.action, detail?.attribute].filter(Boolean).join(" "),
+      )
+      .filter(Boolean)
+      .join(" · ");
+    const attackAttribute = item.attackAttribute?.length
+      ? item.attackAttribute.join(", ")
+      : "";
+    const actionFallback = [item.action, attackAttribute]
+      .filter(Boolean)
+      .join(" ");
+    return actionFromDetails || actionFallback;
+  }
+
+  function getPrimaryDefenseDetail(item) {
+    const details = Array.isArray(item.defenseDetails)
+      ? item.defenseDetails
+      : [];
+    const firstFilled =
+      details.find(
+        (detail) => detail?.defense || detail?.position || detail?.attribute,
+      ) ?? details[0];
+    if (firstFilled) {
+      return {
+        defense: firstFilled.defense ?? "",
+        position: firstFilled.position ?? "",
+        attribute: firstFilled.attribute ?? "",
+      };
+    }
+    return {
+      defense: item.defense ?? item.defensive ?? "",
+      position: item.paradeNumber ?? "",
+      attribute: item.paradeAttribute ?? "",
+    };
+  }
+
   function Badge({ label, variant }) {
     if (!label) return null;
-    return <Text style={[styles.badge, styles[`badge${variant}`]]}>{label}</Text>;
+    return (
+      <Text style={[styles.badge, styles[`badge${variant}`]]}>{label}</Text>
+    );
   }
 
   function renderCardContent(item) {
@@ -255,11 +324,13 @@ function createHelpers(styles, theme) {
     if (item.mode === "choregraphie") {
       return (
         <View style={styles.cardStack}>
-          <Text style={styles.cardText}>Chorégraphie</Text>
+          <Text style={styles.cardText}>chorégraphie</Text>
           {item.chorePhase ? (
             <Text style={styles.cardNote}>{item.chorePhase}</Text>
           ) : null}
-          {item.note ? <Text style={styles.cardNote}>({item.note})</Text> : null}
+          {item.note ? (
+            <Text style={styles.cardNote}>({item.note})</Text>
+          ) : null}
         </View>
       );
     }
@@ -269,14 +340,12 @@ function createHelpers(styles, theme) {
     }
 
     if (item.role === "attack") {
-      const attackAttribute = item.attackAttribute?.length
-        ? item.attackAttribute.join(", ")
-        : "";
-      const actionBits = [item.action, attackAttribute].filter(Boolean).join(" ");
+      const actionBits = getActionLabel(item);
+      const attackMoveLabel = formatDelimitedBits(item.attackMove);
       return (
         <View style={styles.cardStack}>
           <View style={styles.cardLine}>
-            <Badge label={item.offensive} variant="Offensive" />
+            <Badge label={item.offensive} variant="Action" />
             {actionBits ? (
               <>
                 <Text style={styles.cardText}>en</Text>
@@ -289,23 +358,76 @@ function createHelpers(styles, theme) {
                 <Badge label={item.target} variant="Target" />
               </>
             ) : null}
-            {item.attackMove ? (
+            {attackMoveLabel ? (
               <>
                 <Text style={styles.cardText}>avec</Text>
-                <Badge label={item.attackMove} variant="Move" />
+                <Badge label={attackMoveLabel} variant="Move" />
               </>
             ) : null}
           </View>
-          {item.note ? <Text style={styles.cardNote}>({item.note})</Text> : null}
+          {item.note ? (
+            <Text style={styles.cardNote}>({item.note})</Text>
+          ) : null}
+        </View>
+      );
+    }
+
+    if (item.role === "preparation") {
+      const actionDetails = Array.isArray(item.actionDetails)
+        ? item.actionDetails
+        : [];
+      const actionLabel =
+        actionDetails
+          .map((detail) => detail?.action)
+          .filter(Boolean)
+          .join(" · ") ||
+        item.action ||
+        "";
+      const position =
+        actionDetails[0]?.attribute ??
+        (item.attackAttribute?.length ? item.attackAttribute[0] : "");
+      const complements = item.attackAttribute?.length
+        ? item.attackAttribute.filter((entry) => entry !== position)
+        : [];
+      const positionLabel = [position, ...complements]
+        .filter(Boolean)
+        .join(" · ");
+      return (
+        <View style={styles.cardStack}>
+          <View style={styles.cardLine}>
+            <Badge label="Préparation" variant="Preparation" />
+            {actionLabel ? (
+              <>
+                <Text style={styles.cardText}>{actionLabel}</Text>
+              </>
+            ) : null}
+            {item.target ? (
+              <>
+                <Text style={styles.cardText}>sur</Text>
+                <Badge label={item.target} variant="Target" />
+              </>
+            ) : null}
+            {positionLabel ? (
+              <>
+                <Text style={styles.cardText}>en</Text>
+                <Badge label={positionLabel} variant="Move" />
+              </>
+            ) : null}
+          </View>
+          {item.note ? (
+            <Text style={styles.cardNote}>({item.note})</Text>
+          ) : null}
         </View>
       );
     }
 
     if (item.role === "defense") {
-      const defenseLabel = item.defense ?? item.defensive ?? "";
-      const paradeLabel = [item.paradeNumber, item.paradeAttribute]
+      const primaryDefense = getPrimaryDefenseDetail(item);
+      const defenseLabel = primaryDefense.defense;
+      const paradeLabel = [primaryDefense.position, primaryDefense.attribute]
         .filter(Boolean)
         .join(" ");
+      const defendMoveLabel = formatDelimitedBits(item.defendMove);
       return (
         <View style={styles.cardStack}>
           <View style={styles.cardLine}>
@@ -316,14 +438,16 @@ function createHelpers(styles, theme) {
                 <Badge label={paradeLabel} variant="Parade" />
               </>
             ) : null}
-            {item.defendMove ? (
+            {defendMoveLabel ? (
               <>
                 <Text style={styles.cardText}>en</Text>
-                <Badge label={item.defendMove} variant="Move" />
+                <Badge label={defendMoveLabel} variant="Move" />
               </>
             ) : null}
           </View>
-          {item.note ? <Text style={styles.cardNote}>({item.note})</Text> : null}
+          {item.note ? (
+            <Text style={styles.cardNote}>({item.note})</Text>
+          ) : null}
         </View>
       );
     }
@@ -341,11 +465,15 @@ function createHelpers(styles, theme) {
 
 function CombatDocument({ combat, theme }) {
   const styles = createStyles(theme);
-  const { renderCardContent } = createHelpers(styles, theme);
-  const phraseCount = combat.phrases.length;
-  const totalPasses = combat.phrases.reduce(
+  const { renderCardContent } = createHelpers(styles);
+  const participants = Array.isArray(combat.participants)
+    ? combat.participants
+    : [];
+  const phrases = Array.isArray(combat.phrases) ? combat.phrases : [];
+  const phraseCount = phrases.length;
+  const totalPasses = phrases.reduce(
     (sum, phrase) => sum + (phrase.steps?.length ?? 0),
-    0
+    0,
   );
 
   return (
@@ -359,8 +487,8 @@ function CombatDocument({ combat, theme }) {
         <View style={styles.summaryBlock}>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryItem}>
-              {combat.participants.length} participant
-              {combat.participants.length > 1 ? "s" : ""}
+              {participants.length} participant
+              {participants.length > 1 ? "s" : ""}
             </Text>
             <Text style={styles.summaryItem}>
               {phraseCount} phrase{phraseCount > 1 ? "s" : ""}
@@ -370,7 +498,7 @@ function CombatDocument({ combat, theme }) {
             </Text>
           </View>
           <View style={styles.participantsList}>
-            {combat.participants.map((participant, index) => (
+            {participants.map((participant, index) => (
               <Text key={index} style={styles.participantItem}>
                 • {formatParticipantSummary(participant, index)}
               </Text>
@@ -378,7 +506,7 @@ function CombatDocument({ combat, theme }) {
           </View>
         </View>
 
-        {combat.phrases.map((phrase, phraseIndex) => (
+        {phrases.map((phrase, phraseIndex) => (
           <View
             key={phrase.id || phraseIndex}
             style={styles.phraseBlock}
@@ -397,7 +525,7 @@ function CombatDocument({ combat, theme }) {
 
               <View style={styles.gridHeader}>
                 <Text style={styles.indexCell}>#</Text>
-                {combat.participants.map((participant, index) => (
+                {participants.map((participant, index) => (
                   <View key={index} style={styles.participantCell}>
                     <Text style={styles.participantLabel}>
                       {formatParticipantSummary(participant, index)}
@@ -421,17 +549,20 @@ function CombatDocument({ combat, theme }) {
                     ...styles.card,
                     ...(variant === "action"
                       ? styles.cardAction
+                      : variant === "preparation"
+                        ? styles.cardPreparation
                       : variant === "reaction"
                         ? styles.cardReaction
                         : variant === "neutral"
                           ? styles.cardNeutral
-                          : styles.cardEmpty)
+                          : styles.cardEmpty),
                   };
                   return (
-                    <View key={`${stepIndex}-${index}`} style={styles.participantCell}>
-                      <View style={cardStyle}>
-                        {renderCardContent(item)}
-                      </View>
+                    <View
+                      key={`${stepIndex}-${index}`}
+                      style={styles.participantCell}
+                    >
+                      <View style={cardStyle}>{renderCardContent(item)}</View>
                     </View>
                   );
                 })}
@@ -449,7 +580,7 @@ export async function exportCombatPdf(combat, options = {}) {
   const doc = <CombatDocument combat={combat} theme={theme} />;
   const blob = await pdf(doc).toBlob();
   const fileName = sanitizeFileName(
-    `${combat.name || "combat"} - ${new Date().toISOString().slice(0, 10)}.pdf`
+    `${combat.name || "combat"} - ${new Date().toISOString().slice(0, 10)}.pdf`,
   );
   return { blob, fileName };
 }

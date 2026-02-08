@@ -72,7 +72,12 @@ export default function CombatRow({
     >
       <div className="combat-row-title">
         <div className="meta combat-id">#{combat.id}</div>
-        <div className="text-strong">{combat.name}</div>
+        <div className="inline-center">
+          <div className="text-strong">{combat.name}</div>
+          {combat.hasLegacyLexicon ? (
+            <span className="chip chip--danger">Lexique historique</span>
+          ) : null}
+        </div>
       </div>
       <div className="combat-row-meta stack-1">
         <div className="meta">

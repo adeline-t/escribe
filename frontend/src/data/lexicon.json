@@ -41,7 +41,7 @@
     "parade dague directe",
     "parade dague semi-circulaire",
     "parade de main",
-    "parade en croix",
+    "parade ",
     "parade d’opposition",
     "parade en cédant",
     "parade en double",
@@ -52,17 +52,16 @@
     "lié"
   ],
   "cible": [
-    "tête",
-    "épaule gauche",
-    "épaule droite",
+    "tete",
+    "visage",
+    "figure",
+    "epaule_avant",
+    "epaule_arriere",
     "poitrine",
     "bras",
-    "jambe",
-    "jambe gauche",
-    "jambe droite",
+    "jambe_avant",
+    "jambe_arriere",
     "flanc",
-    "pied",
-    "tibia",
     "ventre"
   ],
   "deplacement": [

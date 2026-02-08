@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS nl_deplacement_complement (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  label TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS user_nl_deplacement_complement (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  label TEXT NOT NULL
+);

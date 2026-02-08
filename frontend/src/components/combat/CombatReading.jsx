@@ -48,6 +48,65 @@ export default function CombatReading({
     setPhraseDraft(activePhrase?.name ?? "");
   }, [activePhrase?.id, activePhrase?.name]);
 
+  function hasItemDisplayContent(item) {
+    if (!item || typeof item !== "object") return false;
+    const note = typeof item.note === "string" ? item.note.trim() : "";
+    if (item.mode === "note") {
+      return Boolean(note);
+    }
+    if (item.mode === "choregraphie") {
+      return Boolean(item.chorePhase || note);
+    }
+    if (note) return true;
+    if (item.role === "attack") {
+      const actionDetails = Array.isArray(item.actionDetails)
+        ? item.actionDetails
+        : [];
+      const hasActionDetails = actionDetails.some(
+        (detail) => detail?.action || detail?.attribute,
+      );
+      return Boolean(
+        item.offensive ||
+          item.action ||
+          item.target ||
+          item.attackMove ||
+          hasActionDetails ||
+          (Array.isArray(item.attackAttribute) && item.attackAttribute.length),
+      );
+    }
+    if (item.role === "preparation") {
+      const actionDetails = Array.isArray(item.actionDetails)
+        ? item.actionDetails
+        : [];
+      const hasActionDetails = actionDetails.some(
+        (detail) => detail?.action || detail?.attribute,
+      );
+      return Boolean(
+        item.action ||
+          item.target ||
+          hasActionDetails ||
+          (Array.isArray(item.attackAttribute) && item.attackAttribute.length),
+      );
+    }
+    if (item.role === "defense") {
+      const defenseDetails = Array.isArray(item.defenseDetails)
+        ? item.defenseDetails
+        : [];
+      const hasDefenseDetails = defenseDetails.some(
+        (detail) => detail?.defense || detail?.position || detail?.attribute,
+      );
+      return Boolean(
+        item.defense ||
+          item.defensive ||
+          item.paradeNumber ||
+          item.paradeAttribute ||
+          item.defendMove ||
+          hasDefenseDetails,
+      );
+    }
+    return false;
+  }
+
   function renderReadingHeader({
     title,
     subtitle,
@@ -128,12 +187,29 @@ export default function CombatReading({
   }) {
     const role = item.role;
     const hasCard =
-      role === "attack" || role === "defense" || (role === "none" && item.note);
+      role === "attack" ||
+      role === "defense" ||
+      role === "preparation" ||
+      (role === "none" && item.note);
 
     if (role === "attack") {
       return (
         <StepSummaryCard
           type="action"
+          item={item}
+          inactiveLabel="inactif"
+          onEdit={() => onEditCard(stepId, participantIndex, item)}
+          onLongPress={() => onEditCard(stepId, participantIndex, item)}
+          editLabel={`Modifier la passe ${stepIndex + 1}`}
+          disabled={readOnly}
+        />
+      );
+    }
+
+    if (role === "preparation") {
+      return (
+        <StepSummaryCard
+          type="preparation"
           item={item}
           inactiveLabel="inactif"
           onEdit={() => onEditCard(stepId, participantIndex, item)}
@@ -253,7 +329,19 @@ export default function CombatReading({
                         </div>
                       ) : null}
                       {step.participants.map((item, colIndex) => {
+                        const hasDisplayContent = hasItemDisplayContent(item);
                         const role = item.role;
+                        const cardType = hasDisplayContent
+                          ? role === "defense"
+                            ? "reaction"
+                            : role === "preparation"
+                              ? "preparation"
+                              : role === "attack" ||
+                                  item.mode === "choregraphie" ||
+                                  item.mode === "note"
+                                ? "action"
+                                : null
+                          : null;
                         return (
                           <div
                             key={`${step.id}-${colIndex}`}
@@ -264,13 +352,11 @@ export default function CombatReading({
                                 {index + 1}
                               </div>
                             ) : null}
-                            {role === "attack" ||
-                            item.mode === "choregraphie" ||
-                            item.mode === "note" ? (
-                              <StepSummaryCard type="action" item={item} />
-                            ) : null}
-                            {role === "defense" ? (
-                              <StepSummaryCard type="reaction" item={item} />
+                            {cardType ? (
+                              <StepSummaryCard
+                                type={cardType}
+                                item={item}
+                              />
                             ) : null}
                           </div>
                         );

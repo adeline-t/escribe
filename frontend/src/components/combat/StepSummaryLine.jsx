@@ -20,6 +20,15 @@ export default function StepSummaryLine({
     ));
   }
 
+  function joinDelimitedLabel(value) {
+    if (!value) return "";
+    return value
+      .split(" · ")
+      .map((entry) => entry.trim())
+      .filter(Boolean)
+      .join(" ");
+  }
+
   if (item.mode === "choregraphie") {
     return (
       <span>
@@ -74,12 +83,7 @@ export default function StepSummaryLine({
       : actionBitsFallback
         ? [actionBitsFallback]
         : [];
-    const moveBits = item.attackMove
-      ? item.attackMove
-          .split(" · ")
-          .map((entry) => entry.trim())
-          .filter(Boolean)
-      : [];
+    const moveLabel = joinDelimitedLabel(item.attackMove);
     return (
       <span>
         {badge(item.offensive, "offensive", "offensive")}
@@ -89,8 +93,66 @@ export default function StepSummaryLine({
         {item.target ? (
           <span> sur {badge(item.target, "target", "target")}</span>
         ) : null}
-        {moveBits.length ? (
-          <span> avec {badgeList(moveBits, "move", "move")}</span>
+        {moveLabel ? (
+          <span> avec {badge(moveLabel, "move", "move")}</span>
+        ) : null}
+        {item.note ? (
+          <span>
+            {" "}
+            (<span className="note-inline">{item.note}</span>)
+          </span>
+        ) : null}
+      </span>
+    );
+  }
+
+  if (item.role === "preparation") {
+    if (item.noteOverrides) {
+      return (
+        <span>
+          <span className="note-inline">{item.note}</span>
+        </span>
+      );
+    }
+    const actionDetails = Array.isArray(item.actionDetails)
+      ? item.actionDetails
+      : [];
+    const actionBitsFromDetails = actionDetails
+      .map((detail) =>
+        [detail?.action].filter(Boolean).join(" "),
+      )
+      .filter(Boolean);
+    const actionBitsFallback = [item.action].filter(Boolean).join(" ");
+    const actionBits = actionBitsFromDetails.length
+      ? actionBitsFromDetails
+      : actionBitsFallback
+        ? [actionBitsFallback]
+        : [];
+    const position =
+      actionDetails[0]?.attribute ??
+      (Array.isArray(item.attackAttribute) && item.attackAttribute.length
+        ? item.attackAttribute[0]
+        : "");
+    const positionComplements =
+      Array.isArray(item.attackAttribute) && item.attackAttribute.length > 0
+        ? item.attackAttribute
+        : [];
+    const positionBits = position
+      ? [position, ...positionComplements.filter((entry) => entry !== position)]
+      : positionComplements;
+    const positionLabel = positionBits.join(" ");
+    return (
+      <span>
+        {actionBits.length ? (
+          <span>préparation {badgeList(actionBits, "action", "action")}</span>
+        ) : (
+          <span>préparation</span>
+        )}
+        {item.target ? (
+          <span> sur {badge(item.target, "target", "target")}</span>
+        ) : null}
+        {positionLabel ? (
+          <span> en {badge(positionLabel, "move", "position")}</span>
         ) : null}
         {item.note ? (
           <span>
@@ -136,19 +198,14 @@ export default function StepSummaryLine({
                 .join(" "),
             ]
           : [];
-    const moveBits = item.defendMove
-      ? item.defendMove
-          .split(" · ")
-          .map((entry) => entry.trim())
-          .filter(Boolean)
-      : [];
+    const moveLabel = joinDelimitedLabel(item.defendMove);
     return (
       <span>
         {defenseBits.length ? (
           badgeList(defenseBits, "defensive", "defensive")
         ) : null}
-        {moveBits.length ? (
-          <span> en {badgeList(moveBits, "move", "move")}</span>
+        {moveLabel ? (
+          <span> en {badge(moveLabel, "move", "move")}</span>
         ) : null}
         {item.note ? (
           <span>

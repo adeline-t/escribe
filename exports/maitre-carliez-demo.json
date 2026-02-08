@@ -1,0 +1,3434 @@
+{
+  "exported_at": "2026-02-08T19:25:16.952Z",
+  "combat": {
+    "id": 36,
+    "name": "Enchaînements de Maître Carliez",
+    "description": "Enchaînements - source Maître CARLIEZ",
+    "participants": [
+      {
+        "name": "A",
+        "weapon": ""
+      },
+      {
+        "name": "B",
+        "weapon": ""
+      }
+    ],
+    "draft": [
+      {
+        "mode": "combat",
+        "role": "attack",
+        "offensive": "",
+        "action": "",
+        "actionDetails": [],
+        "target": "",
+        "attackMove": "",
+        "attackAttribute": [],
+        "defense": "",
+        "defenseDetails": [],
+        "paradeNumber": "",
+        "paradeAttribute": "",
+        "defendMove": "",
+        "chorePhase": "",
+        "note": "",
+        "noteOverrides": false
+      },
+      {
+        "mode": "combat",
+        "role": "attack",
+        "offensive": "",
+        "action": "",
+        "actionDetails": [],
+        "target": "",
+        "attackMove": "",
+        "attackAttribute": [],
+        "defense": "",
+        "defenseDetails": [],
+        "paradeNumber": "",
+        "paradeAttribute": "",
+        "defendMove": "",
+        "chorePhase": "",
+        "note": "",
+        "noteOverrides": false
+      }
+    ],
+    "created_at": "2026-02-07T13:41:18.389Z",
+    "updated_at": "2026-02-08T07:39:39.181Z",
+    "archived": 0,
+    "type": "classic",
+    "is_demo": 1
+  },
+  "phrases": [
+    {
+      "id": 2145,
+      "combat_id": 36,
+      "position": 0,
+      "payload": {
+        "id": "daed8736-38fb-4e9c-86e7-08d4d6676f72",
+        "name": "Premier enchaînement",
+        "steps": [
+          {
+            "id": "1cfc9c88-3775-4532-9970-5da96444cb2a",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "feinte",
+                "action": "coup droit",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [],
+                "paradeNumber": "4",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "cef00d22-6f6d-4da9-bf23-f11b7c70fabc",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "dégagement",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [],
+                "paradeNumber": "3",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false,
+                "defensive": "parade"
+              }
+            ]
+          },
+          {
+            "id": "9b31031f-6954-4445-b940-4ef841745c64",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade en double",
+                "defenseDetails": [
+                  {
+                    "defense": "parade en double",
+                    "position": "3",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "3",
+                "paradeAttribute": "",
+                "defendMove": "retour en garde vers l'arrière",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "riposte",
+                "actionDetails": [
+                  {
+                    "action": "riposte",
+                    "attribute": ""
+                  },
+                  {
+                    "action": "dégagement",
+                    "attribute": ""
+                  }
+                ],
+                "target": "",
+                "attackMove": "fente",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "592dddfa-c70f-4a7e-89dc-0ea1721d2e71",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "4",
+                    "attribute": ""
+                  },
+                  {
+                    "defense": "parade",
+                    "position": "3",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "4",
+                "paradeAttribute": "",
+                "defendMove": "retraite",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque composée",
+                "action": "coup droit",
+                "actionDetails": [
+                  {
+                    "action": "coup droit",
+                    "attribute": ""
+                  },
+                  {
+                    "action": "dégagement",
+                    "attribute": ""
+                  }
+                ],
+                "target": "",
+                "attackMove": "fente",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "d3ed9e3b-5724-48fb-bb0f-675069499ee1",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "2",
+                    "attribute": "haute"
+                  }
+                ],
+                "paradeNumber": "2",
+                "paradeAttribute": "haute",
+                "defendMove": "changement de garde arrière",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false,
+                "defensive": "parade"
+              },
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "reprise",
+                "actionDetails": [
+                  {
+                    "action": "reprise",
+                    "attribute": ""
+                  },
+                  {
+                    "action": "couronné revers",
+                    "attribute": ""
+                  }
+                ],
+                "target": "tête",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "269a5b18-420d-4040-9b01-1c37e291b421",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "coup droit",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "fente",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "fente  à gauche",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "2",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "2",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "9f7d38b2-8fcd-48c5-ad7c-28d3eed3742d",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [
+                  {
+                    "action": "",
+                    "attribute": ""
+                  }
+                ],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "changez, battez, chassez",
+                "noteOverrides": false
+              },
+              {
+                "mode": "note",
+                "role": "none",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": true
+              }
+            ]
+          }
+        ]
+      },
+      "created_at": "2026-02-08T07:39:39.181Z"
+    },
+    {
+      "id": 2146,
+      "combat_id": 36,
+      "position": 1,
+      "payload": {
+        "id": "29157198-b9e1-439b-a957-9d1d7ab29096",
+        "name": "Second enchaînement",
+        "steps": [
+          {
+            "id": "55b6bc46-badc-4741-a6ab-346fcf609edb",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "passe arrière pointe basse en 2",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "suivre la distance",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "159fb643-cb5c-42db-9280-38355aa60474",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "couronné",
+                "actionDetails": [],
+                "target": "tête",
+                "attackMove": "marche",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "4",
+                    "attribute": "haute"
+                  }
+                ],
+                "paradeNumber": "4",
+                "paradeAttribute": "haute",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "25d58a29-315f-4640-a7b1-1844f121f270",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "couronné revers",
+                "actionDetails": [],
+                "target": "tête",
+                "attackMove": "marche",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "3",
+                    "attribute": "haute"
+                  }
+                ],
+                "paradeNumber": "3",
+                "paradeAttribute": "haute",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "a7b67d59-3f79-4c1e-b5c8-2fd21f6bc640",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "moulinet",
+                "actionDetails": [],
+                "target": "tête",
+                "attackMove": "fente",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": " moulinet - revers",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "5",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "5",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "a1584a20-ce66-4e1e-b4d2-103f2794e1c5",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "2",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "2",
+                "paradeAttribute": "",
+                "defendMove": "retour en garde vers l'arrière",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "riposte",
+                "actionDetails": [
+                  {
+                    "action": "riposte",
+                    "attribute": ""
+                  },
+                  {
+                    "action": "coup de revers",
+                    "attribute": ""
+                  }
+                ],
+                "target": "cuisse",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "130c5cba-5f0d-4608-a365-8e59a7395390",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "riposte",
+                "actionDetails": [
+                  {
+                    "action": "riposte",
+                    "attribute": ""
+                  },
+                  {
+                    "action": "coup de pointe",
+                    "attribute": ""
+                  }
+                ],
+                "target": "ventre",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "7",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "7",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "f324e381-ed2f-4615-8465-2e8bf4ba4c0b",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "2",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "2",
+                "paradeAttribute": "",
+                "defendMove": "fente",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "riposte",
+                "actionDetails": [
+                  {
+                    "action": "riposte",
+                    "attribute": ""
+                  },
+                  {
+                    "action": "coup de revers",
+                    "attribute": ""
+                  }
+                ],
+                "target": "cuisse",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "843dbcfa-a03d-44fe-9cc1-6ecd94e7c616",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "riposte",
+                "actionDetails": [
+                  {
+                    "action": "riposte",
+                    "attribute": ""
+                  },
+                  {
+                    "action": "coup de revers",
+                    "attribute": ""
+                  }
+                ],
+                "target": "tête",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "3",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "3",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "3d64324e-8999-4308-b502-11031f4c49b8",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "5",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "5",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "riposte",
+                "actionDetails": [
+                  {
+                    "action": "riposte",
+                    "attribute": ""
+                  },
+                  {
+                    "action": "brisé",
+                    "attribute": ""
+                  }
+                ],
+                "target": "tête",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "d3001bde-64ac-4d1e-aacd-eaaf25146006",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "riposte",
+                "actionDetails": [
+                  {
+                    "action": "riposte",
+                    "attribute": ""
+                  },
+                  {
+                    "action": "couronné",
+                    "attribute": ""
+                  }
+                ],
+                "target": "tête",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "4",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "4",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "ca37d3da-8d3b-40aa-afce-18310a79e11c",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "5",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "5",
+                "paradeAttribute": "",
+                "defendMove": "retour en garde vers l'arrière",
+                "chorePhase": "",
+                "note": "quinte inversée",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "riposte",
+                "actionDetails": [
+                  {
+                    "action": "riposte",
+                    "attribute": ""
+                  },
+                  {
+                    "action": "brisé",
+                    "attribute": ""
+                  }
+                ],
+                "target": "tête",
+                "attackMove": "fente",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "f3d98834-2299-467b-9ec4-a7bd7fecd686",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "couronné",
+                "actionDetails": [
+                  {
+                    "action": "couronné",
+                    "attribute": ""
+                  },
+                  {
+                    "action": "couronné",
+                    "attribute": ""
+                  },
+                  {
+                    "action": "coupé",
+                    "attribute": ""
+                  }
+                ],
+                "target": "ventre",
+                "attackMove": "volte avant",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "esquive arrière",
+                "defenseDetails": [
+                  {
+                    "defense": "esquive arrière",
+                    "position": "",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "bond arrière",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "12cc3f58-6add-41da-ac81-b0f5418a63f1",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "1",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "1",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "riposte",
+                "actionDetails": [
+                  {
+                    "action": "riposte",
+                    "attribute": ""
+                  },
+                  {
+                    "action": "coup de pointe",
+                    "attribute": ""
+                  }
+                ],
+                "target": "ventre",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "fbe4f046-037f-4a14-b010-a51b0f3d0a8c",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "riposte",
+                "actionDetails": [
+                  {
+                    "action": "riposte",
+                    "attribute": ""
+                  },
+                  {
+                    "action": "coup de pointe",
+                    "attribute": ""
+                  }
+                ],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "note",
+                "role": "none",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": true
+              }
+            ]
+          }
+        ]
+      },
+      "created_at": "2026-02-08T07:39:39.181Z"
+    },
+    {
+      "id": 2147,
+      "combat_id": 36,
+      "position": 2,
+      "payload": {
+        "id": "2e5dca59-3dbb-451f-b4d2-6948b65a89b0",
+        "name": "Troisième enchaînement",
+        "steps": [
+          {
+            "id": "6dde9d22-cee4-4f23-b80f-ae2a038ec381",
+            "participants": [
+              {
+                "mode": "note",
+                "role": "none",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "position de 1 avec passe de côté, passe arrière, pointe basse",
+                "noteOverrides": false
+              },
+              {
+                "mode": "note",
+                "role": "none",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": true
+              }
+            ]
+          },
+          {
+            "id": "138ec399-673c-4487-908c-88e23e76f926",
+            "participants": [
+              {
+                "mode": "note",
+                "role": "none",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "en garde inverse en arrière en 2 haute plongeante",
+                "noteOverrides": true
+              },
+              {
+                "mode": "note",
+                "role": "none",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": true
+              }
+            ]
+          },
+          {
+            "id": "e9e25d00-e19e-4ebe-a4b2-58ca131e5c79",
+            "participants": [
+              {
+                "mode": "note",
+                "role": "none",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "coup de pointe avec changement de garde et marche en avant",
+                "noteOverrides": true
+              },
+              {
+                "mode": "note",
+                "role": "none",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": true
+              }
+            ]
+          },
+          {
+            "id": "e92afd30-0fad-4f62-97d6-fdbf058bf1be",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "coup de pointe",
+                "actionDetails": [],
+                "target": "cuisse",
+                "attackMove": "fente",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "2",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "2",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "05b2c792-2f35-4303-99e3-0bfa30dcfce8",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "3",
+                    "attribute": "haute"
+                  }
+                ],
+                "paradeNumber": "3",
+                "paradeAttribute": "haute",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "coupé",
+                "actionDetails": [],
+                "target": "tête",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "fadb6356-4555-4306-8635-b9e15960bf0d",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "riposte",
+                "actionDetails": [
+                  {
+                    "action": "riposte",
+                    "attribute": ""
+                  },
+                  {
+                    "action": "couronné",
+                    "attribute": ""
+                  }
+                ],
+                "target": "tête",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "4",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "4",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "3b290731-38bb-4308-8304-a9e44f2d2385",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "2",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "2",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "parade de 2 renversée (dos) ",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "coup de revers",
+                "actionDetails": [],
+                "target": "tête",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "d1847135-a702-4873-8f03-d392b57b9e4f",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "riposte",
+                "actionDetails": [
+                  {
+                    "action": "riposte",
+                    "attribute": ""
+                  }
+                ],
+                "target": "",
+                "attackMove": "volte avant · déplacement latéral externe",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "volte côté",
+                "noteOverrides": false
+              },
+              {
+                "mode": "note",
+                "role": "none",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": true
+              }
+            ]
+          },
+          {
+            "id": "942746b8-5a00-4f18-85c5-c53a32697fd2",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "coup de pointe",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "fente",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "main en 2 haute - fente  à gauche",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "2",
+                    "attribute": "haute"
+                  }
+                ],
+                "paradeNumber": "2",
+                "paradeAttribute": "haute",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "ee5b5727-4c72-47d9-8233-397851a6a0bf",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "esquive latérale extérieure",
+                "defenseDetails": [
+                  {
+                    "defense": "esquive latérale extérieure",
+                    "position": "",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "bras levés avec rapière en main",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "moulinet",
+                "actionDetails": [],
+                "target": "tête",
+                "attackMove": "",
+                "attackAttribute": [
+                  "interieur"
+                ],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "d470c38b-65c9-4fe1-9ce3-4a9e08fef370",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "coupé",
+                "actionDetails": [],
+                "target": "ventre",
+                "attackMove": "volte avant",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "esquive arrière",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "273fccf0-bead-45dc-a716-7610f81b2322",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "coup de pointe",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "en pivot",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "2",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "2",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "chassé",
+                "noteOverrides": false
+              }
+            ]
+          }
+        ]
+      },
+      "created_at": "2026-02-08T07:39:39.181Z"
+    },
+    {
+      "id": 2148,
+      "combat_id": 36,
+      "position": 3,
+      "payload": {
+        "id": "44f162d7-72ef-46d4-b2a3-d6530554631c",
+        "name": "Quatrième enchaînement",
+        "steps": [
+          {
+            "id": "acc40d83-efb1-4e47-83d1-d742eafcc69a",
+            "participants": [
+              {
+                "mode": "note",
+                "role": "none",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "se redresse en 8 haute puis cinq pas latéraux à droite",
+                "noteOverrides": true
+              },
+              {
+                "mode": "note",
+                "role": "none",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "suit avec engagement",
+                "noteOverrides": true
+              }
+            ]
+          },
+          {
+            "id": "05d9a162-769e-47a4-8c76-35a8017ea5b6",
+            "participants": [
+              {
+                "mode": "note",
+                "role": "none",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "descend en 2 basse puis quatre pas à gauche",
+                "noteOverrides": true
+              },
+              {
+                "mode": "note",
+                "role": "none",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "suit toujours",
+                "noteOverrides": true
+              }
+            ]
+          },
+          {
+            "id": "05e0f15f-04d3-4633-ba12-94afb1795218",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque composée",
+                "action": "couronné",
+                "actionDetails": [
+                  {
+                    "action": "couronné",
+                    "attribute": ""
+                  }
+                ],
+                "target": "tête",
+                "attackMove": "volte avant",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "double couronné en volte sautée",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "3",
+                    "attribute": "haute"
+                  }
+                ],
+                "paradeNumber": "3",
+                "paradeAttribute": "haute",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "131510d2-8dce-4748-a91d-3df6d4d5898c",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "coup de revers",
+                "actionDetails": [
+                  {
+                    "action": "coup de revers",
+                    "attribute": ""
+                  },
+                  {
+                    "action": "",
+                    "attribute": ""
+                  }
+                ],
+                "target": "cuisse",
+                "attackMove": "demi-marche",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "attaque - coup de revers - jambe - demi-marche",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "2",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "2",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "e4ec0d8e-5a5a-4005-ba65-64ca35000b50",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "coup de revers",
+                "actionDetails": [],
+                "target": "épaule",
+                "attackMove": "demi-marche",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "3",
+                    "attribute": "haute"
+                  }
+                ],
+                "paradeNumber": "3",
+                "paradeAttribute": "haute",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "d5e4ee33-f139-487d-845e-77ef0708c036",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "couronné",
+                "actionDetails": [],
+                "target": "épaule",
+                "attackMove": "fente",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "4",
+                    "attribute": "haute"
+                  }
+                ],
+                "paradeNumber": "4",
+                "paradeAttribute": "haute",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "b7a901d6-ea89-4a45-b366-d3de4d339347",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "2",
+                    "attribute": ""
+                  },
+                  {
+                    "defense": "parade",
+                    "position": "4",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "2",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "parade de 2 lié 4",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "coupé",
+                "actionDetails": [
+                  {
+                    "action": "coupé",
+                    "attribute": ""
+                  },
+                  {
+                    "action": "coup de revers",
+                    "attribute": ""
+                  }
+                ],
+                "target": "cuisse",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "ae736127-5ecf-437e-a829-d776956b8d24",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "riposte",
+                "actionDetails": [
+                  {
+                    "action": "riposte",
+                    "attribute": ""
+                  },
+                  {
+                    "action": "coup de pointe",
+                    "attribute": ""
+                  }
+                ],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "4",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "4",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "72b81242-b007-4722-b2e2-ddae03877b9f",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "4",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "4",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "riposte",
+                "actionDetails": [
+                  {
+                    "action": "riposte",
+                    "attribute": ""
+                  },
+                  {
+                    "action": "coup droit",
+                    "attribute": ""
+                  }
+                ],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "dceedef8-6ca3-4ebb-8c35-a4ac6ff40106",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "riposte",
+                "actionDetails": [
+                  {
+                    "action": "riposte",
+                    "attribute": ""
+                  },
+                  {
+                    "action": "coup droit",
+                    "attribute": ""
+                  }
+                ],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "4",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "4",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "dedd63f0-8dd1-47c6-b37e-1a6e6b4ff5a3",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "3",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "3",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "dégagement",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "f1e73e17-0fe2-4b15-a782-886db15c8db7",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "riposte",
+                "actionDetails": [
+                  {
+                    "action": "riposte",
+                    "attribute": ""
+                  },
+                  {
+                    "action": "coup de pointe",
+                    "attribute": ""
+                  }
+                ],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "3",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "3",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "18f69fd6-bf9f-44e2-870a-1ca765f97cc7",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "2",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "2",
+                "paradeAttribute": "",
+                "defendMove": "retour en garde vers l'arrière",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "coup de revers",
+                "actionDetails": [],
+                "target": "cuisse",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "2633dad3-2e68-4eeb-988f-4ab3e0acd577",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "2",
+                    "attribute": ""
+                  },
+                  {
+                    "defense": "parade",
+                    "position": "3",
+                    "attribute": "haute"
+                  }
+                ],
+                "paradeNumber": "2",
+                "paradeAttribute": "",
+                "defendMove": "passe arrière",
+                "chorePhase": "",
+                "note": "enveloppé 2 avec passe arrière parade de 3 haute ",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "dégagement",
+                "actionDetails": [
+                  {
+                    "action": "dégagement",
+                    "attribute": ""
+                  },
+                  {
+                    "action": "coup de pointe",
+                    "attribute": ""
+                  }
+                ],
+                "target": "poitrine",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "aab69e77-62a4-484b-a733-1cd83f172780",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "feinte",
+                "action": "riposte",
+                "actionDetails": [
+                  {
+                    "action": "riposte",
+                    "attribute": ""
+                  }
+                ],
+                "target": "cuisse",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "2",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "2",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "bd6d5448-bf58-4353-be8f-84823a07dcfc",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "dégagement",
+                "actionDetails": [],
+                "target": "poitrine",
+                "attackMove": "fente",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "fente  latérale",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "7",
+                    "attribute": "haute"
+                  }
+                ],
+                "paradeNumber": "7",
+                "paradeAttribute": "haute",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "e9e079ef-8d99-4e35-97ab-76375cb3a746",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "esquive arrière",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "coupé",
+                "actionDetails": [],
+                "target": "ventre",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "chassez",
+                "noteOverrides": false
+              }
+            ]
+          }
+        ]
+      },
+      "created_at": "2026-02-08T07:39:39.181Z"
+    },
+    {
+      "id": 2149,
+      "combat_id": 36,
+      "position": 4,
+      "payload": {
+        "id": "2ed19787-fe1e-49cc-867e-0f30ade6e8b9",
+        "name": "Cinquième enchaînement",
+        "steps": [
+          {
+            "id": "a74ad8d8-7ffa-414e-af19-5f48bc9494d5",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "coup de pointe",
+                "actionDetails": [
+                  {
+                    "action": "coup de pointe",
+                    "attribute": ""
+                  }
+                ],
+                "target": "ventre",
+                "attackMove": "fente inversée",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "attaque",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "esquive arrière",
+                "defenseDetails": [
+                  {
+                    "defense": "esquive arrière",
+                    "position": "",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "35b19b72-46e4-4b78-9316-40d659ff3959",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "",
+                "actionDetails": [
+                  {
+                    "action": "",
+                    "attribute": ""
+                  }
+                ],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "rassemblement avec menace au ventre",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "en garde, observe",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "5f551ecd-e24b-405f-a5d9-fbb5e019b79f",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "menace ventre avec 5 pas en passe de côté (D, G, D, G-D rapide)",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "ou maintient distance",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "a728295a-eef7-4d8f-8022-57aaf76259da",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "menace ventre avec 3 pas en passe de côté (D, G, D)",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "ou maintient distance",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "e4427f1e-de5a-4ace-b9a4-f6e91c1ecced",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "2",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "2",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "sur reprise d'appui pied droit",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "4dfb71ff-ca76-4a3c-a7bd-2f3bb02972ff",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "esquive latérale extérieure",
+                "defenseDetails": [
+                  {
+                    "defense": "esquive latérale extérieure",
+                    "position": "",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "volte avant",
+                "chorePhase": "",
+                "note": "pied gauche en avant",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "12ea797c-86c0-4754-9cbe-ae1679453019",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "feinte",
+                "action": "coup droit",
+                "actionDetails": [
+                  {
+                    "action": "coup droit",
+                    "attribute": ""
+                  }
+                ],
+                "target": "tête",
+                "attackMove": "demi-marche",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "369558cc-2014-43ea-abac-07e72d58387c",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "feinte",
+                "action": "coup droit",
+                "target": "cuisse",
+                "attackMove": "demi-marche",
+                "attackAttribute": [],
+                "defense": "",
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false,
+                "actionDetails": [
+                  {
+                    "action": "coup droit",
+                    "attribute": ""
+                  }
+                ],
+                "defenseDetails": []
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false,
+                "actionDetails": [],
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "",
+                    "attribute": ""
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "61fb7e99-7e09-4c0e-b28e-79e5cadcea05",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "feinte",
+                "action": "coup droit",
+                "target": "épaule",
+                "attackMove": "marche",
+                "attackAttribute": [],
+                "defense": "",
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false,
+                "actionDetails": [
+                  {
+                    "action": "coup droit",
+                    "attribute": ""
+                  }
+                ],
+                "defenseDetails": []
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false,
+                "actionDetails": [
+                  {
+                    "action": "",
+                    "attribute": ""
+                  }
+                ],
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "",
+                    "attribute": ""
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "96060cff-8548-4581-a1b6-ea65577056ed",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "couronné",
+                "target": "épaule",
+                "attackMove": "fente",
+                "attackAttribute": [],
+                "defense": "",
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false,
+                "actionDetails": [
+                  {
+                    "action": "couronné",
+                    "attribute": ""
+                  }
+                ],
+                "defenseDetails": []
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false,
+                "actionDetails": [],
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "",
+                    "attribute": ""
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "a3a5dff7-b8c9-4642-86f6-62eb95cb5d15",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "2",
+                    "attribute": ""
+                  },
+                  {
+                    "defense": "parade",
+                    "position": "4",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "2",
+                "paradeAttribute": "",
+                "defendMove": "retour en garde vers l'arrière",
+                "chorePhase": "",
+                "note": "parade de 2 lié 4",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "d38cb087-8ffd-42c3-a9ba-02df7acd225c",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "coup de pointe",
+                "target": "ventre",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false,
+                "actionDetails": [
+                  {
+                    "action": "coup de pointe",
+                    "attribute": ""
+                  }
+                ],
+                "defenseDetails": []
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "paradeNumber": "4",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false,
+                "actionDetails": [],
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "4",
+                    "attribute": ""
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "9f2ac5de-b47e-447c-a235-d5ee37e30bb1",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "3",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "3",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "coup droit",
+                "actionDetails": [
+                  {
+                    "action": "coup droit",
+                    "attribute": ""
+                  }
+                ],
+                "target": "épaule",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "0b052063-c3b8-4d46-a05b-6e526c4fd2e2",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "riposte",
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false,
+                "actionDetails": [
+                  {
+                    "action": "riposte",
+                    "attribute": ""
+                  },
+                  {
+                    "action": "coup droit",
+                    "attribute": ""
+                  }
+                ],
+                "defenseDetails": []
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "paradeNumber": "3",
+                "paradeAttribute": "",
+                "defendMove": "retour en garde vers l'arrière",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false,
+                "actionDetails": [],
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "3",
+                    "attribute": ""
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "2cb68fd4-d2cf-44cd-82bd-0c92e1c5bdf0",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "3",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "3",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "riposte",
+                "actionDetails": [
+                  {
+                    "action": "riposte",
+                    "attribute": ""
+                  }
+                ],
+                "target": "épaule",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          },
+          {
+            "id": "fa8f74b4-6972-4bf9-b86c-0da059bf1eca",
+            "participants": [
+              {
+                "mode": "combat",
+                "role": "attack",
+                "offensive": "attaque",
+                "action": "riposte",
+                "actionDetails": [
+                  {
+                    "action": "riposte",
+                    "attribute": ""
+                  },
+                  {
+                    "action": "coup de pointe",
+                    "attribute": ""
+                  }
+                ],
+                "target": "ventre",
+                "attackMove": "fente",
+                "attackAttribute": [],
+                "defense": "",
+                "defenseDetails": [],
+                "paradeNumber": "",
+                "paradeAttribute": "",
+                "defendMove": "",
+                "chorePhase": "",
+                "note": "riposter en pointe cavée au ventre avec fente à gauche",
+                "noteOverrides": false
+              },
+              {
+                "mode": "combat",
+                "role": "defense",
+                "offensive": "",
+                "action": "",
+                "actionDetails": [],
+                "target": "",
+                "attackMove": "",
+                "attackAttribute": [],
+                "defense": "parade",
+                "defenseDetails": [
+                  {
+                    "defense": "parade",
+                    "position": "1",
+                    "attribute": ""
+                  }
+                ],
+                "paradeNumber": "1",
+                "paradeAttribute": "",
+                "defendMove": "retour en garde vers l'arrière",
+                "chorePhase": "",
+                "note": "",
+                "noteOverrides": false
+              }
+            ]
+          }
+        ]
+      },
+      "created_at": "2026-02-08T07:39:39.181Z"
+    }
+  ]
+}

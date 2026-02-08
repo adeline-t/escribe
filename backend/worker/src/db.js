@@ -44,6 +44,7 @@ export function buildCorsHeaders(request, env) {
 }
 
 import seedLexicon from "./lexicon.seed.json";
+import seedNewLexicon from "./lexicon-new.seed.json";
 import seedSabreLexicon from "./lexicon-sabre-laser.seed.json";
 
 let schemaReady = false;
@@ -77,6 +78,15 @@ export async function ensureLexiconSchema(env) {
     "parade_numero",
     "parade_attribut",
     "attaque_attribut",
+    "nl_offensive",
+    "nl_action",
+    "nl_defensive",
+    "nl_cible",
+    "nl_deplacement",
+    "nl_deplacement_complement",
+    "nl_parade_numero",
+    "nl_parade_attribut",
+    "nl_attaque_attribut",
     "sl_armes",
     "sl_phases_choregraphie",
     "sl_cibles",
@@ -94,6 +104,15 @@ export async function ensureLexiconSchema(env) {
     "user_parade_numero",
     "user_parade_attribut",
     "user_attaque_attribut",
+    "user_nl_offensive",
+    "user_nl_action",
+    "user_nl_defensive",
+    "user_nl_cible",
+    "user_nl_deplacement",
+    "user_nl_deplacement_complement",
+    "user_nl_parade_numero",
+    "user_nl_parade_attribut",
+    "user_nl_attaque_attribut",
     "user_sl_armes",
     "user_sl_phases_choregraphie",
     "user_sl_cibles",
@@ -130,6 +149,17 @@ async function ensureLexiconSeeded(env) {
   const sabreCount = Number(sabreRow?.count ?? 0);
   if (sabreCount === 0) {
     await replaceLexiconByKey(env, "sabre-laser", seedSabreLexicon);
+  }
+  const newRow = await env.DB.prepare("SELECT COUNT(*) AS count FROM nl_offensive").first();
+  const newCount = Number(newRow?.count ?? 0);
+  const newMovementComplementRow = await env.DB
+    .prepare("SELECT COUNT(*) AS count FROM nl_deplacement_complement")
+    .first();
+  const newMovementComplementCount = Number(
+    newMovementComplementRow?.count ?? 0
+  );
+  if (newCount === 0 || newMovementComplementCount === 0) {
+    await replaceLexiconByKey(env, "classic-v2", seedNewLexicon);
   }
   lexiconSeeded = true;
 }
@@ -253,7 +283,9 @@ export async function listCombats(env, userId, includeArchived = false, combatTy
     ? env.DB.prepare(query).bind(userId, combatType)
     : env.DB.prepare(query).bind(userId);
   const rows = await stmt.all();
-  return rows?.results?.map((row) => {
+  const results = rows?.results ?? [];
+  const legacyMap = await detectLegacyLexiconByCombat(env, results.map((row) => row.id));
+  return results.map((row) => {
     let participants = [];
     try {
       participants = JSON.parse(row.participants);
@@ -274,9 +306,48 @@ export async function listCombats(env, userId, includeArchived = false, combatTy
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       phraseCount: Number(row.phrase_count ?? 0),
+      hasLegacyLexicon: Boolean(legacyMap.get(row.id)),
       participantsCount: participants.length
     };
   }) ?? [];
+}
+
+async function detectLegacyLexiconByCombat(env, combatIds) {
+  const map = new Map();
+  if (!combatIds?.length) return map;
+  for (const combatId of combatIds) {
+    const rows = await env.DB
+      .prepare(
+        `SELECT payload FROM combat_phrases
+         WHERE combat_id = ?1`
+      )
+      .bind(combatId)
+      .all();
+    const payloads = rows?.results ?? [];
+    let hasLegacy = false;
+    for (const row of payloads) {
+      if (hasLegacy) break;
+      try {
+        const payload = JSON.parse(row.payload);
+        const steps = Array.isArray(payload?.steps)
+          ? payload.steps
+          : payload?.participants
+            ? [payload]
+            : [];
+        for (const step of steps) {
+          const lexicon = typeof step?.lexicon === "string" ? step.lexicon : "classic";
+          if (lexicon === "classic") {
+            hasLegacy = true;
+            break;
+          }
+        }
+      } catch {
+        // ignore parse errors
+      }
+    }
+    if (hasLegacy) map.set(combatId, true);
+  }
+  return map;
 }
 
 export async function createCombat(env, userId, data) {
@@ -640,6 +711,17 @@ const LEXICON_TABLES = {
     "parade-attribut": "parade_attribut",
     "attaque-attribut": "attaque_attribut"
   },
+  "classic-v2": {
+    offensive: "nl_offensive",
+    action: "nl_action",
+    defensive: "nl_defensive",
+    cible: "nl_cible",
+    deplacement: "nl_deplacement",
+    deplacement_complement: "nl_deplacement_complement",
+    "parade-numero": "nl_parade_numero",
+    "parade-attribut": "nl_parade_attribut",
+    "attaque-attribut": "nl_attaque_attribut"
+  },
   "sabre-laser": {
     armes: "sl_armes",
     phases_choregraphie: "sl_phases_choregraphie",
@@ -652,6 +734,49 @@ const LEXICON_TABLES = {
     deplacements: "sl_deplacements"
   }
 };
+
+function normalizeLexiconLabel(value) {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function mergeUniqueLabels(...lists) {
+  const seen = new Set();
+  const out = [];
+  for (const list of lists) {
+    if (!Array.isArray(list)) continue;
+    for (const value of list) {
+      const label = typeof value === "string" ? value.trim() : "";
+      if (!label || seen.has(label)) continue;
+      seen.add(label);
+      out.push(label);
+    }
+  }
+  return out;
+}
+
+function splitNewMovementLabels(values, complementValues) {
+  const complementLookup = new Set(
+    mergeUniqueLabels(complementValues).map(normalizeLexiconLabel)
+  );
+  const base = [];
+  const complement = [];
+  for (const value of values ?? []) {
+    if (complementLookup.has(normalizeLexiconLabel(value))) {
+      complement.push(value);
+      continue;
+    }
+    base.push(value);
+  }
+  return {
+    base: mergeUniqueLabels(base),
+    complement: mergeUniqueLabels(complementValues, complement)
+  };
+}
 
 export async function replaceLexiconByKey(env, lexiconKey, lexicon) {
   await ensureLexiconSchema(env);
@@ -674,7 +799,17 @@ export async function getLexiconByKey(env, lexiconKey) {
   const entries = await Promise.all(
     Object.entries(tables).map(async ([key, table]) => [key, await getLabels(env, table)])
   );
-  return Object.fromEntries(entries);
+  const lexicon = Object.fromEntries(entries);
+  if (lexiconKey === "classic-v2") {
+    const { base, complement } = splitNewMovementLabels(
+      lexicon.deplacement,
+      lexicon.deplacement_complement
+    );
+    lexicon.deplacement_base = base;
+    lexicon.deplacement_complement = complement;
+    lexicon.deplacement = mergeUniqueLabels(base, complement);
+  }
+  return lexicon;
 }
 
 export async function getLexicon(env) {

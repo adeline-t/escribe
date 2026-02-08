@@ -26,8 +26,14 @@ import {
   DEFAULT_PARTICIPANTS,
   DEFAULT_SABRE_LEXICON,
   normalizeLexicon,
+  normalizeNewLexicon,
   normalizeSabreLexicon,
 } from "./lib/lexicon.js";
+import {
+  CLASSIC_LEXICON_OPTIONS,
+  SABRE_FAVORITE_TYPE_KEYS,
+  SABRE_UI_LABELS,
+} from "./lib/combats.js";
 import {
   buildParticipantLabel,
   labelForParticipant,
@@ -40,7 +46,8 @@ import {
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:4000";
 const TOKEN_KEY = "escribe_token";
-const FRONT_ENV = import.meta.env.VITE_ENVIRONMENT ?? import.meta.env.MODE ?? "";
+const FRONT_ENV =
+  import.meta.env.VITE_ENVIRONMENT ?? import.meta.env.MODE ?? "";
 
 export default function App() {
   const [authUser, setAuthUser] = useState(null);
@@ -69,14 +76,15 @@ export default function App() {
   const [combatType, setCombatType] = useState("classic");
   const [combatShareRole, setCombatShareRole] = useState("read");
   const [isHydrated, setIsHydrated] = useState(false);
-  const [lexiconData, setLexiconData] = useState(() =>
-    normalizeLexicon(DEFAULT_LEXICON),
-  );
+  const [lexiconData, setLexiconData] = useState(() => DEFAULT_LEXICON);
+  const [newLexiconData, setNewLexiconData] = useState(() => ({}));
   const [sabreLexiconData, setSabreLexiconData] = useState(
     () => DEFAULT_SABRE_LEXICON,
   );
   const [favorites, setFavorites] = useState({});
+  const [newFavorites, setNewFavorites] = useState({});
   const [sabreFavorites, setSabreFavorites] = useState({});
+  const [stepLexiconKey, setStepLexiconKey] = useState("classic-v2");
   const saveTimerRef = useRef(null);
   const [isMenuCollapsed, setIsMenuCollapsed] = useState(false);
   const [backendVersion, setBackendVersion] = useState(null);
@@ -94,6 +102,11 @@ export default function App() {
   const normalizedLexicon = useMemo(
     () => normalizeLexicon(lexiconData),
     [lexiconData],
+  );
+
+  const normalizedNewLexicon = useMemo(
+    () => normalizeNewLexicon(newLexiconData),
+    [newLexiconData],
   );
 
   const normalizedSabreLexicon = useMemo(
@@ -150,13 +163,20 @@ export default function App() {
             setLexiconData(lexiconPayload.lexicon);
           }
         }
-        const sabreLexiconResponse = await apiFetch(
-          "/api/lexicon?lexicon=sabre-laser",
-        );
+        const [sabreLexiconResponse, newLexiconResponse] = await Promise.all([
+          apiFetch("/api/lexicon?lexicon=sabre-laser"),
+          apiFetch("/api/lexicon?lexicon=classic-v2"),
+        ]);
         if (sabreLexiconResponse.ok) {
           const sabrePayload = await sabreLexiconResponse.json();
           if (sabrePayload?.lexicon) {
             setSabreLexiconData(sabrePayload.lexicon);
+          }
+        }
+        if (newLexiconResponse.ok) {
+          const newPayload = await newLexiconResponse.json();
+          if (newPayload?.lexicon) {
+            setNewLexiconData(newPayload.lexicon);
           }
         }
 
@@ -168,13 +188,21 @@ export default function App() {
               setFavorites(favoritesPayload.favorites);
             }
           }
-          const sabreFavoritesResponse = await apiFetch(
-            "/api/lexicon/favorites?lexicon=sabre-laser",
-          );
+          const [sabreFavoritesResponse, newFavoritesResponse] =
+            await Promise.all([
+              apiFetch("/api/lexicon/favorites?lexicon=sabre-laser"),
+              apiFetch("/api/lexicon/favorites?lexicon=classic-v2"),
+            ]);
           if (sabreFavoritesResponse.ok) {
             const sabreFavoritesPayload = await sabreFavoritesResponse.json();
             if (sabreFavoritesPayload?.favorites) {
               setSabreFavorites(sabreFavoritesPayload.favorites);
+            }
+          }
+          if (newFavoritesResponse.ok) {
+            const newFavoritesPayload = await newFavoritesResponse.json();
+            if (newFavoritesPayload?.favorites) {
+              setNewFavorites(newFavoritesPayload.favorites);
             }
           }
         }
@@ -485,8 +513,24 @@ export default function App() {
     );
   }
 
+  function updateStepLexicon(stepId, lexiconKey) {
+    if (!lexiconKey) return;
+    setPhrases((prev) =>
+      prev.map((phrase) => {
+        if (phrase.id !== activePhraseId) return phrase;
+        return {
+          ...phrase,
+          steps: phrase.steps.map((step) =>
+            step.id === stepId ? { ...step, lexicon: lexiconKey } : step,
+          ),
+        };
+      }),
+    );
+  }
+
   function resetForm() {
     setForm(participants.map(() => emptyParticipantState()));
+    setStepLexiconKey("classic-v2");
     setEditingStepId(null);
     setInsertStepIndex(null);
     setInsertionMode(false);
@@ -518,7 +562,11 @@ export default function App() {
             ...phrase,
             steps: phrase.steps.map((step) =>
               step.id === editingStepId
-                ? { ...step, participants: form.map((item) => ({ ...item })) }
+                ? {
+                    ...step,
+                    lexicon: stepLexiconKey,
+                    participants: form.map((item) => ({ ...item })),
+                  }
                 : step,
             ),
           };
@@ -526,6 +574,7 @@ export default function App() {
       );
       setEditingStepId(null);
       setForm(participants.map(() => emptyParticipantState()));
+      setStepLexiconKey("classic-v2");
       setInsertStepIndex(null);
       setInsertionMode(false);
       setDeletionMode(false);
@@ -534,6 +583,7 @@ export default function App() {
 
     const step = {
       id: crypto.randomUUID(),
+      lexicon: stepLexiconKey,
       participants: form.map((item) => ({ ...item })),
     };
     setPhrases((prev) =>
@@ -550,6 +600,7 @@ export default function App() {
     );
     setEditingStepId(null);
     setForm(participants.map(() => emptyParticipantState()));
+    setStepLexiconKey("classic-v2");
     setInsertStepIndex(null);
     setInsertionMode(false);
     setDeletionMode(false);
@@ -559,6 +610,7 @@ export default function App() {
     if (!activePhraseId) return;
     const step = {
       id: crypto.randomUUID(),
+      lexicon: stepLexiconKey,
       participants: participants.map(() => ({
         mode: "note",
         role: "none",
@@ -599,6 +651,7 @@ export default function App() {
     if (editingStepId === id) {
       setEditingStepId(null);
     }
+    setStepLexiconKey("classic-v2");
     setInsertStepIndex(null);
     setInsertionMode(false);
     setDeletionMode(false);
@@ -617,6 +670,9 @@ export default function App() {
     const phrase = phrases.find((item) => item.id === activePhraseId);
     const step = phrase?.steps?.find((item) => item.id === editingStepId);
     if (!step) return;
+    setStepLexiconKey(
+      typeof step.lexicon === "string" ? step.lexicon : "classic",
+    );
     setForm(
       step.participants.map((item) => ({
         ...emptyParticipantState(),
@@ -631,6 +687,7 @@ export default function App() {
   function cancelEditStep() {
     setEditingStepId(null);
     setForm(participants.map(() => emptyParticipantState()));
+    setStepLexiconKey("classic-v2");
     setInsertStepIndex(null);
     setInsertionMode(false);
     setDeletionMode(false);
@@ -640,6 +697,7 @@ export default function App() {
     setActivePhraseId(id);
     setEditingStepId(null);
     setForm(participants.map(() => emptyParticipantState()));
+    setStepLexiconKey("classic-v2");
     setInsertStepIndex(null);
     setInsertionMode(false);
     setDeletionMode(false);
@@ -656,6 +714,7 @@ export default function App() {
     setActivePhraseId(newPhrase.id);
     setEditingStepId(null);
     setForm(participants.map(() => emptyParticipantState()));
+    setStepLexiconKey("classic-v2");
   }
 
   function renamePhrase(id, name) {
@@ -697,6 +756,7 @@ export default function App() {
       setActivePhraseId(remaining[0]?.id ?? null);
       setEditingStepId(null);
       setForm(participants.map(() => emptyParticipantState()));
+      setStepLexiconKey("classic-v2");
     }
   }
 
@@ -939,7 +999,16 @@ export default function App() {
             stepsCount={activePhrase?.steps?.length ?? 0}
             participantLabels={participantLabels}
             normalizedLexicon={normalizedLexicon}
+            lexiconByKey={{
+              classic: normalizedLexicon,
+              "classic-v2": normalizedNewLexicon,
+            }}
             favorites={favorites}
+            favoritesByLexicon={{
+              classic: favorites,
+              "classic-v2": newFavorites,
+            }}
+            lexiconKey={stepLexiconKey}
             isReadOnly={combatShareRole === "read"}
             onParticipantCountChange={updateParticipantCount}
             onParticipantNameChange={updateParticipantName}
@@ -964,12 +1033,14 @@ export default function App() {
             toggleAttribute={toggleAttribute}
             onNavigate={setPage}
             onUpdateStepParticipant={updateStepParticipant}
+            onUpdateStepLexicon={updateStepLexicon}
             onResetForm={resetForm}
             insertStepIndex={insertStepIndex}
             onInsertStep={(index) => {
               setInsertStepIndex(index);
               setEditingStepId(null);
               setForm(participants.map(() => emptyParticipantState()));
+              setStepLexiconKey("classic-v2");
               setInsertionMode(false);
               setDeletionMode(false);
             }}
@@ -985,6 +1056,7 @@ export default function App() {
               setInsertionMode(false);
             }}
             onDeleteStep={removeStep}
+            lexiconOptions={CLASSIC_LEXICON_OPTIONS}
           />
         ) : null}
 
@@ -1000,29 +1072,10 @@ export default function App() {
             stepsCount={activePhrase?.steps?.length ?? 0}
             participantLabels={participantLabels}
             normalizedLexicon={normalizedSabreLexicon}
+            lexiconKey="sabre-laser"
             favorites={sabreFavorites}
-            labels={{
-              offensive: "Technique offensive",
-              action: "Préparation",
-              attackAttribute: "Attribut offensif",
-              target: "Cible",
-              attackMove: "Déplacement",
-              defensive: "Technique défensive",
-              paradeAttribute: "Attribut défensif",
-              defendMove: "Déplacement",
-              notes: "Notes",
-              weapon: "Arme",
-            }}
-            favoriteTypeKeys={{
-              offensive: "techniques_offensives",
-              action: "preparations",
-              attackAttribute: "attributs_offensifs",
-              target: "cibles",
-              attackMove: "deplacements",
-              defensive: "techniques_defensives",
-              paradeAttribute: "attributs_defensifs",
-              defendMove: "deplacements",
-            }}
+            labels={SABRE_UI_LABELS}
+            favoriteTypeKeys={SABRE_FAVORITE_TYPE_KEYS}
             showParadeNumber={false}
             participantWeaponOptions={normalizedSabreLexicon.armes ?? []}
             isReadOnly={combatShareRole === "read"}
@@ -1091,6 +1144,8 @@ export default function App() {
             authUser={authUser}
             favorites={favorites}
             setFavorites={setFavorites}
+            newFavorites={newFavorites}
+            setNewFavorites={setNewFavorites}
             sabreFavorites={sabreFavorites}
             setSabreFavorites={setSabreFavorites}
           />
