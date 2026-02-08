@@ -4,7 +4,9 @@ import crypto from "node:crypto";
 
 const sourceFile = path.resolve("doc/enchainements-carliez.txt");
 const outputFile = path.resolve("db/import-enchainements-carliez.sql");
-const vocabOutputFile = path.resolve("doc/enchainements-carliez-vocab-manquant.txt");
+const vocabOutputFile = path.resolve(
+  "doc/enchainements-carliez-vocab-manquant.txt",
+);
 const lexiconFile = path.resolve("db/lexicon.sql");
 const lexiconJsonFile = path.resolve("frontend/src/data/lexicon.json");
 
@@ -75,7 +77,7 @@ function parseParticipant(text, role, lexicon) {
       defendMove: "",
       chorePhase: "",
       note: "",
-      noteOverrides: true
+      noteOverrides: true,
     };
   }
 
@@ -95,7 +97,7 @@ function parseParticipant(text, role, lexicon) {
       defendMove: "",
       chorePhase: "",
       note: "",
-      noteOverrides: true
+      noteOverrides: true,
     };
   }
 
@@ -118,7 +120,8 @@ function parseParticipant(text, role, lexicon) {
   let action = role === "attack" ? matchAction(tokenSource) : "";
   let target = role === "attack" ? matchTarget(tokenSource) : "";
   let attackMove = role === "attack" ? matchAttackMove(tokenSource) : "";
-  let attackAttribute = role === "attack" ? [matchAttackAttr(tokenSource)].filter(Boolean) : [];
+  let attackAttribute =
+    role === "attack" ? [matchAttackAttr(tokenSource)].filter(Boolean) : [];
 
   let defense = role === "defense" ? matchDefense(tokenSource) : "";
   let paradeNumber = "";
@@ -135,7 +138,8 @@ function parseParticipant(text, role, lexicon) {
       if (/arrière|arriere/i.test(tokenSource)) defense = "esquive arrière";
       else if (/basse/i.test(tokenSource)) defense = "esquive basse";
       else if (/saut/i.test(tokenSource)) defense = "esquive en sautant";
-      else if (/côté|cote|latéral|lateral/i.test(tokenSource)) defense = "esquive latérale intérieure";
+      else if (/côté|cote|latéral|lateral/i.test(tokenSource))
+        defense = "esquive latérale intérieure";
     }
     if (/haute|haut/i.test(tokenSource)) paradeAttribute = "haut";
     if (/basse|bas/i.test(tokenSource)) paradeAttribute = "bas";
@@ -184,7 +188,7 @@ function parseParticipant(text, role, lexicon) {
     defendMove: defenseMove,
     chorePhase: "",
     note: noteChunks.length ? noteChunks.join(" · ") : trimmed,
-    noteOverrides: !hasStructured
+    noteOverrides: !hasStructured,
   };
 }
 
@@ -208,10 +212,17 @@ function splitSections(text) {
   for (const rawLine of lines) {
     const line = rawLine.trim();
     if (!line) continue;
-    const headerMatch = line.match(/^#{0,3}\s*(Premier|Second|Troisi[eè]me|Quatri[eè]me|Cinqui[eè]me)\s+encha[iî]nement\s*:?/i);
+    const headerMatch = line.match(
+      /^#{0,3}\s*(Premier|Second|Troisi[eè]me|Quatri[eè]me|Cinqui[eè]me)\s+encha[iî]nement\s*:?/i,
+    );
     if (headerMatch) {
       if (current) sections.push(current);
-      current = { title: headerMatch[1] ? `${headerMatch[1]} enchaînement` : headerMatch[0].replace(/\s*:/, ""), lines: [] };
+      current = {
+        title: headerMatch[1]
+          ? `${headerMatch[1]} enchaînement`
+          : headerMatch[0].replace(/\s*:/, ""),
+        lines: [],
+      };
       continue;
     }
     if (/^#{1,3}\s+/.test(line)) continue;
@@ -245,14 +256,26 @@ function mergeContinuation(lines) {
 }
 
 function splitArrow(line) {
-  const arrowMatch = line.match(/(.*?)(<-+|<------|<------|<---------|<--------|<-------|<------|<-----|<----|<---|<--|<-)\s*(.*)/);
-  const rightMatch = line.match(/(.*?)(-+>|----->|------->|--------->|---------->|----->|---->|-->|->)\s*(.*)/);
+  const arrowMatch = line.match(
+    /(.*?)(<-+|<------|<------|<---------|<--------|<-------|<------|<-----|<----|<---|<--|<-)\s*(.*)/,
+  );
+  const rightMatch = line.match(
+    /(.*?)(-+>|----->|------->|--------->|---------->|----->|---->|-->|->)\s*(.*)/,
+  );
 
   if (rightMatch) {
-    return { left: rightMatch[1].trim(), arrow: "right", right: rightMatch[3].trim() };
+    return {
+      left: rightMatch[1].trim(),
+      arrow: "right",
+      right: rightMatch[3].trim(),
+    };
   }
   if (arrowMatch) {
-    return { left: arrowMatch[1].trim(), arrow: "left", right: arrowMatch[3].trim() };
+    return {
+      left: arrowMatch[1].trim(),
+      arrow: "left",
+      right: arrowMatch[3].trim(),
+    };
   }
   return { left: line.trim(), arrow: null, right: "" };
 }
@@ -296,7 +319,7 @@ function buildCombats(text) {
     const steps = parseSteps(section.lines);
     return {
       name: section.title,
-      steps
+      steps,
     };
   });
 }
@@ -309,7 +332,7 @@ function buildSql(combats) {
   for (const combat of combats) {
     const participants = JSON.stringify([
       { name: "A", weapon: "" },
-      { name: "B", weapon: "" }
+      { name: "B", weapon: "" },
     ]);
 
     const phrase = {
@@ -320,20 +343,23 @@ function buildSql(combats) {
         const participantB = parseParticipant(step.b, step.roleB, lexicon);
         return {
           id: crypto.randomUUID(),
-          participants: [participantA, participantB]
+          participants: [participantA, participantB],
         };
-      })
+      }),
     };
 
     const payload = JSON.stringify(phrase).replace(/'/g, "''");
     const name = combat.name.replace(/'/g, "''");
-    const description = "Enchaînements - source CARLIEZ".replace(/'/g, "''");
+    const description = "Enchaînements - source Maître CARLIEZ".replace(
+      /'/g,
+      "''",
+    );
 
     lines.push(
-      `INSERT INTO combats (user_id, name, description, participants, draft, type, created_at, updated_at, archived) VALUES ((SELECT id FROM users WHERE email = '${email}'), '${name}', '${description}', '${participants}', NULL, 'classic', '${now}', '${now}', 0);`
+      `INSERT INTO combats (user_id, name, description, participants, draft, type, created_at, updated_at, archived) VALUES ((SELECT id FROM users WHERE email = '${email}'), '${name}', '${description}', '${participants}', NULL, 'classic', '${now}', '${now}', 0);`,
     );
     lines.push(
-      `INSERT INTO combat_phrases (combat_id, position, payload, created_at) VALUES (last_insert_rowid(), 0, '${payload}', '${now}');`
+      `INSERT INTO combat_phrases (combat_id, position, payload, created_at) VALUES (last_insert_rowid(), 0, '${payload}', '${now}');`,
     );
   }
 
@@ -383,7 +409,7 @@ function buildMissingVocabulary(combats) {
     "un",
     "une",
     "vers",
-    "note"
+    "note",
   ]);
 
   const missing = new Set();
@@ -419,7 +445,7 @@ const vocabText = [
   "Vocabulaire manquant (Enchaînements - CARLIEZ)",
   `Total: ${missing.length}`,
   "",
-  ...missing
+  ...missing,
 ].join("\n");
 fs.writeFileSync(vocabOutputFile, vocabText, "utf-8");
 

@@ -25,8 +25,7 @@ const CLASSIC_TYPE_MAP = {
   action: "action",
   defensive: "defensive",
   cible: "cible",
-  "deplacement-attaque": "deplacement_attaque",
-  "deplacement-defense": "deplacement_defense",
+  deplacement: "deplacement",
   "parade-numero": "parade_numero",
   "parade-attribut": "parade_attribut",
   "attaque-attribut": "attaque_attribut"
@@ -37,8 +36,7 @@ const CLASSIC_USER_TYPE_MAP = {
   action: "user_action",
   defensive: "user_defensive",
   cible: "user_cible",
-  "deplacement-attaque": "user_deplacement_attaque",
-  "deplacement-defense": "user_deplacement_defense",
+  deplacement: "user_deplacement",
   "parade-numero": "user_parade_numero",
   "parade-attribut": "user_parade_attribut",
   "attaque-attribut": "user_attaque_attribut"

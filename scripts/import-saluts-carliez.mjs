@@ -46,7 +46,7 @@ function extractText() {
     "",
     "text = text.replace('\\r', '\\n')",
     "text = re.sub(r'\\n+', '\\n', text)",
-    "print(text)"
+    "print(text)",
   ].join("\n");
   return execFileSync(python, ["-c", script], { encoding: "utf-8" });
 }
@@ -84,7 +84,10 @@ function splitSaluts(text) {
   if (match) {
     chunk = chunk.slice(match.index);
   }
-  const lines = chunk.split("\n").map((line) => line.trim()).filter(Boolean);
+  const lines = chunk
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
 
   const blocks = [];
   const prelude = [];
@@ -132,15 +135,19 @@ function parseSaluts(text) {
 
   for (const block of blocks) {
     const titleLine = normalizeWhitespace(block.title || "");
-    const titleMatch = titleLine.match(/^(Salut\s+[^:]+)(?:\s*:\s*(\d+\s*temps))?/i);
-    const baseName = titleMatch ? normalizeWhitespace(titleMatch[1]) : titleLine;
+    const titleMatch = titleLine.match(
+      /^(Salut\s+[^:]+)(?:\s*:\s*(\d+\s*temps))?/i,
+    );
+    const baseName = titleMatch
+      ? normalizeWhitespace(titleMatch[1])
+      : titleLine;
     const temps = titleMatch?.[2] ? titleMatch[2].trim() : "";
     const name = temps ? `${baseName} (${temps})` : baseName;
 
     const cleaned = block.lines
       .filter((line) => !/^SALUTS D/i.test(line))
-      .filter((line) => !/^a\)/i.test(line) ? true : true)
-      .filter((line) => !/^b\)/i.test(line) ? true : true);
+      .filter((line) => (!/^a\)/i.test(line) ? true : true))
+      .filter((line) => (!/^b\)/i.test(line) ? true : true));
 
     const merged = mergeContinuation(cleaned);
     const steps = merged
@@ -211,7 +218,7 @@ function buildMissingVocabulary(saluts) {
     "un",
     "une",
     "vers",
-    "note"
+    "note",
   ]);
 
   const missing = new Set();
@@ -257,19 +264,19 @@ function buildSql(saluts) {
             defendMove: "",
             chorePhase: "",
             note: step,
-            noteOverrides: true
-          }
-        ]
-      }))
+            noteOverrides: true,
+          },
+        ],
+      })),
     };
     const payload = JSON.stringify(phrase).replace(/'/g, "''");
     const name = salut.name.replace(/'/g, "''");
-    const description = "Saluts - source CARLIEZ".replace(/'/g, "''");
+    const description = "Saluts - source Maître CARLIEZ".replace(/'/g, "''");
     lines.push(
-      `INSERT INTO combats (user_id, name, description, participants, draft, type, created_at, updated_at, archived) VALUES ((SELECT id FROM users WHERE email = '${email}'), '${name}', '${description}', '${participants}', NULL, 'classic', '${now}', '${now}', 0);`
+      `INSERT INTO combats (user_id, name, description, participants, draft, type, created_at, updated_at, archived) VALUES ((SELECT id FROM users WHERE email = '${email}'), '${name}', '${description}', '${participants}', NULL, 'classic', '${now}', '${now}', 0);`,
     );
     lines.push(
-      `INSERT INTO combat_phrases (combat_id, position, payload, created_at) VALUES (last_insert_rowid(), 0, '${payload}', '${now}');`
+      `INSERT INTO combat_phrases (combat_id, position, payload, created_at) VALUES (last_insert_rowid(), 0, '${payload}', '${now}');`,
     );
   }
   return lines.join("\n");
@@ -288,7 +295,7 @@ const vocabText = [
   "Vocabulaire manquant (Saluts - CARLIEZ)",
   `Total: ${missing.length}`,
   "",
-  ...missing
+  ...missing,
 ].join("\n");
 fs.writeFileSync(vocabOutputFile, vocabText, "utf-8");
 console.log(`Generated ${saluts.length} saluts -> ${outputFile}`);

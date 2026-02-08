@@ -11,11 +11,10 @@ export const LEXICON_TYPES = [
   { key: "action", label: "Action d'arme" },
   { key: "attaque-attribut", label: "Attribut attaque" },
   { key: "cible", label: "Cible" },
-  { key: "deplacement-attaque", label: "Déplacement attaque" },
+  { key: "deplacement", label: "Déplacement" },
   { key: "defensive", label: "Défensive" },
   { key: "parade-numero", label: "Position de parade" },
   { key: "parade-attribut", label: "Attribut parade" },
-  { key: "deplacement-defense", label: "Déplacement défense" },
 ];
 
 export const SABRE_LEXICON_TYPES = [
@@ -36,8 +35,18 @@ export function normalizeLexicon(data) {
     action: data.action ?? [],
     defensive: data.defensive ?? [],
     cible: data.cible ?? [],
-    attackMove: data["deplacement-attaque"] ?? data.deplacementAttaque ?? [],
-    defendMove: data["deplacement-defense"] ?? data.deplacementDefense ?? [],
+    attackMove:
+      data.deplacement ??
+      data.deplacements ??
+      data["deplacement-attaque"] ??
+      data.deplacementAttaque ??
+      [],
+    defendMove:
+      data.deplacement ??
+      data.deplacements ??
+      data["deplacement-defense"] ??
+      data.deplacementDefense ??
+      [],
     paradeNumber: data["parade-numero"] ?? data.paradeNumero ?? [],
     paradeAttribute: data["parade-attribut"] ?? data.paradeAttribut ?? [],
     attackAttribute: data["attaque-attribut"] ?? data.attaqueAttribut ?? [],

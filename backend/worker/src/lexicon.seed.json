@@ -65,7 +65,7 @@
     "tibia",
     "ventre"
   ],
-  "deplacement-attaque": [
+  "deplacement": [
     "appel de pied arrière",
     "appel de pied avant",
     "balestra",
@@ -88,9 +88,7 @@
     "quart de volte avant interne",
     "redoublement de fente",
     "retour en garde vers l'avant",
-    "volte avant"
-  ],
-  "deplacement-defense": [
+    "volte avant",
     "bond arrière",
     "contre-volte arrière",
     "demi-marche",
@@ -119,9 +117,8 @@
     "9"
   ],
   "parade-attribut": [
-    "haut",
-    "bas",
-    "normal"
+    "haute",
+    "basse"
   ],
   "attaque-attribut": [
     "interieur",

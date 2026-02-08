@@ -14,8 +14,7 @@ const mapTable = {
   action: "action",
   defensive: "defensive",
   cible: "cible",
-  "deplacement-attaque": "deplacement_attaque",
-  "deplacement-defense": "deplacement_defense",
+  deplacement: "deplacement",
   "parade-numero": "parade_numero",
   "parade-attribut": "parade_attribut",
   "attaque-attribut": "attaque_attribut"

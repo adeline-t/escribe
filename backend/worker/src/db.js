@@ -73,8 +73,7 @@ export async function ensureLexiconSchema(env) {
     "action",
     "defensive",
     "cible",
-    "deplacement_attaque",
-    "deplacement_defense",
+    "deplacement",
     "parade_numero",
     "parade_attribut",
     "attaque_attribut",
@@ -91,8 +90,7 @@ export async function ensureLexiconSchema(env) {
     "user_action",
     "user_defensive",
     "user_cible",
-    "user_deplacement_attaque",
-    "user_deplacement_defense",
+    "user_deplacement",
     "user_parade_numero",
     "user_parade_attribut",
     "user_attaque_attribut",
@@ -136,15 +134,16 @@ async function ensureLexiconSeeded(env) {
   lexiconSeeded = true;
 }
 
-export async function getCombatState(env, userId, combatId) {
+export async function getCombatState(env, userId, combatId, isSuperAdmin = false) {
   await ensureSchema(env);
   const combat = await env.DB
     .prepare(
       `SELECT c.id, c.name, c.description, c.participants, c.draft, c.type,
+        c.user_id, c.is_demo,
         CASE WHEN c.user_id = ?2 THEN 'owner' ELSE cs.role END as share_role
        FROM combats c
        LEFT JOIN combat_shares cs ON cs.combat_id = c.id AND cs.shared_user_id = ?2
-       WHERE c.id = ?1 AND (c.user_id = ?2 OR cs.shared_user_id = ?2)`
+       WHERE c.id = ?1 AND (c.user_id = ?2 OR cs.shared_user_id = ?2 OR c.is_demo = 1)`
     )
     .bind(combatId, userId)
     .first();
@@ -195,22 +194,32 @@ export async function getCombatState(env, userId, combatId) {
     form = null;
   }
 
+  const isDemo = Boolean(combat.is_demo);
+  const isOwner = combat.user_id === userId;
+  const shareRole = isOwner
+    ? "owner"
+    : isSuperAdmin && isDemo
+      ? "owner"
+      : combat.share_role ?? "read";
+
   return {
     combatId: combat.id,
     combatName: combat.name,
     combatDescription: combat.description ?? "",
     combatType: combat.type ?? "classic",
-    combatShareRole: combat.share_role ?? "read",
+    combatShareRole: shareRole,
+    combatIsDemo: isDemo,
+    combatOwnerId: combat.user_id,
     participants,
     phrases,
     form
   };
 }
 
-export async function getState(env, userId, combatId = null, combatType = null) {
+export async function getState(env, userId, combatId = null, combatType = null, isSuperAdmin = false) {
   await ensureSchema(env);
   if (combatId) {
-    const state = await getCombatState(env, userId, combatId);
+    const state = await getCombatState(env, userId, combatId, isSuperAdmin);
     if (state) return state;
   }
   const typeFilter = combatType ? "AND type = ?2" : "";
@@ -225,20 +234,20 @@ export async function getState(env, userId, combatId = null, combatType = null) 
     : env.DB.prepare(query).bind(userId);
   const combat = await stmt.first();
   if (!combat?.id) return null;
-  return getCombatState(env, userId, combat.id);
+  return getCombatState(env, userId, combat.id, isSuperAdmin);
 }
 
-export async function listCombats(env, userId, includeArchived = false, combatType = null) {
+export async function listCombats(env, userId, includeArchived = false, combatType = null, isSuperAdmin = false) {
   await ensureSchema(env);
   const typeFilter = combatType ? "AND c.type = ?2" : "";
   const archiveFilter = includeArchived ? "" : "AND c.archived = 0";
-  const query = `SELECT DISTINCT c.id, c.name, c.description, c.participants, c.archived, c.updated_at, c.created_at, c.type,
+  const query = `SELECT DISTINCT c.id, c.name, c.description, c.participants, c.archived, c.updated_at, c.created_at, c.type, c.is_demo, c.user_id,
       (SELECT COUNT(*) FROM combat_phrases cp WHERE cp.combat_id = c.id) as phrase_count,
       CASE WHEN c.user_id = ?1 THEN 1 ELSE 0 END as is_owner,
       CASE WHEN c.user_id = ?1 THEN 'owner' ELSE cs.role END as share_role
      FROM combats c
      LEFT JOIN combat_shares cs ON cs.combat_id = c.id AND cs.shared_user_id = ?1
-     WHERE (c.user_id = ?1 OR cs.shared_user_id = ?1) ${archiveFilter} ${typeFilter}
+     WHERE (c.user_id = ?1 OR cs.shared_user_id = ?1 OR c.is_demo = 1) ${archiveFilter} ${typeFilter}
      ORDER BY c.updated_at DESC`;
   const stmt = combatType
     ? env.DB.prepare(query).bind(userId, combatType)
@@ -251,14 +260,17 @@ export async function listCombats(env, userId, includeArchived = false, combatTy
     } catch {
       participants = [];
     }
+    const isDemo = Boolean(row.is_demo);
+    const isOwner = Boolean(row.is_owner) || (isSuperAdmin && isDemo);
     return {
       id: row.id,
       name: row.name,
       description: row.description ?? "",
       type: row.type ?? "classic",
       archived: Boolean(row.archived),
-      isOwner: Boolean(row.is_owner),
-      shareRole: row.share_role ?? (row.is_owner ? "owner" : "read"),
+      isOwner,
+      isDemo,
+      shareRole: isOwner ? "owner" : row.share_role ?? "read",
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       phraseCount: Number(row.phrase_count ?? 0),
@@ -278,8 +290,8 @@ export async function createCombat(env, userId, data) {
     : [{ name: "A", weapon: "" }, { name: "B", weapon: "" }];
   const result = await env.DB
     .prepare(
-      `INSERT INTO combats (user_id, name, description, participants, draft, type, created_at, updated_at, archived)
-       VALUES (?1, ?2, ?3, ?4, NULL, ?5, ?6, ?6, 0)
+      `INSERT INTO combats (user_id, name, description, participants, draft, type, created_at, updated_at, archived, is_demo)
+       VALUES (?1, ?2, ?3, ?4, NULL, ?5, ?6, ?6, 0, 0)
        RETURNING id, name, description, type`
     )
     .bind(userId, name, description, JSON.stringify(participants), type, now)
@@ -398,7 +410,7 @@ export async function listShareUsersAll(env, userId) {
   return rows?.results ?? [];
 }
 
-export async function saveState(env, userId, state) {
+export async function saveState(env, userId, state, isSuperAdmin = false) {
   await ensureSchema(env);
   const now = new Date().toISOString();
   const combatName = typeof state.combatName === "string" && state.combatName.trim()
@@ -413,17 +425,19 @@ export async function saveState(env, userId, state) {
 
   let combatId = Number.isFinite(requestedId) ? requestedId : null;
   let shareRole = null;
+  let existingCombat = null;
   if (combatId) {
     const exists = await env.DB
       .prepare(
-        `SELECT c.id, c.user_id,
+        `SELECT c.id, c.user_id, c.is_demo,
           CASE WHEN c.user_id = ?2 THEN 'owner' ELSE cs.role END as share_role
          FROM combats c
          LEFT JOIN combat_shares cs ON cs.combat_id = c.id AND cs.shared_user_id = ?2
-         WHERE c.id = ?1 AND (c.user_id = ?2 OR cs.shared_user_id = ?2) AND c.archived = 0`
+         WHERE c.id = ?1 AND (c.user_id = ?2 OR cs.shared_user_id = ?2 OR c.is_demo = 1) AND c.archived = 0`
       )
       .bind(combatId, userId)
       .first();
+    existingCombat = exists;
     if (!exists?.id) {
       combatId = null;
     } else {
@@ -450,9 +464,15 @@ export async function saveState(env, userId, state) {
       .first();
     combatId = inserted?.id;
   } else {
+    const isDemo = Boolean(existingCombat?.is_demo);
+    if (isDemo && !isSuperAdmin) {
+      return combatId;
+    }
     if (shareRole === "read") {
       return combatId;
     }
+    const ownerId =
+      isDemo && isSuperAdmin ? existingCombat.user_id : userId;
     await env.DB
       .prepare(
         `UPDATE combats
@@ -466,7 +486,7 @@ export async function saveState(env, userId, state) {
         draft ? JSON.stringify(draft) : null,
         now,
         combatId,
-        userId
+        ownerId
       )
       .run();
   }
@@ -615,8 +635,7 @@ const LEXICON_TABLES = {
     action: "action",
     defensive: "defensive",
     cible: "cible",
-    "deplacement-attaque": "deplacement_attaque",
-    "deplacement-defense": "deplacement_defense",
+    deplacement: "deplacement",
     "parade-numero": "parade_numero",
     "parade-attribut": "parade_attribut",
     "attaque-attribut": "attaque_attribut"

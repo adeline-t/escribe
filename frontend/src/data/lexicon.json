@@ -1,9 +1,5 @@
 {
-  "offensive": [
-    "attaque",
-    "attaque composée",
-    "feinte"
-  ],
+  "offensive": ["attaque", "attaque composée", "feinte"],
   "action": [
     "batté",
     "banderole",
@@ -27,15 +23,15 @@
     "contre-riposte",
     "contre-temps",
     "terrassement",
-    "tranché"
+    "tranché",
+    "menace"
   ],
   "defensive": [
+    "subit",
     "déséquilibre",
     "esquive arrière",
     "esquive basse",
     "esquive en sautant",
-    "esquive latérale extérieure",
-    "esquive latérale intérieure",
     "invitation",
     "parade",
     "parade bouclier",
@@ -45,87 +41,59 @@
     "parade dague directe",
     "parade dague semi-circulaire",
     "parade de main",
-    "parade directe",
     "parade en croix",
     "parade d’opposition",
     "parade en cédant",
     "parade en double",
     "parade semi-circulaire",
     "passata di sotto",
-    "ramassé"
+    "ramassé",
+    "menace",
+    "lié"
   ],
   "cible": [
     "tête",
-    "épaule",
+    "épaule gauche",
+    "épaule droite",
     "poitrine",
     "bras",
-    "cuisse",
+    "jambe",
+    "jambe gauche",
+    "jambe droite",
     "flanc",
     "pied",
     "tibia",
     "ventre"
   ],
-  "deplacement-attaque": [
+  "deplacement": [
     "appel de pied arrière",
     "appel de pied avant",
     "balestra",
+    "bond arrière",
     "bond avant",
     "changement de garde arrière",
     "changement de garde avant",
-    "contre-volte avant",
-    "demi-marche",
-    "demi-passe avant",
-    "demi-volte avant externe",
-    "demi-volte avant interne",
-    "déplacement latéral externe",
-    "déplacement latéral interne",
-    "fente",
-    "fente inversée",
-    "flèche",
-    "marche",
-    "passe avant",
-    "quart de volte avant externe",
-    "quart de volte avant interne",
-    "redoublement de fente",
-    "retour en garde vers l'avant",
-    "volte avant"
-  ],
-  "deplacement-defense": [
-    "bond arrière",
-    "contre-volte arrière",
     "demi-marche",
     "demi-passe arrière",
+    "demi-passe avant",
     "demi-retraite",
-    "demi-volte arrière externe",
-    "demi-volte arrière interne",
-    "déplacement latéral externe",
-    "déplacement latéral interne",
+    "demi-volte",
+    "déplacement latéral",
+    "fente",
+    "fente inversée",
+    "fente latérale",
+    "flèche",
+    "marche",
     "passe arrière",
-    "quart de volte arrière externe",
-    "quart de volte arrière interne",
+    "passe avant",
+    "quart de volte ",
+    "redoublement de fente",
     "retour en garde vers l'arrière",
+    "retour en garde vers l'avant",
     "retraite",
-    "volte arrière"
+    "volte"
   ],
-  "parade-numero": [
-    "1",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-    "8",
-    "9"
-  ],
-  "parade-attribut": [
-    "haut",
-    "bas",
-    "normal"
-  ],
-  "attaque-attribut": [
-    "interieur",
-    "exterieur",
-    "inversé"
-  ]
+  "parade-numero": ["1", "2", "3", "4", "5", "6", "7", "8", "9"],
+  "parade-attribut": ["haute", "basse"],
+  "attaque-attribut": ["interieur", "exterieur", "inversé"]
 }

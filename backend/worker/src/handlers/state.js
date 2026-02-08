@@ -1,5 +1,5 @@
 import { getState, saveState, jsonResponse, buildCorsHeaders } from "../db.js";
-import { requireAuth } from "../auth.js";
+import { requireAuth, requireRole } from "../auth.js";
 import { logAudit } from "../audit.js";
 
 export async function handleState(request, env) {
@@ -13,7 +13,8 @@ export async function handleState(request, env) {
     const combatId = Number(url.searchParams.get("combatId"));
     const typeParam = url.searchParams.get("type");
     const combatType = typeParam === "sabre-laser" ? "sabre-laser" : typeParam === "classic" ? "classic" : null;
-    const state = await getState(env, session.user.id, Number.isFinite(combatId) ? combatId : null, combatType);
+    const isSuperAdmin = requireRole(session, ["superadmin"]);
+    const state = await getState(env, session.user.id, Number.isFinite(combatId) ? combatId : null, combatType, isSuperAdmin);
     return jsonResponse({ state }, 200, corsHeaders);
   }
 
@@ -23,7 +24,8 @@ export async function handleState(request, env) {
     if (!state || typeof state !== "object") {
       return jsonResponse({ error: "invalid_state" }, 400, corsHeaders);
     }
-    const combatId = await saveState(env, session.user.id, state);
+    const isSuperAdmin = requireRole(session, ["superadmin"]);
+    const combatId = await saveState(env, session.user.id, state, isSuperAdmin);
     await logAudit(env, "state.save", session.user.id, combatId, {});
     return jsonResponse({ ok: true, combatId }, 200, corsHeaders);
   }
