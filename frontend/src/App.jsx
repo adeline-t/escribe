@@ -508,12 +508,34 @@ export default function App() {
     });
     if (!hasContent) return;
 
+    if (!activePhraseId) return;
+
+    if (editingStepId) {
+      setPhrases((prev) =>
+        prev.map((phrase) => {
+          if (phrase.id !== activePhraseId) return phrase;
+          return {
+            ...phrase,
+            steps: phrase.steps.map((step) =>
+              step.id === editingStepId
+                ? { ...step, participants: form.map((item) => ({ ...item })) }
+                : step,
+            ),
+          };
+        }),
+      );
+      setEditingStepId(null);
+      setForm(participants.map(() => emptyParticipantState()));
+      setInsertStepIndex(null);
+      setInsertionMode(false);
+      setDeletionMode(false);
+      return;
+    }
+
     const step = {
       id: crypto.randomUUID(),
       participants: form.map((item) => ({ ...item })),
     };
-
-    if (!activePhraseId) return;
     setPhrases((prev) =>
       prev.map((phrase) => {
         if (phrase.id !== activePhraseId) return phrase;
@@ -589,6 +611,22 @@ export default function App() {
     setInsertionMode(false);
     setDeletionMode(false);
   }
+
+  useEffect(() => {
+    if (!editingStepId || !activePhraseId) return;
+    const phrase = phrases.find((item) => item.id === activePhraseId);
+    const step = phrase?.steps?.find((item) => item.id === editingStepId);
+    if (!step) return;
+    setForm(
+      step.participants.map((item) => ({
+        ...emptyParticipantState(),
+        ...item,
+        attackAttribute: Array.isArray(item.attackAttribute)
+          ? item.attackAttribute
+          : [],
+      })),
+    );
+  }, [editingStepId, activePhraseId, phrases]);
 
   function cancelEditStep() {
     setEditingStepId(null);

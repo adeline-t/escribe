@@ -1,5 +1,6 @@
 import CombatPageLayout from "../components/combat/CombatPageLayout.jsx";
 import CombatColumns from "../components/combat/CombatColumns.jsx";
+import CombatDetails from "../components/combat/CombatDetails.jsx";
 import CombatLeftPanels from "../components/combat/CombatLeftPanels.jsx";
 import CombatRightPanels from "../components/combat/CombatRightPanels.jsx";
 
@@ -16,13 +17,19 @@ export default function CombatReaderPage({
       subtitle="Vue complète en lecture seule."
       onBack={() => onNavigate?.("combats")}
     >
+      <CombatDetails
+        combatName={combatName}
+        combatDescription={combatDescription}
+        onCombatNameChange={() => {}}
+        onCombatDescriptionChange={() => {}}
+        isReadOnly
+        mode="read"
+      />
       <CombatColumns
         mode="read"
         readLeft={
           <CombatLeftPanels
             mode="read"
-            combatName={combatName}
-            combatDescription={combatDescription}
             participants={participants}
             showWeapons={participants.some((participant) => participant?.weapon)}
             uiLabels={{ weapon: "Arme" }}

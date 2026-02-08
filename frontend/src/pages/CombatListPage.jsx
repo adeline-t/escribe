@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import CombatRow from "../components/combat/CombatRow.jsx";
 import CombatShareModal from "../components/combat/CombatShareModal.jsx";
+import ConfirmDeleteModal from "../components/modals/ConfirmDeleteModal.jsx";
 
 export default function CombatListPage({
   apiBase,
@@ -33,6 +34,7 @@ export default function CombatListPage({
   const [shareLoading, setShareLoading] = useState(false);
   const [shareRole, setShareRole] = useState("read");
   const [exportingCombatId, setExportingCombatId] = useState(null);
+  const [pendingCombatDelete, setPendingCombatDelete] = useState(null);
 
   // ==================== UTILITY FUNCTIONS ====================
 
@@ -161,14 +163,17 @@ export default function CombatListPage({
       return {
         classic: filteredCombats,
         sabre: [],
+        demo: [],
       };
     }
     return {
+      demo: filteredCombats.filter((combat) => combat.isDemo),
       classic: filteredCombats.filter(
-        (combat) => (combat.type ?? "classic") === "classic",
+        (combat) => !combat.isDemo && (combat.type ?? "classic") === "classic",
       ),
       sabre: filteredCombats.filter(
-        (combat) => (combat.type ?? "classic") === "sabre-laser",
+        (combat) =>
+          !combat.isDemo && (combat.type ?? "classic") === "sabre-laser",
       ),
     };
   }, [filteredCombats, combatType]);
@@ -212,7 +217,9 @@ export default function CombatListPage({
 
   function openFromRow(combat) {
     const canWrite =
-      combat?.isOwner || combat?.shareRole === "write" || combat?.shareRole === "owner";
+      combat?.isOwner ||
+      combat?.shareRole === "write" ||
+      combat?.shareRole === "owner";
     if (canWrite) {
       openCombat(combat.id, combat.type);
     } else {
@@ -237,9 +244,9 @@ export default function CombatListPage({
           name: state.combatName,
           description: state.combatDescription,
           participants: state.participants ?? [],
-          phrases: state.phrases ?? []
+          phrases: state.phrases ?? [],
         },
-        options
+        options,
       );
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -254,12 +261,23 @@ export default function CombatListPage({
     }
   }
 
-  async function deleteCombat(id) {
+  function requestDeleteCombat(combat) {
+    setPendingCombatDelete(combat);
+  }
+
+  function closeDeleteCombatModal() {
+    setPendingCombatDelete(null);
+  }
+
+  async function confirmDeleteCombat() {
+    if (!pendingCombatDelete) return;
+    const id = pendingCombatDelete.id;
     await authFetch(`/api/combats/${id}/delete`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
     });
     await loadCombats();
+    setPendingCombatDelete(null);
   }
 
   async function openShareModal(combat) {
@@ -285,7 +303,9 @@ export default function CombatListPage({
       setShareAllUsers(usersPayload.users ?? []);
     } else {
       setShareError(
-        usersPayload?.error ? "Impossible de charger les utilisateurs." : "Erreur lors du chargement des utilisateurs."
+        usersPayload?.error
+          ? "Impossible de charger les utilisateurs."
+          : "Erreur lors du chargement des utilisateurs.",
       );
       setShareAllUsers([]);
     }
@@ -349,7 +369,7 @@ export default function CombatListPage({
             onRowOpen={openFromRow}
             onExportCombat={exportCombatPdfFromRow}
             onShare={openShareModal}
-            onDelete={deleteCombat}
+            onDelete={requestDeleteCombat}
             isExporting={exportingCombatId === combat.id}
           />
         ))}
@@ -509,6 +529,36 @@ export default function CombatListPage({
             <div className="stack-2">
               {!combatType ? (
                 <>
+                  {groupedCombats.demo.length ? (
+                    <details className="fold fold-combat" open>
+                      <summary className="fold-kicker demo-fold-summary">
+                        <span className="demo-fold-title">
+                          <span className="text-bold text-lg">Démo</span>
+                          <span className="meta text-muted">
+                            {groupedCombats.demo.length} combat
+                            {groupedCombats.demo.length > 1 ? "s" : ""}
+                          </span>
+                        </span>
+                      </summary>
+                      <div className="stack-2 stretch-rows">
+                        {groupedCombats.demo.map((combat) => (
+                          <CombatRow
+                            key={combat.id}
+                            combat={combat}
+                            isActive={combat.id === combatId}
+                            formatDate={formatDate}
+                            onOpenCombat={openCombat}
+                            onReadCombat={readCombat}
+                            onRowOpen={openFromRow}
+                            onExportCombat={exportCombatPdfFromRow}
+                            onShare={openShareModal}
+                            onDelete={requestDeleteCombat}
+                            isExporting={exportingCombatId === combat.id}
+                          />
+                        ))}
+                      </div>
+                    </details>
+                  ) : null}
                   <CombatSection
                     title="Escrime"
                     combats={groupedCombats.classic}
@@ -530,7 +580,7 @@ export default function CombatListPage({
                     onRowOpen={openFromRow}
                     onExportCombat={exportCombatPdfFromRow}
                     onShare={openShareModal}
-                    onDelete={deleteCombat}
+                    onDelete={requestDeleteCombat}
                     isExporting={exportingCombatId === combat.id}
                   />
                 ))
@@ -564,6 +614,19 @@ export default function CombatListPage({
         onAddShare={(userId) => addShare(userId)}
         onQueryChange={setShareQuery}
         onQuickAddShare={addShare}
+      />
+      <ConfirmDeleteModal
+        isOpen={!!pendingCombatDelete}
+        title="Supprimer le combat ?"
+        message={
+          pendingCombatDelete
+            ? `Le combat "${pendingCombatDelete.name}" sera supprimé.`
+            : "Ce combat sera supprimé."
+        }
+        confirmLabel="Supprimer"
+        cancelLabel="Annuler"
+        onConfirm={confirmDeleteCombat}
+        onCancel={closeDeleteCombatModal}
       />
     </section>
   );

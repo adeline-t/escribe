@@ -12,47 +12,24 @@ export default function CombatRightPanels({
 
   return (
     <>
-      <details className="fold" open>
-        <summary className="fold-kicker fold-kicker-row">
-          <span className="kicker">Lecture par cartes</span>
-          {readingProps?.onToggleInsertionMode ? (
-            <div className="phrase-mode-actions">
-              <button
-                type="button"
-                className={`button-secondary phrase-insert-toggle ${
-                  readingProps?.insertionMode ? "is-active" : ""
-                }`}
-                onClick={readingProps.onToggleInsertionMode}
-                disabled={readingProps?.deletionMode}
-              >
-                {readingProps?.insertionMode
-                  ? "Quitter l'insertion"
-                  : "Mode insertion"}
-              </button>
-              {readingProps?.onToggleDeletionMode ? (
-                <button
-                  type="button"
-                  className={`button-secondary phrase-delete-toggle ${
-                    readingProps?.deletionMode ? "is-active" : ""
-                  }`}
-                  onClick={readingProps.onToggleDeletionMode}
-                  disabled={readingProps?.insertionMode}
-                >
-                  {readingProps?.deletionMode
-                    ? "Quitter la suppression"
-                    : "Mode suppression"}
-                </button>
-              ) : null}
-            </div>
-          ) : null}
-        </summary>
+      <div className="fold">
+        <div className="fold-kicker fold-kicker-row">
+          {readingProps?.onToggleInsertionMode ? null : null}
+        </div>
         <CombatReading mode={mode} {...readingProps} />
-      </details>
+      </div>
       {!isReadMode ? (
-        <details className="fold" open>
-          <summary className="panel-header fold-kicker">
+        <div className="fold">
+          <div className="panel-header fold-kicker">
             <div className="header-with-badge">
-              <div className="kicker">
+              <div
+                className={`kicker ${
+                  phraseIndex === 0 && nextStepIndex === 0 ? "kicker-alert" : ""
+                }`}
+              >
+                Ajout nouvelle passe
+              </div>
+              <div className="text-sm text-muted">
                 Passe{" "}
                 <span className="badge">
                   #
@@ -68,9 +45,13 @@ export default function CombatRightPanels({
                 </span>
               </div>
             </div>
-          </summary>
-          <div className="step-form-panel">{stepForm}</div>
-        </details>
+          </div>
+          <div
+            className={`step-form-panel ${phraseIndex === 0 && nextStepIndex === 0 ? "step-form-panel--accent" : ""}`}
+          >
+            {stepForm}
+          </div>
+        </div>
       ) : null}
     </>
   );

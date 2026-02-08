@@ -1,4 +1,5 @@
-import { FaPlus } from "react-icons/fa6";
+import { useEffect, useRef, useState } from "react";
+import { FaEllipsis, FaPen, FaPlus } from "react-icons/fa6";
 
 export default function CombatPhraseList({
   phrases,
@@ -8,9 +9,12 @@ export default function CombatPhraseList({
   onMovePhrase,
   onMovePhraseToIndex,
   onRequestDeletePhrase,
+  onRequestRenamePhrase,
   mode = "edit",
 }) {
   const readOnly = mode === "read";
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const menuRef = useRef(null);
 
   function handleDragStart(event, phraseId) {
     if (readOnly) return;
@@ -32,19 +36,51 @@ export default function CombatPhraseList({
     event.dataTransfer.dropEffect = "move";
   }
 
+  function toggleMenu(phraseId) {
+    setOpenMenuId((prev) => (prev === phraseId ? null : phraseId));
+  }
+
+  function closeMenu() {
+    setOpenMenuId(null);
+  }
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (!menuRef.current) return;
+      if (!menuRef.current.contains(event.target)) {
+        closeMenu();
+      }
+    }
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        closeMenu();
+      }
+    }
+    if (openMenuId) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [openMenuId]);
+
   return (
     <>
       {!readOnly ? (
-        <summary className="header-with-badge header-with-badge--space fold-kicker">
+        <div className="header-with-badge header-with-badge--space fold-kicker">
           <span className="kicker">Phrases d'armes</span>
           <button
             type="button"
             className="button-icon button-secondary"
             onClick={onCreatePhrase}
+            aria-label="Ajouter une phrase"
+            title="Ajouter une phrase"
           >
             <FaPlus />
           </button>
-        </summary>
+        </div>
       ) : null}
       <div className="stack-2">
         {phrases.length === 0 ? (
@@ -64,10 +100,11 @@ export default function CombatPhraseList({
               draggable={!readOnly}
               onDragStart={(event) => handleDragStart(event, phrase.id)}
               onDragOver={handleDragOver}
+              onClick={() => onSelectPhrase(phrase.id)}
               onDrop={(event) => handleDrop(event, index)}
             >
               {readOnly ? (
-                <div className="row-top">
+                <div className="row">
                   <div className="text-strong">
                     {phrase.name?.trim() || `Phrase ${index + 1}`}
                   </div>
@@ -78,46 +115,83 @@ export default function CombatPhraseList({
                 </div>
               ) : (
                 <>
-                  <button
-                    type="button"
-                    className="button-secondary button-block align-left-center"
-                    onClick={() => onSelectPhrase(phrase.id)}
-                  >
-                    <div className="text-strong">
-                      {phrase.name?.trim() || `Phrase ${index + 1}`} •
+                  <div className="row">
+                    <div className="text-md">
+                      {phrase.name?.trim() || `Phrase ${index + 1}`}
+                      {" • "}
                       <span className="meta">
                         {phrase.steps.length} passe
                         {phrase.steps.length > 1 ? "s" : ""}
                       </span>
                     </div>
-                  </button>
+                  </div>
                   <div className="row-actions">
                     <button
                       type="button"
                       className="button-icon button-secondary"
-                      onClick={() => onMovePhrase(phrase.id, "up")}
+                      onClick={() => toggleMenu(phrase.id)}
+                      aria-label="Actions"
+                      title="Actions"
                     >
-                      ↑
+                      <FaEllipsis />
                     </button>
-                    <button
-                      type="button"
-                      className="button-icon button-secondary"
-                      onClick={() => onMovePhrase(phrase.id, "down")}
-                    >
-                      ↓
-                    </button>
-                    <button
-                      type="button"
-                      className="button-danger"
-                      onClick={() =>
-                        onRequestDeletePhrase({
-                          id: phrase.id,
-                          name: phrase.name?.trim() || `Phrase ${index + 1}`,
-                        })
-                      }
-                    >
-                      Suppr.
-                    </button>
+                    {openMenuId === phrase.id ? (
+                      <div className="row-menu" role="menu" ref={menuRef}>
+                        <button
+                          type="button"
+                          className="button-ghost"
+                          onClick={() => {
+                            onRequestRenamePhrase?.({
+                              id: phrase.id,
+                              name:
+                                phrase.name?.trim() || `Phrase ${index + 1}`,
+                            });
+                            setTimeout(closeMenu, 0);
+                          }}
+                        >
+                          Renommer
+                        </button>
+                        {phrases.length > 1 ? (
+                          <>
+                            <button
+                              type="button"
+                              className="button-ghost"
+                              onClick={() => {
+                                onMovePhrase(phrase.id, "up");
+                                closeMenu();
+                              }}
+                            >
+                              Monter
+                            </button>
+                            <button
+                              type="button"
+                              className="button-ghost"
+                              onClick={() => {
+                                onMovePhrase(phrase.id, "down");
+                                closeMenu();
+                              }}
+                            >
+                              Descendre
+                            </button>
+                            <button
+                              type="button"
+                              className="button-ghost button-danger"
+                              onClick={() => {
+                                onRequestDeletePhrase({
+                                  id: phrase.id,
+                                  name:
+                                    phrase.name?.trim() ||
+                                    `Phrase ${index + 1}`,
+                                });
+                                closeMenu();
+                              }}
+                            >
+                              Supprimer
+                            </button>
+                          </>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </div>
                 </>
               )}

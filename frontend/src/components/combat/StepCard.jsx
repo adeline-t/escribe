@@ -31,7 +31,7 @@ export default function StepCard({
 
   return (
     <div
-      className={`card-mini ${type}`}
+      className={`card-mini ${type} ${onEdit ? "card-mini--editable" : ""}`}
       onPointerDown={handlePointerDown}
       onPointerUp={clearLongPress}
       onPointerLeave={clearLongPress}

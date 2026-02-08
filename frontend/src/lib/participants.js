@@ -51,10 +51,12 @@ export function emptyParticipantState() {
     role: "attack",
     offensive: "",
     action: "",
+    actionDetails: [],
     target: "",
     attackMove: "",
     attackAttribute: [],
     defense: "",
+    defenseDetails: [],
     paradeNumber: "",
     paradeAttribute: "",
     defendMove: "",
@@ -77,6 +79,19 @@ export function normalizeParticipant(item) {
     ...item,
     mode,
     role,
+    actionDetails: Array.isArray(item?.actionDetails)
+      ? item.actionDetails.map((detail) => ({
+          action: detail?.action ?? "",
+          attribute: detail?.attribute ?? "",
+        }))
+      : [],
+    defenseDetails: Array.isArray(item?.defenseDetails)
+      ? item.defenseDetails.map((detail) => ({
+          defense: detail?.defense ?? "",
+          position: detail?.position ?? "",
+          attribute: detail?.attribute ?? "",
+        }))
+      : [],
     attackAttribute: Array.isArray(item?.attackAttribute)
       ? item.attackAttribute
       : [],
@@ -162,30 +177,73 @@ function buildChoregraphieSummary(item, { includeNoteWhenEmpty }) {
 }
 
 function buildAttackSummary(item) {
-  const actionBits = [
+  const actionDetails = Array.isArray(item.actionDetails)
+    ? item.actionDetails
+    : [];
+  const actionBitsFromDetails = actionDetails
+    .map((detail) =>
+      [detail?.action, detail?.attribute].filter(Boolean).join(" "),
+    )
+    .filter(Boolean)
+    .join(" · ");
+  const actionBitsFallback = [
     item.action,
     item.attackAttribute?.length ? item.attackAttribute.join(", ") : "",
   ]
     .filter(Boolean)
     .join(" ");
+  const actionBits = actionBitsFromDetails || actionBitsFallback;
+  const moveBits = item.attackMove
+    ? item.attackMove
+        .split(" · ")
+        .map((entry) => entry.trim())
+        .filter(Boolean)
+        .join(" · ")
+    : "";
   const pieces = [
     item.offensive,
     actionBits ? `en ${actionBits}` : "",
     item.target ? `sur ${item.target}` : "",
-    item.attackMove ? `avec ${item.attackMove}` : "",
+    moveBits ? `avec ${moveBits}` : "",
     item.note ? `(${item.note})` : "",
   ];
   return pieces.filter(Boolean).join(" ");
 }
 
 function buildDefenseSummary(item) {
+  const defenseDetails = Array.isArray(item.defenseDetails)
+    ? item.defenseDetails
+    : [];
+  const defenseBitsFromDetails = defenseDetails
+    .map((detail) => {
+      const parts = [];
+      if (detail?.defense) parts.push(detail.defense);
+      if (detail?.position) parts.push(`de ${detail.position}`);
+      if (detail?.attribute) parts.push(detail.attribute);
+      return parts.join(" ");
+    })
+    .filter(Boolean)
+    .join(" · ");
   const paradeBits = [item.paradeNumber, item.paradeAttribute]
     .filter(Boolean)
     .join(" ");
-  const pieces = [
+  const defenseBitsFallback = [
     item.defense,
     paradeBits ? `de ${paradeBits}` : "",
-    item.defendMove ? `en ${item.defendMove}` : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const defenseBits = defenseBitsFromDetails || defenseBitsFallback;
+  const moveBits = item.defendMove
+    ? item.defendMove
+        .split(" · ")
+        .map((entry) => entry.trim())
+        .filter(Boolean)
+        .join(" · ")
+    : "";
+  const pieces = [
+    defenseBits,
+    moveBits ? `en ${moveBits}` : "",
     item.note ? `(${item.note})` : "",
   ];
   return pieces.filter(Boolean).join(" ");

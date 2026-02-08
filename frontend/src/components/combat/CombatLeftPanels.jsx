@@ -1,13 +1,8 @@
-import CombatDetails from "./CombatDetails.jsx";
 import CombatParticipants from "./CombatParticipants.jsx";
 import CombatPhraseList from "./CombatPhraseList.jsx";
 
 export default function CombatLeftPanels({
   mode = "edit",
-  combatName,
-  combatDescription,
-  onCombatNameChange,
-  onCombatDescriptionChange,
   participants,
   buildParticipantLabel,
   onParticipantCountChange,
@@ -29,20 +24,7 @@ export default function CombatLeftPanels({
 
   return (
     <>
-      <details className="fold" open>
-        <summary className="fold-kicker">
-          <span className="kicker">Combat</span>
-        </summary>
-        <CombatDetails
-          combatName={combatName}
-          combatDescription={combatDescription}
-          onCombatNameChange={onCombatNameChange}
-          onCombatDescriptionChange={onCombatDescriptionChange}
-          isReadOnly={isReadOnly}
-          mode={mode}
-        />
-      </details>
-      <details className="fold" open>
+      <details className="fold" close>
         <summary className="fold-kicker">
           <span className="kicker">Combattants</span>
         </summary>
@@ -59,7 +41,7 @@ export default function CombatLeftPanels({
           mode={mode}
         />
       </details>
-      <details className="fold" open>
+      <div className="fold">
         {isReadMode ? (
           <>
             <summary className="fold-kicker">
@@ -79,7 +61,7 @@ export default function CombatLeftPanels({
             mode="edit"
           />
         )}
-      </details>
+      </div>
     </>
   );
 }

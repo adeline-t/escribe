@@ -120,6 +120,17 @@ button {
   cursor: pointer;
 }
 
+.button-icon:disabled,
+.button-secondary:disabled,
+.button-primary:disabled,
+.button-danger:disabled,
+.button-ghost:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  box-shadow: none;
+  filter: grayscale(45%);
+}
+
 /* Segmented controls */
 .segmented {
   display: inline-flex;

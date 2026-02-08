@@ -11,6 +11,15 @@ export default function StepSummaryLine({
     );
   }
 
+  function badgeList(labels, variant, keyPrefix) {
+    return labels.map((label, index) => (
+      <span key={`${keyPrefix}-${index}`}>
+        {index > 0 ? " · " : ""}
+        {badge(label, variant, `${keyPrefix}-${index}`)}
+      </span>
+    ));
+  }
+
   if (item.mode === "choregraphie") {
     return (
       <span>
@@ -46,19 +55,42 @@ export default function StepSummaryLine({
         </span>
       );
     }
-    const attackAttribute = item.attackAttribute?.length
-      ? item.attackAttribute.join(", ")
-      : "";
-    const actionBits = [item.action, attackAttribute].filter(Boolean).join(" ");
+    const actionDetails = Array.isArray(item.actionDetails)
+      ? item.actionDetails
+      : [];
+    const actionBitsFromDetails = actionDetails
+      .map((detail) =>
+        [detail?.action, detail?.attribute].filter(Boolean).join(" "),
+      )
+      .filter(Boolean);
+    const actionBitsFallback = [
+      item.action,
+      item.attackAttribute?.length ? item.attackAttribute.join(", ") : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+    const actionBits = actionBitsFromDetails.length
+      ? actionBitsFromDetails
+      : actionBitsFallback
+        ? [actionBitsFallback]
+        : [];
+    const moveBits = item.attackMove
+      ? item.attackMove
+          .split(" · ")
+          .map((entry) => entry.trim())
+          .filter(Boolean)
+      : [];
     return (
       <span>
         {badge(item.offensive, "offensive", "offensive")}
-        {actionBits ? <> en {badge(actionBits, "action", "action")}</> : null}
+        {actionBits.length ? (
+          <span> en {badgeList(actionBits, "action", "action")}</span>
+        ) : null}
         {item.target ? (
           <span> sur {badge(item.target, "target", "target")}</span>
         ) : null}
-        {item.attackMove ? (
-          <span> avec {badge(item.attackMove, "move", "move")}</span>
+        {moveBits.length ? (
+          <span> avec {badgeList(moveBits, "move", "move")}</span>
         ) : null}
         {item.note ? (
           <span>
@@ -78,18 +110,45 @@ export default function StepSummaryLine({
         </span>
       );
     }
-    const defenseLabel = item.defense ?? item.defensive ?? "";
+    const defenseDetails = Array.isArray(item.defenseDetails)
+      ? item.defenseDetails
+      : [];
+    const defenseBitsFromDetails = defenseDetails
+      .map((detail) => {
+        const parts = [];
+        if (detail?.defense) parts.push(detail.defense);
+        if (detail?.position) parts.push(`de ${detail.position}`);
+        if (detail?.attribute) parts.push(detail.attribute);
+        return parts.join(" ");
+      })
+      .filter(Boolean);
     const paradeLabel = [item.paradeNumber, item.paradeAttribute]
       .filter(Boolean)
       .join(" ");
+    const defenseLabel = item.defense ?? item.defensive ?? "";
+    const defenseBits =
+      defenseBitsFromDetails.length > 0
+        ? defenseBitsFromDetails
+        : defenseLabel || paradeLabel
+          ? [
+              [defenseLabel, paradeLabel ? `de ${paradeLabel}` : ""]
+                .filter(Boolean)
+                .join(" "),
+            ]
+          : [];
+    const moveBits = item.defendMove
+      ? item.defendMove
+          .split(" · ")
+          .map((entry) => entry.trim())
+          .filter(Boolean)
+      : [];
     return (
       <span>
-        {badge(defenseLabel, "defensive", "parade")}
-        {paradeLabel ? (
-          <> de {badge(paradeLabel, "parade-number", "paradeLabel")}</>
+        {defenseBits.length ? (
+          badgeList(defenseBits, "defensive", "defensive")
         ) : null}
-        {item.defendMove ? (
-          <span> en {badge(item.defendMove, "move", "move")}</span>
+        {moveBits.length ? (
+          <span> en {badgeList(moveBits, "move", "move")}</span>
         ) : null}
         {item.note ? (
           <span>

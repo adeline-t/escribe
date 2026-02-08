@@ -35,10 +35,7 @@ export default function AuthPage({
           </p>
           <p className="text-md">
             C’est une <strong>bêta</strong> : des évolutions et ajustements
-            arrivent (
-            <em>
-              promis, pas de duel au sabre laser pour valider une mise à jour
-            </em>
+            arrivent (<em>promis, pas de duel pour valider une mise à jour</em>
             ).
           </p>
           <p className="meta text-md">
@@ -63,10 +60,7 @@ export default function AuthPage({
             </div>
             <div>
               • <strong>Blaise LAPORTE</strong>{" "}
-              <span className="meta">
-                (par n’importe quel moyen — il est plus connu qu’il ne veut
-                l’admettre.)
-              </span>
+              <span className="meta">(si vous avez ses coordonées.)</span>
             </div>
           </div>
           <p className="text-md">
@@ -86,7 +80,8 @@ export default function AuthPage({
             majuscules.
           </p>
           <p className="text-sm text-muted">
-            Et pour ceux qui sont intéressés par la notation en compétition, voici la grande sœur :{" "}
+            Et pour ceux qui sont intéressés par la notation en compétition,
+            voici la grande sœur :{" "}
             <a
               href="https://balestra-bkf.pages.dev"
               target="_blank"

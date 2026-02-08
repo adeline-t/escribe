@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import ConfirmDeleteModal from "../components/modals/ConfirmDeleteModal.jsx";
 import CombatPageLayout from "../components/combat/CombatPageLayout.jsx";
 import CombatColumns from "../components/combat/CombatColumns.jsx";
+import CombatDetails from "../components/combat/CombatDetails.jsx";
 import CombatStepForm from "../components/combat/CombatStepForm.jsx";
 import StepInlineEditorModal from "../components/combat/StepInlineEditorModal.jsx";
 import CombatLeftPanels from "../components/combat/CombatLeftPanels.jsx";
@@ -67,6 +68,8 @@ export default function CombatFormPage({
   const [inlineEdit, setInlineEdit] = useState(null);
   const [inlineItem, setInlineItem] = useState(null);
   const [pendingPhraseDelete, setPendingPhraseDelete] = useState(null);
+  const [pendingPhraseRename, setPendingPhraseRename] = useState(null);
+  const [renameValue, setRenameValue] = useState("");
   const inlineStepIndex = inlineEdit
     ? (activePhrase?.steps?.findIndex(
         (step) => step.id === inlineEdit.stepId,
@@ -93,11 +96,11 @@ export default function CombatFormPage({
     action: "action",
     attackAttribute: "attaque-attribut",
     target: "cible",
-    attackMove: "deplacement-attaque",
+    attackMove: "deplacement",
     defensive: "defensive",
     paradeNumber: "parade-numero",
     paradeAttribute: "parade-attribut",
-    defendMove: "deplacement-defense",
+    defendMove: "deplacement",
     ...favoriteTypeKeys,
   };
 
@@ -157,6 +160,26 @@ export default function CombatFormPage({
     closeInlineEditor();
   }
 
+  function openRenamePhraseModal(payload) {
+    if (!payload) return;
+    setPendingPhraseRename(payload);
+    setRenameValue(payload.name ?? "");
+  }
+
+  function closeRenamePhraseModal() {
+    setPendingPhraseRename(null);
+  }
+
+  function submitRenamePhrase(event) {
+    event?.preventDefault?.();
+    if (!pendingPhraseRename) return;
+    const trimmed = renameValue.trim();
+    if (!trimmed) return;
+    onRenamePhrase(pendingPhraseRename.id, trimmed);
+    closeRenamePhraseModal();
+  }
+
+
   const stepForm = (
     <CombatStepForm
       form={form}
@@ -191,15 +214,19 @@ export default function CombatFormPage({
         subtitle="Édite les phrases et les passes."
         onBack={() => onNavigate?.("combats")}
       >
+        <CombatDetails
+          combatName={combatName}
+          combatDescription={combatDescription}
+          onCombatNameChange={onCombatNameChange}
+          onCombatDescriptionChange={onCombatDescriptionChange}
+          isReadOnly={isReadOnly}
+          mode={"edit"}
+        />
         <CombatColumns
           mode="edit"
           editLeft={
             <CombatLeftPanels
               mode="edit"
-              combatName={combatName}
-              combatDescription={combatDescription}
-              onCombatNameChange={onCombatNameChange}
-              onCombatDescriptionChange={onCombatDescriptionChange}
               participants={participants}
               buildParticipantLabel={buildParticipantLabel}
               onParticipantCountChange={onParticipantCountChange}
@@ -215,6 +242,7 @@ export default function CombatFormPage({
               onMovePhrase={onMovePhrase}
               onMovePhraseToIndex={onMovePhraseToIndex}
               onRequestDeletePhrase={setPendingPhraseDelete}
+              onRequestRenamePhrase={openRenamePhraseModal}
               isReadOnly={isReadOnly}
             />
           }
@@ -223,6 +251,7 @@ export default function CombatFormPage({
               mode="edit"
               readingProps={{
                 activePhrase,
+                phrases,
                 participants,
                 participantLabels,
                 onResetForm,
@@ -236,6 +265,8 @@ export default function CombatFormPage({
                 deletionMode,
                 onToggleDeletionMode,
                 onDeleteStep,
+                onSelectPhrase,
+                onRenamePhrase,
               }}
               stepForm={stepForm}
               nextStepIndex={nextStepIndex}
@@ -257,13 +288,46 @@ export default function CombatFormPage({
         favoriteKeys={favoriteKeys}
         normalizedLexicon={normalizedLexicon}
         orderOptions={orderOptions}
-        toggleAttribute={toggleAttribute}
         showParadeNumber={showParadeNumber}
         isReadOnly={isReadOnly}
         onClose={closeInlineEditor}
         onSave={saveInlineEditor}
         onUpdateInlineItem={updateInlineItem}
       />
+      {pendingPhraseRename ? (
+        <div
+          className="modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          onClick={closeRenamePhraseModal}
+        >
+          <div className="modal" onClick={(event) => event.stopPropagation()}>
+            <div className="kicker">Renommer la phrase</div>
+            <form className="stack-2" onSubmit={submitRenamePhrase}>
+              <label>
+                Nom de la phrase
+                <input
+                  value={renameValue}
+                  onChange={(event) => setRenameValue(event.target.value)}
+                  autoFocus
+                />
+              </label>
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="button-secondary"
+                  onClick={closeRenamePhraseModal}
+                >
+                  Annuler
+                </button>
+                <button type="submit" className="button-primary">
+                  Enregistrer
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
       <ConfirmDeleteModal
         isOpen={!!pendingPhraseDelete}
         title="Supprimer la phrase"

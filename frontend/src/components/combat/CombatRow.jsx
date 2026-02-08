@@ -25,6 +25,8 @@ export default function CombatRow({
   const rowLabel = `Ouvrir ${combat.name}`;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef(null);
+  const canWrite =
+    combat?.isOwner || combat?.shareRole === "write" || combat?.shareRole === "owner";
 
   function handleRowClick() {
     if (!onRowOpen) return;
@@ -84,18 +86,20 @@ export default function CombatRow({
       </div>
       <div className="align-end">
         <div className="row-actions desktop-only">
-          <button
-            type="button"
-            className="chip icon-button"
-            onClick={(event) => {
-              stopRowClick(event);
-              onOpenCombat(combat.id, combat.type);
-            }}
-            aria-label="Ouvrir le combat"
-            title="Ouvrir"
-          >
-            <FaUpRightFromSquare />
-          </button>
+          {canWrite ? (
+            <button
+              type="button"
+              className="chip icon-button"
+              onClick={(event) => {
+                stopRowClick(event);
+                onOpenCombat(combat.id, combat.type);
+              }}
+              aria-label="Ouvrir le combat"
+              title="Ouvrir"
+            >
+              <FaUpRightFromSquare />
+            </button>
+          ) : null}
           <button
             type="button"
             className="chip icon-button"
@@ -179,19 +183,21 @@ export default function CombatRow({
               className="combat-row-menu"
               role="menu"
             >
-              <button
-                type="button"
-                className="icon-button"
-                onClick={(event) => {
-                  stopRowClick(event);
-                  onOpenCombat(combat.id, combat.type);
-                  setIsMenuOpen(false);
-                }}
-                aria-label="Ouvrir"
-                title="Ouvrir"
-              >
-                <FaUpRightFromSquare />
-              </button>
+              {canWrite ? (
+                <button
+                  type="button"
+                  className="icon-button"
+                  onClick={(event) => {
+                    stopRowClick(event);
+                    onOpenCombat(combat.id, combat.type);
+                    setIsMenuOpen(false);
+                  }}
+                  aria-label="Ouvrir"
+                  title="Ouvrir"
+                >
+                  <FaUpRightFromSquare />
+                </button>
+              ) : null}
               <button
                 type="button"
                 className="icon-button"
