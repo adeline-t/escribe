@@ -24,7 +24,7 @@ export default function CombatLeftPanels({
 
   return (
     <>
-      <details className="fold" close>
+      <details className="fold">
         <summary className="fold-kicker">
           <span className="kicker">Combattants</span>
         </summary>
@@ -41,7 +41,7 @@ export default function CombatLeftPanels({
           mode={mode}
         />
       </details>
-      <div className="fold">
+      <details className="fold" open={isReadMode}>
         {isReadMode ? (
           <>
             <summary className="fold-kicker">
@@ -61,7 +61,7 @@ export default function CombatLeftPanels({
             mode="edit"
           />
         )}
-      </div>
+      </details>
     </>
   );
 }

@@ -107,6 +107,35 @@ export default function CombatReading({
     return false;
   }
 
+  function getReadCardType(item) {
+    const hasDisplayContent = hasItemDisplayContent(item);
+    if (!hasDisplayContent) return null;
+    if (item.role === "defense") return "reaction";
+    if (item.role === "preparation") return "preparation";
+    if (
+      item.role === "attack" ||
+      item.mode === "choregraphie" ||
+      item.mode === "note"
+    ) {
+      return "action";
+    }
+    return null;
+  }
+
+  function getReadConnectorRole(item) {
+    if (!item || typeof item !== "object") return null;
+    if (item.role === "attack") return "attack";
+    if (item.role === "defense") return "response";
+    return null;
+  }
+
+  function isAttackResponsePair(leftRole, rightRole) {
+    return (
+      (leftRole === "attack" && rightRole === "response") ||
+      (leftRole === "response" && rightRole === "attack")
+    );
+  }
+
   function renderReadingHeader({
     title,
     subtitle,
@@ -285,7 +314,7 @@ export default function CombatReading({
     }
 
     return (
-      <div className="stack-4">
+      <div className="stack-4 combat-reading-readonly">
         {phrases.map((phrase, phraseIndex) => (
           <div key={phrase.id} className="phrase-block">
             <div className="panel-header">
@@ -316,53 +345,122 @@ export default function CombatReading({
               </div>
               <div className="stack-2">
                 {phrase.steps?.length ? (
-                  phrase.steps.map((step, index) => (
-                    <div
-                      key={step.id}
-                      className={`phrase-grid-row cols-index-${participants.length} index-wide ${
-                        participants.length === 1 ? "index-hidden" : ""
-                      }`}
-                    >
-                      {participants.length > 1 ? (
-                        <div className="phrase-index">
-                          <div className="phrase-index-number">{index + 1}</div>
-                        </div>
-                      ) : null}
-                      {step.participants.map((item, colIndex) => {
-                        const hasDisplayContent = hasItemDisplayContent(item);
-                        const role = item.role;
-                        const cardType = hasDisplayContent
-                          ? role === "defense"
-                            ? "reaction"
-                            : role === "preparation"
-                              ? "preparation"
-                              : role === "attack" ||
-                                  item.mode === "choregraphie" ||
-                                  item.mode === "note"
-                                ? "action"
-                                : null
-                          : null;
-                        return (
-                          <div
-                            key={`${step.id}-${colIndex}`}
-                            className="phrase-cell"
-                          >
-                            {participants.length === 1 ? (
-                              <div className="phrase-step-number-inline">
-                                {index + 1}
-                              </div>
-                            ) : null}
-                            {cardType ? (
-                              <StepSummaryCard
-                                type={cardType}
-                                item={item}
-                              />
-                            ) : null}
+                  phrase.steps.map((step, index) => {
+                    const stepCardTypes = step.participants.map(getReadCardType);
+                    const stepConnectorRoles = step.participants.map(
+                      (item, participantIndex) =>
+                        stepCardTypes[participantIndex]
+                          ? getReadConnectorRole(item)
+                          : null,
+                    );
+                    const connectorIndices = stepConnectorRoles.reduce(
+                      (accumulator, role, participantIndex) => {
+                        if (role) accumulator.push(participantIndex);
+                        return accumulator;
+                      },
+                      [],
+                    );
+                    const connectorLinks = [];
+                    for (
+                      let pairIndex = 0;
+                      pairIndex < connectorIndices.length - 1;
+                      pairIndex += 1
+                    ) {
+                      const fromIndex = connectorIndices[pairIndex];
+                      const toIndex = connectorIndices[pairIndex + 1];
+                      const fromRole = stepConnectorRoles[fromIndex];
+                      const toRole = stepConnectorRoles[toIndex];
+                      if (!isAttackResponsePair(fromRole, toRole)) {
+                        continue;
+                      }
+                      connectorLinks.push({
+                        fromIndex,
+                        toIndex,
+                        span: toIndex - fromIndex,
+                      });
+                    }
+
+                    return (
+                      <div
+                        key={step.id}
+                        className={`phrase-grid-row cols-index-${participants.length} index-wide ${
+                          participants.length === 1 ? "index-hidden" : ""
+                        }`}
+                      >
+                        {participants.length > 1 ? (
+                          <div className="phrase-index">
+                            <div className="phrase-index-number">
+                              {index + 1}
+                            </div>
                           </div>
-                        );
-                      })}
-                    </div>
-                  ))
+                        ) : null}
+                        {step.participants.map((item, colIndex) => {
+                          const cardType = stepCardTypes[colIndex];
+                          const incomingLink = connectorLinks.find(
+                            (link) => link.toIndex === colIndex,
+                          );
+                          const outgoingLink = connectorLinks.find(
+                            (link) => link.fromIndex === colIndex,
+                          );
+                          const hasPrevLink = Boolean(incomingLink);
+                          const hasNextLink = Boolean(outgoingLink);
+                          const showLeftColumnDot = Boolean(cardType) && hasNextLink;
+                          const showRightColumnDot = Boolean(cardType) && hasPrevLink;
+                          const isDefenseMarker = cardType === "reaction";
+                          const nextLinkSpan = outgoingLink?.span ?? 1;
+                          return (
+                            <div
+                              key={`${step.id}-${colIndex}`}
+                              className="phrase-cell"
+                            >
+                              {participants.length === 1 ? (
+                                <div className="phrase-step-number-inline">
+                                  {index + 1}
+                                </div>
+                              ) : null}
+                              {cardType ? (
+                                <div className="phrase-cell-card-wrap">
+                                  <StepSummaryCard type={cardType} item={item} />
+                                  {showRightColumnDot ? (
+                                    <span
+                                      className={`phrase-cell-left-dot ${
+                                        isDefenseMarker
+                                          ? "is-defense-marker"
+                                          : ""
+                                      }`}
+                                      aria-hidden="true"
+                                    >
+                                      {isDefenseMarker ? ">" : ""}
+                                    </span>
+                                  ) : null}
+                                  {showLeftColumnDot ? (
+                                    <>
+                                      {hasNextLink ? (
+                                        <span
+                                          className={`phrase-cell-link-line span-${nextLinkSpan}`}
+                                          aria-hidden="true"
+                                        />
+                                      ) : null}
+                                      <span
+                                        className={`phrase-cell-right-dot ${
+                                          isDefenseMarker
+                                            ? "is-defense-marker"
+                                            : ""
+                                        }`}
+                                        aria-hidden="true"
+                                      >
+                                        {isDefenseMarker ? "<" : ""}
+                                      </span>
+                                    </>
+                                  ) : null}
+                                </div>
+                              ) : null}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })
                 ) : (
                   <div className="empty">Aucune étape.</div>
                 )}

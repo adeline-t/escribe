@@ -1102,8 +1102,28 @@
 }
 
 @media (max-width: 640px) {
+  html,
+  body,
+  #root {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
   .page {
     padding: var(--space-6) var(--space-4) var(--space-8);
+  }
+
+  .content,
+  .panel,
+  .card,
+  .row-card,
+  .split-layout,
+  .split-layout--slider,
+  .lexicon-shell,
+  .lexicon-categories,
+  .lexicon-main {
+    max-width: 100%;
+    min-width: 0;
   }
 
   .split-layout--slider {
@@ -1171,6 +1191,7 @@
     grid-template-columns: 24px 1fr;
     padding: var(--space-2) var(--space-3);
     width: 100%;
+    min-width: 0;
   }
 
   .menu-icon {
@@ -1245,12 +1266,48 @@
   .row-actions {
     width: 100%;
     justify-content: flex-start;
+    min-width: 0;
   }
 
   .row-actions > button,
   .row-actions > input,
   .row-actions > select {
     width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .row-between > * {
+    min-width: 0;
+  }
+
+  .row-menu {
+    max-width: min(280px, calc(100vw - 24px));
+  }
+
+  .phrase-insert-arrow {
+    transform: none;
+  }
+
+  .phrase-cell,
+  .phrase-name,
+  .text-strong,
+  .meta,
+  .title,
+  .subtitle,
+  .badge,
+  .chip,
+  .kicker {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  input,
+  select,
+  textarea,
+  button {
+    max-width: 100%;
   }
 
   .row-top {
@@ -1949,6 +2006,10 @@ select {
   gap: var(--space-6);
 }
 
+.phrase--reading .phrase-grid-row {
+  --phrase-link-gap: var(--space-6);
+}
+
 .phrase--reading .phrase-grid-row + .phrase-grid-row {
   margin-top: var(--space-4);
 }
@@ -1990,6 +2051,76 @@ select {
 
 .card-mini {
   position: relative; /* ancre l'absolu */
+}
+
+.phrase-cell-card-wrap {
+  position: relative;
+  width: 100%;
+}
+
+/* Trait horizontal qui relie le point de gauche au point de droite. */
+.phrase-cell-link-line {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  width: var(--phrase-link-gap, var(--space-6));
+  height: 1px;
+  background: #000;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.phrase-cell-link-line.span-1 {
+  width: var(--phrase-link-gap, var(--space-6));
+}
+
+.phrase-cell-link-line.span-2 {
+  width: calc(100% + (var(--phrase-link-gap, var(--space-6)) * 2));
+}
+
+.phrase-cell-link-line.span-3 {
+  width: calc(200% + (var(--phrase-link-gap, var(--space-6)) * 3));
+}
+
+/* Point noir 2px au milieu du bord droit de chaque carte de la colonne gauche. */
+.phrase-cell-right-dot {
+  position: absolute;
+  right: -2px;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: #000;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.phrase-cell-left-dot {
+  position: absolute;
+  left: -2px;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: #000;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.phrase-cell-right-dot.is-defense-marker,
+.phrase-cell-left-dot.is-defense-marker {
+  width: auto;
+  height: auto;
+  background: transparent;
+  border-radius: 0;
+  color: #000;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  margin-top: 1px;
 }
 
 .card-mini-plus {
@@ -2422,6 +2553,7 @@ select {
   }
   .phrase-grid-row {
     gap: var(--space-4);
+    --phrase-link-gap: var(--space-4);
   }
   .arrow {
     display: none;
@@ -2431,5 +2563,279 @@ select {
   }
   .preparation-position-row {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .option-grid .fold {
+    padding: var(--space-2);
+  }
+
+  .option-grid .fold .fold-kicker {
+    margin-bottom: var(--space-2);
+  }
+
+  .combat-reading-readonly .phrase-index,
+  .combat-reading-readonly .phrase-step-number-inline {
+    display: none;
+  }
+
+  .combat-reading-readonly {
+    gap: var(--space-2);
+  }
+
+  .combat-reading-readonly .phrase-block {
+    padding: var(--space-2);
+  }
+
+  .combat-reading-readonly .phrase--reading {
+    gap: var(--space-2);
+  }
+
+  .combat-reading-readonly .phrase--reading .phrase-header,
+  .combat-reading-readonly .phrase--reading .phrase-grid-row {
+    gap: var(--space-2);
+  }
+
+  .combat-reading-readonly .phrase--reading .phrase-grid-row {
+    --phrase-link-gap: var(--space-2);
+  }
+
+  .combat-reading-readonly .phrase--reading .phrase-grid-row + .phrase-grid-row {
+    margin-top: var(--space-2);
+  }
+
+  .combat-reading-readonly .phrase-name {
+    padding: var(--space-1) var(--space-2);
+    min-height: 38px;
+  }
+
+  .combat-reading-readonly .card-mini {
+    padding: var(--space-2);
+  }
+
+  .combat-reading-readonly .card-mini-line {
+    line-height: 1.35;
+  }
+
+  .combat-reading-readonly .phrase-header.cols-index-2,
+  .combat-reading-readonly .phrase-grid-row.cols-index-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .combat-reading-readonly .phrase-header.cols-index-3,
+  .combat-reading-readonly .phrase-grid-row.cols-index-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .combat-reading-readonly .phrase-header.cols-index-4,
+  .combat-reading-readonly .phrase-grid-row.cols-index-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* ============================= */
+/* Responsive: Mobile Pass */
+/* ============================= */
+@media (max-width: 900px) {
+  .phrase-name-editor {
+    max-width: 100%;
+  }
+
+  .phrase-name-editor .input {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .users-row-inline {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Foundation */
+  .page {
+    max-width: 100%;
+    padding: var(--space-4) var(--space-3) var(--space-8);
+  }
+
+  .panel {
+    padding: var(--space-3);
+    border-radius: var(--radius-3);
+  }
+
+  .title {
+    font-size: 20px;
+    line-height: 1.2;
+  }
+
+  .subtitle {
+    font-size: 14px;
+    line-height: 1.35;
+  }
+
+  .kicker {
+    letter-spacing: 0.16em;
+    font-size: 10px;
+  }
+
+  .panel > *,
+  .card > *,
+  .row-card > *,
+  .fold > * {
+    min-width: 0;
+  }
+
+  /* Controls */
+  .segmented {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: stretch;
+  }
+
+  .segmented-button {
+    flex: 1 1 calc(50% - var(--space-1));
+    min-width: 0;
+  }
+
+  /* Combat list */
+  .combat-row-meta,
+  .combat-row .meta {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .combat-row .align-end {
+    width: auto;
+    min-width: 0;
+    display: flex;
+    gap: var(--space-1);
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .combat-row-menu {
+    right: var(--space-2);
+    left: var(--space-2);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Combat create / read */
+  .option-grid {
+    gap: var(--space-3);
+  }
+
+  .participant-card-header {
+    align-items: stretch;
+  }
+
+  .participant-card-header .segmented {
+    width: 100%;
+  }
+
+  .phrase-reading-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .phrase-reading-center,
+  .phrase-reading-nav,
+  .phrase-reading-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .phrase-name-editor {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr auto;
+  }
+
+  .phrase-name-editor .input {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .phrase-row.is-deleting {
+    padding-right: 0;
+    padding-bottom: calc(var(--control-height) + var(--space-2));
+  }
+
+  .phrase-delete-button {
+    top: auto;
+    bottom: 0;
+    right: 0;
+    transform: none;
+  }
+
+  .step-form-panel {
+    padding: var(--space-3);
+  }
+
+  .builder-controls,
+  .compact-fields,
+  .action-row,
+  .action-row--two,
+  .preparation-position-row {
+    grid-template-columns: 1fr;
+  }
+
+  /* Lexicon */
+  .lexicon-row {
+    align-items: flex-start;
+  }
+
+  .lexicon-row .text-strong {
+    overflow-wrap: anywhere;
+  }
+
+  .lexicon-row-actions {
+    flex-shrink: 0;
+  }
+
+  .lexicon-categories__list {
+    max-height: 52vh;
+  }
+
+  /* Users / profile */
+  .users-row-inline {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .users-row-inline > * {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .users-role select {
+    width: 100%;
+  }
+
+  .audit-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+    padding: var(--space-2);
+  }
+
+  /* Modal */
+  .modal-backdrop {
+    padding: var(--space-2);
+  }
+
+  .modal {
+    width: min(96vw, 520px);
+    max-height: calc(100vh - var(--space-4));
+    padding: var(--space-3);
+  }
+
+  .modal-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .modal-actions > button {
+    width: 100%;
   }
 }
