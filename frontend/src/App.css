@@ -2656,6 +2656,30 @@ select {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 
+/* Attack layout: vertical 2 / 1 / 2 blocks (action+attribut, then cible, then mouvement+attribut). */
+.form-section--attack-layout {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+}
+
+.form-section--attack-layout .action-row--two {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.form-section--attack-layout .preparation-position-row {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.form-section--attack-layout .attack-layout-block--target {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.form-section--attack-layout .attack-layout-block--target,
+.form-section--attack-layout .attack-layout-block--move {
+  padding-top: var(--space-2);
+  border-top: 1px dashed var(--border-cream-2);
+}
+
 .button-with-icon {
   display: inline-flex;
   align-items: center;
@@ -2677,6 +2701,15 @@ select {
   }
   .action-row {
     grid-template-columns: 1fr;
+  }
+  .form-section--attack-layout {
+    grid-template-columns: 1fr;
+  }
+  .attack-layout-block--offense,
+  .attack-layout-block--target,
+  .attack-layout-block--move,
+  .attack-layout-full {
+    grid-column: auto;
   }
   .preparation-position-row {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

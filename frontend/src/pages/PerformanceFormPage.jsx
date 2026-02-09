@@ -11,6 +11,7 @@ import {
   PERFORMANCE_FAVORITE_TYPE_KEYS,
   PERFORMANCE_UI_LABELS,
 } from "../lib/performances.js";
+import { resolveLexiconTermLabel } from "../lib/lexicon.js";
 
 export default function PerformanceFormPage({
   performers,
@@ -103,6 +104,8 @@ export default function PerformanceFormPage({
     lexiconByKey && inlineLexiconKey
       ? (lexiconByKey[inlineLexiconKey] ?? resolvedLexicon)
       : resolvedLexicon;
+  const resolveCurrentTermLabel = (type, value) =>
+    resolveLexiconTermLabel(resolvedLexicon, value, type);
 
   const uiLabels = { ...PERFORMANCE_UI_LABELS, ...labels };
 
@@ -116,14 +119,20 @@ export default function PerformanceFormPage({
   }, [performers.length, activePerformerIndex]);
 
   function createOrderOptions(map) {
-    return (list, typeKey) => {
+    return (list, typeKey, getLabel = (value) => value) => {
       const favs = new Set(map[typeKey] ?? []);
       const favoriteItems = list
-        .filter((item) => favs.has(item))
-        .map((item) => ({ value: item, label: `★ ${item}` }));
+        .filter((item) => {
+          const label = getLabel(item);
+          return favs.has(item) || favs.has(label);
+        })
+        .map((item) => ({ value: item, label: `★ ${getLabel(item)}` }));
       const others = list
-        .filter((item) => !favs.has(item))
-        .map((item) => ({ value: item, label: item }));
+        .filter((item) => {
+          const label = getLabel(item);
+          return !favs.has(item) && !favs.has(label);
+        })
+        .map((item) => ({ value: item, label: getLabel(item) }));
       return [...favoriteItems, ...others];
     };
   }
@@ -273,6 +282,7 @@ export default function PerformanceFormPage({
                 sequences,
                 performers,
                 performerLabels,
+                resolveTermLabel: resolveCurrentTermLabel,
                 onResetForm,
                 setActivePerformerIndex,
                 isReadOnly,

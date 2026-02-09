@@ -21,6 +21,9 @@ export const DEFAULT_STEP_PERFORMER = Object.freeze({
   chorePhase: "",
   note: "",
   noteOverrides: false,
+  // Snapshot of selected lexicon terms for resilient persistence.
+  // Each entry: { field, lexicon_id, name }.
+  lexiconRefs: [],
 });
 
 function normalizeActionDetails(raw) {
@@ -42,6 +45,17 @@ function normalizeDefenseDetails(raw) {
 
 function normalizeStringArray(raw) {
   return Array.isArray(raw) ? raw : [];
+}
+
+function normalizeLexiconRefs(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((item) => ({
+      field: item?.field ?? "",
+      lexicon_id: item?.lexicon_id ?? null,
+      name: item?.name ?? "",
+    }))
+    .filter((item) => item.field || item.name);
 }
 
 function normalizeStepMode(mode) {
@@ -67,6 +81,7 @@ export function createStepPerformerModel(overrides = {}) {
     defenseDetails: normalizeDefenseDetails(overrides?.defenseDetails),
     attackAttribute: normalizeStringArray(overrides?.attackAttribute),
     noteOverrides: Boolean(overrides?.noteOverrides),
+    lexiconRefs: normalizeLexiconRefs(overrides?.lexiconRefs),
   };
 }
 

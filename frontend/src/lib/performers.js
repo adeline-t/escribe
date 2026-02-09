@@ -19,14 +19,18 @@ export function buildPerformerLabel(index) {
 
 export function normalizePerformerIdentity(item, index, fallbackName) {
   if (typeof item === "string") {
-    return { name: item, weapon: "" };
+    return { id: crypto.randomUUID(), name: item, weapon: "" };
   }
   if (item && typeof item === "object") {
+    const id =
+      typeof item.id === "string" && item.id.trim()
+        ? item.id
+        : crypto.randomUUID();
     const name = typeof item.name === "string" ? item.name : "";
     const weapon = typeof item.weapon === "string" ? item.weapon : "";
-    return { name, weapon };
+    return { id, name, weapon };
   }
-  return { name: fallbackName || "", weapon: "" };
+  return { id: crypto.randomUUID(), name: fallbackName || "", weapon: "" };
 }
 
 export function getPerformerName(performer, index) {

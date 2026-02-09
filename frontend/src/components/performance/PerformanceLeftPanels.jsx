@@ -43,28 +43,26 @@ export default function PerformanceLeftPanels({
           mode={mode}
         />
       </details>
-      <details className="fold" open={isReadMode}>
-        {isReadMode ? (
-          <>
-            <summary className="fold-kicker">
-              <span className="kicker">Liste des séquences</span>
-            </summary>
-            <PerformanceSequenceList sequences={sequences} mode="read" />
-          </>
-        ) : (
-          <PerformanceSequenceList
-            sequences={sequences}
-            activeSequenceId={activeSequenceId}
-            onCreateSequence={onCreateSequence}
-            onSelectSequence={onSelectSequence}
-            onMoveSequence={onMoveSequence}
-            onMoveSequenceToIndex={onMoveSequenceToIndex}
-            onRequestDeleteSequence={onRequestDeleteSequence}
-            onRequestRenameSequence={onRequestRenameSequence}
-            mode="edit"
-          />
-        )}
-      </details>
+      {isReadMode ? (
+        <details className="fold" open>
+          <summary className="fold-kicker">
+            <span className="kicker">Liste des séquences</span>
+          </summary>
+          <PerformanceSequenceList sequences={sequences} mode="read" />
+        </details>
+      ) : (
+        <PerformanceSequenceList
+          sequences={sequences}
+          activeSequenceId={activeSequenceId}
+          onCreateSequence={onCreateSequence}
+          onSelectSequence={onSelectSequence}
+          onMoveSequence={onMoveSequence}
+          onMoveSequenceToIndex={onMoveSequenceToIndex}
+          onRequestDeleteSequence={onRequestDeleteSequence}
+          onRequestRenameSequence={onRequestRenameSequence}
+          mode="edit"
+        />
+      )}
     </>
   );
 }

@@ -245,7 +245,7 @@ export default function PerformanceListPage({
         {
           name: state.performanceName,
           description: state.performanceDescription,
-          performers: state.performers ?? [],
+          performers: state.performers ?? state.participants ?? [],
           sequences: state.sequences ?? [],
         },
         options,

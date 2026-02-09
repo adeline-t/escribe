@@ -5,12 +5,17 @@ export const DEFAULT_PERFORMANCE_SHARE_ROLE = "read";
 export const OWNER_PERFORMANCE_SHARE_ROLE = "owner";
 
 export const DEFAULT_PERFORMANCE_PERFORMERS = [
-  { name: "A", weapon: "" },
-  { name: "B", weapon: "" },
+  { id: "performer-a", name: "A", weapon: "" },
+  { id: "performer-b", name: "B", weapon: "" },
 ];
 
 export function createPerformerIdentity(overrides = {}) {
+  const id =
+    typeof overrides?.id === "string" && overrides.id.trim()
+      ? overrides.id.trim()
+      : crypto.randomUUID();
   return {
+    id,
     name: typeof overrides?.name === "string" ? overrides.name : "",
     weapon: typeof overrides?.weapon === "string" ? overrides.weapon : "",
   };

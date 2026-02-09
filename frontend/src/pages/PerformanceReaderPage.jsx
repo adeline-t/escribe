@@ -9,6 +9,7 @@ export default function PerformanceReaderPage({
   performanceDescription,
   performers,
   sequences,
+  resolveTermLabel,
   isReadOnly = true,
   onToggleSequencePerformerVisibility,
   onNavigate,
@@ -44,6 +45,7 @@ export default function PerformanceReaderPage({
             readingProps={{
               sequences,
               performers,
+              resolveTermLabel,
               isReadOnly,
               onToggleSequencePerformerVisibility,
             }}

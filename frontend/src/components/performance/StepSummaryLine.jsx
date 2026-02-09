@@ -1,7 +1,13 @@
 export default function StepSummaryLine({
   item,
   inactiveLabel = "inactif",
+  resolveTermLabel = null,
 }) {
+  function resolve(type, value) {
+    if (typeof resolveTermLabel !== "function") return value;
+    return resolveTermLabel(type, value);
+  }
+
   function badge(label, variant = "note", key) {
     if (!label) return null;
     return (
@@ -20,12 +26,13 @@ export default function StepSummaryLine({
     ));
   }
 
-  function joinDelimitedLabel(value) {
+  function joinDelimitedLabel(value, type = "term") {
     if (!value) return "";
     return value
       .split(" · ")
       .map((entry) => entry.trim())
       .filter(Boolean)
+      .map((entry) => resolve(type, entry))
       .join(" ");
   }
 
@@ -69,12 +76,21 @@ export default function StepSummaryLine({
       : [];
     const actionBitsFromDetails = actionDetails
       .map((detail) =>
-        [detail?.action, detail?.attribute].filter(Boolean).join(" "),
+        [
+          resolve("action", detail?.action),
+          resolve("attaque_attribut", detail?.attribute),
+        ]
+          .filter(Boolean)
+          .join(" "),
       )
       .filter(Boolean);
     const actionBitsFallback = [
-      item.action,
-      item.attackAttribute?.length ? item.attackAttribute.join(", ") : "",
+      resolve("action", item.action),
+      item.attackAttribute?.length
+        ? item.attackAttribute
+            .map((entry) => resolve("attaque_attribut", entry))
+            .join(", ")
+        : "",
     ]
       .filter(Boolean)
       .join(" ");
@@ -83,15 +99,18 @@ export default function StepSummaryLine({
       : actionBitsFallback
         ? [actionBitsFallback]
         : [];
-    const moveLabel = joinDelimitedLabel(item.attackMove);
+    const moveLabel = joinDelimitedLabel(item.attackMove, "deplacement");
     return (
       <span>
-        {badge(item.offensive, "offensive", "offensive")}
+        {badge(resolve("offensive", item.offensive), "offensive", "offensive")}
         {actionBits.length ? (
           <span> en {badgeList(actionBits, "action", "action")}</span>
         ) : null}
         {item.target ? (
-          <span> sur {badge(item.target, "target", "target")}</span>
+          <span>
+            {" "}
+            sur {badge(resolve("target", item.target), "target", "target")}
+          </span>
         ) : null}
         {moveLabel ? (
           <span> avec {badge(moveLabel, "move", "move")}</span>
@@ -118,24 +137,26 @@ export default function StepSummaryLine({
       ? item.actionDetails
       : [];
     const actionBitsFromDetails = actionDetails
-      .map((detail) =>
-        [detail?.action].filter(Boolean).join(" "),
-      )
+      .map((detail) => [resolve("action", detail?.action)].filter(Boolean).join(" "))
       .filter(Boolean);
-    const actionBitsFallback = [item.action].filter(Boolean).join(" ");
+    const actionBitsFallback = [resolve("action", item.action)]
+      .filter(Boolean)
+      .join(" ");
     const actionBits = actionBitsFromDetails.length
       ? actionBitsFromDetails
       : actionBitsFallback
         ? [actionBitsFallback]
         : [];
     const position =
-      actionDetails[0]?.attribute ??
+      resolve("parade_numero", actionDetails[0]?.attribute) ??
       (Array.isArray(item.attackAttribute) && item.attackAttribute.length
-        ? item.attackAttribute[0]
+        ? resolve("parade_attribut", item.attackAttribute[0])
         : "");
     const positionComplements =
       Array.isArray(item.attackAttribute) && item.attackAttribute.length > 0
-        ? item.attackAttribute
+        ? item.attackAttribute.map((entry) =>
+            resolve("parade_attribut", entry),
+          )
         : [];
     const positionBits = position
       ? [position, ...positionComplements.filter((entry) => entry !== position)]
@@ -149,7 +170,10 @@ export default function StepSummaryLine({
           <span>préparation</span>
         )}
         {item.target ? (
-          <span> sur {badge(item.target, "target", "target")}</span>
+          <span>
+            {" "}
+            sur {badge(resolve("target", item.target), "target", "target")}
+          </span>
         ) : null}
         {positionLabel ? (
           <span> en {badge(positionLabel, "move", "position")}</span>
@@ -178,16 +202,34 @@ export default function StepSummaryLine({
     const defenseBitsFromDetails = defenseDetails
       .map((detail) => {
         const parts = [];
-        if (detail?.defense) parts.push(detail.defense);
-        if (detail?.position) parts.push(`de ${detail.position}`);
-        if (detail?.attribute) parts.push(detail.attribute);
+        if (detail?.defense) parts.push(resolve("defensive", detail.defense));
+        if (detail?.position)
+          parts.push(`de ${resolve("parade_numero", detail.position)}`);
+        if (detail?.attribute) {
+          parts.push(
+            detail.attribute
+              .split(" · ")
+              .map((entry) => resolve("parade_attribut", entry.trim()))
+              .filter(Boolean)
+              .join(" "),
+          );
+        }
         return parts.join(" ");
       })
       .filter(Boolean);
-    const paradeLabel = [item.paradeNumber, item.paradeAttribute]
+    const paradeLabel = [
+      resolve("parade_numero", item.paradeNumber),
+      item.paradeAttribute
+        ? item.paradeAttribute
+            .split(" · ")
+            .map((entry) => resolve("parade_attribut", entry.trim()))
+            .filter(Boolean)
+            .join(" ")
+        : "",
+    ]
       .filter(Boolean)
       .join(" ");
-    const defenseLabel = item.defense ?? item.defensive ?? "";
+    const defenseLabel = resolve("defensive", item.defense ?? item.defensive ?? "");
     const defenseBits =
       defenseBitsFromDetails.length > 0
         ? defenseBitsFromDetails
@@ -198,7 +240,7 @@ export default function StepSummaryLine({
                 .join(" "),
             ]
           : [];
-    const moveLabel = joinDelimitedLabel(item.defendMove);
+    const moveLabel = joinDelimitedLabel(item.defendMove, "deplacement");
     return (
       <span>
         {defenseBits.length ? (

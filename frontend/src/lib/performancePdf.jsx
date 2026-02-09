@@ -474,6 +474,8 @@ function PerformanceDocument({ performance, theme }) {
   const { renderCardContent } = createHelpers(styles);
   const performers = Array.isArray(performance.performers)
     ? performance.performers
+    : Array.isArray(performance.participants)
+      ? performance.participants
     : [];
   const sequences = Array.isArray(performance.sequences)
     ? performance.sequences
@@ -575,7 +577,9 @@ function PerformanceDocument({ performance, theme }) {
                   <Text style={styles.indexCell}>{stepIndex + 1}</Text>
                   {resolvedVisibleIndexes.map((performerIndex) => {
                     const item =
-                      step?.performers?.[performerIndex] ?? {};
+                      step?.performers?.[performerIndex] ??
+                      step?.participants?.[performerIndex] ??
+                      {};
                     const variant = getCardVariant(item);
                     const cardStyle = {
                       ...styles.card,

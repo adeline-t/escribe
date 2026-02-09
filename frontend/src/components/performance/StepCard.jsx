@@ -64,6 +64,7 @@ export function StepSummaryCard({
   type,
   item,
   inactiveLabel,
+  resolveTermLabel,
   onEdit,
   onLongPress,
   editLabel,
@@ -77,6 +78,7 @@ export function StepSummaryCard({
           key="summary"
           item={item}
           inactiveLabel={inactiveLabel}
+          resolveTermLabel={resolveTermLabel}
         />,
       ]}
       onEdit={onEdit}

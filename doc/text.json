@@ -1,0 +1,663 @@
+{
+  "lexicon": {
+    "id": "classic_v2_root",
+    "nom": "Escrime historique française - Lexique complet",
+    "description": "Lexique v2 structuré en arbre",
+    "children": [
+      {
+        "id": "target_zones",
+        "nom": "Zones de touche (cibles)",
+        "description": "",
+        "children": [
+          {
+            "id": "zone_head",
+            "nom": "Tête",
+            "description": "",
+            "children": []
+          },
+          {
+            "id": "zone_face",
+            "nom": "Visage",
+            "description": "",
+            "children": []
+          },
+          {
+            "id": "zone_figure",
+            "nom": "Figure",
+            "description": "",
+            "children": []
+          },
+          {
+            "id": "zone_front_shoulder",
+            "nom": "Épaule avant",
+            "description": "",
+            "children": []
+          },
+          {
+            "id": "zone_back_shoulder",
+            "nom": "Épaule arrière",
+            "description": "",
+            "children": []
+          },
+          {
+            "id": "zone_chest",
+            "nom": "Poitrine",
+            "description": "",
+            "children": []
+          },
+          {
+            "id": "zone_arm",
+            "nom": "Bras",
+            "description": "",
+            "children": []
+          },
+          {
+            "id": "zone_front_leg",
+            "nom": "Jambe avant",
+            "description": "",
+            "children": []
+          },
+          {
+            "id": "zone_back_leg",
+            "nom": "Jambe arrière",
+            "description": "",
+            "children": []
+          },
+          {
+            "id": "zone_flank",
+            "nom": "Flanc",
+            "description": "",
+            "children": []
+          },
+          {
+            "id": "zone_belly",
+            "nom": "Ventre",
+            "description": "",
+            "children": []
+          },
+          { "id": "above", "nom": "Dessus", "description": "", "children": [] },
+          {
+            "id": "below",
+            "nom": "Dessous",
+            "description": "",
+            "children": []
+          },
+          {
+            "id": "inside",
+            "nom": "Dedans",
+            "description": "",
+            "children": []
+          },
+          {
+            "id": "outside",
+            "nom": "Dehors",
+            "description": "",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "movements",
+        "nom": "Déplacements",
+        "description": "",
+        "children": [
+          {
+            "id": "basic_movements",
+            "nom": "Déplacements de base",
+            "description": "",
+            "children": [
+              {
+                "id": "foot_stamp",
+                "nom": "Appel de pied",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "balestra",
+                "nom": "Balestra",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "jump",
+                "nom": "Bond saut",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "guard_change",
+                "nom": "Changement de garde",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "half_advance",
+                "nom": "Demi-marche",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "half_pass",
+                "nom": "Demi-passe",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "half_retreat",
+                "nom": "Demi-retraite",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "half_volta",
+                "nom": "Demi-volte",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "displacement",
+                "nom": "Déplacement",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "lunge",
+                "nom": "Fente",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "fleche",
+                "nom": "Flèche",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "advance",
+                "nom": "Marche",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "pass",
+                "nom": "Passe",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "quarter_volta",
+                "nom": "Quart de volte",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "lunge_redoublement",
+                "nom": "Redoublement de fente",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "return_guard",
+                "nom": "Retour en garde",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "retreat",
+                "nom": "Retraite",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "volta",
+                "nom": "Volte",
+                "description": "",
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "movement_complements",
+        "nom": "Compléments de déplacement",
+        "description": "",
+        "children": [
+          {
+            "id": "forward",
+            "nom": "Avant",
+            "description": "",
+            "children": []
+          },
+          {
+            "id": "backward",
+            "nom": "Arrière",
+            "description": "",
+            "children": []
+          },
+          {
+            "id": "movement_lateral",
+            "nom": "Latérale",
+            "description": "",
+            "children": []
+          },
+          {
+            "id": "interior",
+            "nom": "Intérieur",
+            "description": "",
+            "children": []
+          },
+          {
+            "id": "exterior",
+            "nom": "Extérieur",
+            "description": "",
+            "children": []
+          },
+          {
+            "id": "reverse",
+            "nom": "Inverse",
+            "description": "",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "positions",
+        "nom": "Positions",
+        "description": "",
+        "children": [
+          { "id": "position_1", "nom": "1", "description": "", "children": [] },
+          { "id": "position_2", "nom": "2", "description": "", "children": [] },
+          { "id": "position_3", "nom": "3", "description": "", "children": [] },
+          { "id": "position_4", "nom": "4", "description": "", "children": [] },
+          { "id": "position_5", "nom": "5", "description": "", "children": [] },
+          { "id": "position_6", "nom": "6", "description": "", "children": [] },
+          { "id": "position_7", "nom": "7", "description": "", "children": [] },
+          { "id": "position_8", "nom": "8", "description": "", "children": [] },
+          { "id": "position_9", "nom": "9", "description": "", "children": [] }
+        ]
+      },
+      {
+        "id": "position_complements",
+        "nom": "Compléments de position",
+        "description": "",
+        "children": [
+          {
+            "id": "position_lateral",
+            "nom": "Latérale",
+            "description": "",
+            "children": []
+          },
+          {
+            "id": "circular",
+            "nom": "Circulaire",
+            "description": "",
+            "children": []
+          },
+          {
+            "id": "semi_circular",
+            "nom": "Semi-circulaire",
+            "description": "",
+            "children": []
+          },
+          {
+            "id": "diagonal",
+            "nom": "Diagonale",
+            "description": "",
+            "children": []
+          },
+          {
+            "id": "au_tac",
+            "nom": "Au tac",
+            "description": "",
+            "children": []
+          },
+          {
+            "id": "opposition",
+            "nom": "Opposition",
+            "description": "",
+            "children": []
+          },
+          {
+            "id": "yielding",
+            "nom": "En cédant",
+            "description": "",
+            "children": []
+          },
+          { "id": "high", "nom": "Haute", "description": "", "children": [] },
+          { "id": "low", "nom": "Basse", "description": "", "children": [] },
+          {
+            "id": "inverted",
+            "nom": "Inversée",
+            "description": "",
+            "children": []
+          },
+          {
+            "id": "free_hand",
+            "nom": "Main libre",
+            "description": "",
+            "children": []
+          },
+          {
+            "id": "dagger_buckler",
+            "nom": "Dague bocle",
+            "description": "",
+            "children": []
+          },
+          { "id": "object", "nom": "Objet", "description": "", "children": [] },
+          {
+            "id": "crossed",
+            "nom": "En croix",
+            "description": "",
+            "children": []
+          },
+          {
+            "id": "double",
+            "nom": "Double",
+            "description": "",
+            "children": []
+          },
+          {
+            "id": "gathered",
+            "nom": "Ramassé",
+            "description": "",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "offensive_actions",
+        "nom": "Actions offensives",
+        "description": "",
+        "children": [
+          {
+            "id": "attack_types",
+            "nom": "Types d'attaques",
+            "description": "",
+            "children": [
+              {
+                "id": "thrust",
+                "nom": "Coup de pointe",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "cut",
+                "nom": "Coupe de tranche",
+                "description": "",
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "attack_complements",
+            "nom": "Compléments d'attaques",
+            "description": "",
+            "children": [
+              {
+                "id": "crown",
+                "nom": "Couronne",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "broken",
+                "nom": "Brisé",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "lifted",
+                "nom": "Enlevé",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "opposition_att",
+                "nom": "Opposition",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "diagonals",
+                "nom": "Diagonales",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "obverse_exterior",
+                "nom": "Avers extérieur",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "reverse_interior",
+                "nom": "Revers intérieur",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "supination",
+                "nom": "Supination",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "emprenation",
+                "nom": "Emprenation",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "free_hand_att",
+                "nom": "Main libre",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "dagger_buckler_att",
+                "nom": "Dague bocle",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "object_att",
+                "nom": "Objet",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "streamer",
+                "nom": "Banderole",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "riposte",
+                "nom": "Riposte",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "grounded",
+                "nom": "Terrassé",
+                "description": "",
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "defensive_actions",
+        "nom": "Actions défensives",
+        "description": "",
+        "children": [
+          {
+            "id": "evasions",
+            "nom": "Esquives",
+            "description": "",
+            "children": [
+              {
+                "id": "unbalance",
+                "nom": "Déséquilibre",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "evasion_backward",
+                "nom": "Esquive arrière",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "evasion_low",
+                "nom": "Esquive basse",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "evasion_jumping",
+                "nom": "Esquive en sautant",
+                "description": "",
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "preparations",
+        "nom": "Préparations",
+        "description": "",
+        "children": [
+          {
+            "id": "engagement",
+            "nom": "Engagement",
+            "description": "",
+            "children": [
+              {
+                "id": "engagement_simple",
+                "nom": "Engagement",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "engagement_change",
+                "nom": "Changement d'engagement",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "engagement_double",
+                "nom": "Double engagement",
+                "description": "",
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "blade_attacks",
+            "nom": "Attaques au fer",
+            "description": "",
+            "children": [
+              {
+                "id": "beat",
+                "nom": "Battement",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "pressure",
+                "nom": "Pression",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "froissement",
+                "nom": "Froissement",
+                "description": "",
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "blade_seizures",
+            "nom": "Prises de fer",
+            "description": "",
+            "children": [
+              {
+                "id": "opposition_prep",
+                "nom": "Opposition",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "croise",
+                "nom": "Croisé",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "bind",
+                "nom": "Liement",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "envelopment",
+                "nom": "Enveloppement",
+                "description": "",
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "no_contact",
+            "nom": "Préparations sans contact",
+            "description": "",
+            "children": [
+              {
+                "id": "feint",
+                "nom": "Feinte",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "invitation",
+                "nom": "Invite",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "threat",
+                "nom": "Menace",
+                "description": "",
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "compound",
+            "nom": "Actions composées",
+            "description": "",
+            "children": [
+              {
+                "id": "disengagement",
+                "nom": "Dégagement",
+                "description": "",
+                "children": []
+              },
+              {
+                "id": "cut_over",
+                "nom": "Coupé",
+                "description": "",
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

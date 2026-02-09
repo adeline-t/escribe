@@ -34,6 +34,7 @@ export default function PerformanceReading({
   onSelectSequence,
   onRenameSequence,
   onToggleSequencePerformerVisibility,
+  resolveTermLabel,
 }) {
   const readOnly = mode === "read" || isReadOnly;
   const canEditSequenceVisibility =
@@ -349,6 +350,7 @@ export default function PerformanceReading({
         <StepSummaryCard
           type="action"
           item={item}
+          resolveTermLabel={resolveTermLabel}
           inactiveLabel="inactif"
           onEdit={() => onEditCard(stepId, performerIndex, item)}
           onLongPress={() => onEditCard(stepId, performerIndex, item)}
@@ -363,6 +365,7 @@ export default function PerformanceReading({
         <StepSummaryCard
           type="preparation"
           item={item}
+          resolveTermLabel={resolveTermLabel}
           inactiveLabel="inactif"
           onEdit={() => onEditCard(stepId, performerIndex, item)}
           onLongPress={() => onEditCard(stepId, performerIndex, item)}
@@ -377,6 +380,7 @@ export default function PerformanceReading({
         <StepSummaryCard
           type="reaction"
           item={item}
+          resolveTermLabel={resolveTermLabel}
           inactiveLabel="inactif"
           onEdit={() => onEditCard(stepId, performerIndex, item)}
           onLongPress={() => onEditCard(stepId, performerIndex, item)}
@@ -535,7 +539,11 @@ export default function PerformanceReading({
                                 ) : null}
                                 {cardType ? (
                                   <div className="phrase-cell-card-wrap">
-                                    <StepSummaryCard type={cardType} item={item} />
+                                    <StepSummaryCard
+                                      type={cardType}
+                                      item={item}
+                                      resolveTermLabel={resolveTermLabel}
+                                    />
                                     {showRightColumnDot ? (
                                       <span
                                         className={`phrase-cell-left-dot ${

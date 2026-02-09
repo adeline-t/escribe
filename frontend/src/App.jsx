@@ -26,6 +26,7 @@ import {
   normalizeLexicon,
   normalizeNewLexicon,
   normalizeSabreLexicon,
+  resolveLexiconTermLabel,
 } from "./lib/lexicon.js";
 import {
   CLASSIC_LEXICON_OPTIONS,
@@ -139,6 +140,20 @@ export default function App() {
     () => normalizeSabreLexicon(sabreLexiconData),
     [sabreLexiconData],
   );
+  const resolveAnyTermLabel = (type, value) => {
+    const token = String(value ?? "").trim();
+    if (!token) return "";
+    const candidates = [
+      normalizedNewLexicon,
+      normalizedLexicon,
+      normalizedSabreLexicon,
+    ];
+    for (const lexicon of candidates) {
+      const resolved = resolveLexiconTermLabel(lexicon, token, type);
+      if (resolved && resolved !== token) return resolved;
+    }
+    return token;
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -584,6 +599,7 @@ export default function App() {
             performanceDescription={performanceDescription}
             performers={performers}
             sequences={sequences}
+            resolveTermLabel={resolveAnyTermLabel}
             isReadOnly={performanceShareRole === "read"}
             onToggleSequencePerformerVisibility={
               toggleSequencePerformerVisibility

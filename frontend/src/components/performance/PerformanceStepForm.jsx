@@ -128,7 +128,9 @@ export default function PerformanceStepForm({
     paradeComplementOptions,
     prepTypeList,
     attackMoveBaseValues,
+    resolveLabel,
   } = logic;
+  const resolveTermLabel = (type, value) => resolveLabel(type, value);
   const [manuallyHiddenIndexes, setManuallyHiddenIndexes] = useState([]);
   const [manuallyShownIndexes, setManuallyShownIndexes] = useState([]);
 
@@ -326,16 +328,27 @@ export default function PerformanceStepForm({
           const attackActionOptions = withCurrentOption(
             offensiveOptions,
             attackActionValue,
+            "offensive",
           );
           const prepActionValue = getActionDetails(item)[0]?.action ?? "";
           const prepTypeOptions = withCurrentOption(
-            prepTypeList.map((value) => ({ value, label: value })),
+            prepTypeList.map((value) => ({
+              value,
+              label: resolveTermLabel("action", value),
+            })),
             prepActionValue,
+            "action",
           );
           const defenseActionValue = getDefenseActionValue(item);
           const defenseActionOptions = withCurrentOption(
             defensiveOptions,
             defenseActionValue,
+            "defensive",
+          );
+          const targetSelectOptions = withCurrentOption(
+            targetOptions,
+            item.target,
+            "target",
           );
           // Defense type may come from local builder state or persisted data.
           const defenseType = resolveDefenseType(item, index);
@@ -460,8 +473,8 @@ export default function PerformanceStepForm({
                     </div>
 
                     {!item.noteOverrides && v2Mode === "attack" ? (
-                      <div className="form-section">
-                        <div className="action-row action-row--two preparation-position-row">
+                      <div className="form-section form-section--attack-layout">
+                        <div className="action-row action-row--two preparation-position-row attack-layout-block attack-layout-block--offense">
                           <label>
                             {uiLabels.offensive}
                             <select
@@ -521,9 +534,9 @@ export default function PerformanceStepForm({
                         item.attackAttribute.length ? (
                           <div className="builder-tags">
                             {item.attackAttribute.map((token) => (
-                              <span key={token} className="builder-tag">
+                                <span key={token} className="builder-tag">
                                 <span className="builder-tag-value">
-                                  {token}
+                                  {resolveTermLabel("attaque_attribut", token)}
                                 </span>
                                 <button
                                   type="button"
@@ -541,9 +554,9 @@ export default function PerformanceStepForm({
                           </div>
                         ) : null}
 
-                        <label>
-                          {uiLabels.target}
-                          <select
+                          <label className="attack-layout-block attack-layout-block--target">
+                            {uiLabels.target}
+                            <select
                             value={item.target}
                             onChange={(event) =>
                               onFormChange(index, {
@@ -552,7 +565,7 @@ export default function PerformanceStepForm({
                             }
                           >
                             <option value="">—</option>
-                            {targetOptions.map((option) => (
+                            {targetSelectOptions.map((option) => (
                               <option key={option.value} value={option.value}>
                                 {option.label}
                               </option>
@@ -560,7 +573,7 @@ export default function PerformanceStepForm({
                           </select>
                         </label>
 
-                        <div className="action-row action-row--two">
+                        <div className="action-row action-row--two attack-layout-block attack-layout-block--move">
                           <label>
                             {PERFORMANCE_STEP_LABELS.movementLabel}
                             <select
@@ -617,7 +630,7 @@ export default function PerformanceStepForm({
                                 <option value="">—</option>
                                 {attackMoveComplementOptions.map((value) => (
                                   <option key={value} value={value}>
-                                    {value}
+                                    {resolveTermLabel("deplacement_complement", value)}
                                   </option>
                                 ))}
                               </select>
@@ -626,14 +639,14 @@ export default function PerformanceStepForm({
                         </div>
                         {getMoveParts(item.attackMove, attackMoveBaseValues)
                           .complements.length > 0 && (
-                          <div className="builder-tags">
+                          <div className="builder-tags attack-layout-full">
                             {getMoveParts(
                               item.attackMove,
                               attackMoveBaseValues,
                             ).complements.map((token) => (
                               <span key={token} className="builder-tag">
                                 <span className="builder-tag-value">
-                                  {token}
+                                  {resolveTermLabel("deplacement_complement", token)}
                                 </span>
                                 <button
                                   type="button"
@@ -768,7 +781,7 @@ export default function PerformanceStepForm({
                                     <option value="">—</option>
                                     {paradeComplementOptions.map((value) => (
                                       <option key={value} value={value}>
-                                        {value}
+                                        {resolveTermLabel("parade_attribut", value)}
                                       </option>
                                     ))}
                                   </select>
@@ -781,7 +794,7 @@ export default function PerformanceStepForm({
                                   (token) => (
                                     <span key={token} className="builder-tag">
                                       <span className="builder-tag-value">
-                                        {token}
+                                        {resolveTermLabel("parade_attribut", token)}
                                       </span>
                                       <button
                                         type="button"
@@ -896,7 +909,7 @@ export default function PerformanceStepForm({
                                     {attackMoveComplementOptions.map(
                                       (value) => (
                                         <option key={value} value={value}>
-                                          {value}
+                                          {resolveTermLabel("deplacement_complement", value)}
                                         </option>
                                       ),
                                     )}
@@ -913,7 +926,7 @@ export default function PerformanceStepForm({
                                 ).complements.map((token) => (
                                   <span key={token} className="builder-tag">
                                     <span className="builder-tag-value">
-                                      {token}
+                                      {resolveTermLabel("deplacement_complement", token)}
                                     </span>
                                     <button
                                       type="button"
@@ -971,7 +984,7 @@ export default function PerformanceStepForm({
                             }
                           >
                             <option value="">—</option>
-                            {targetOptions.map((option) => (
+                            {targetSelectOptions.map((option) => (
                               <option key={option.value} value={option.value}>
                                 {option.label}
                               </option>
@@ -1025,7 +1038,7 @@ export default function PerformanceStepForm({
                                 <option value="">—</option>
                                 {paradeComplementOptions.map((value) => (
                                   <option key={value} value={value}>
-                                    {value}
+                                    {resolveTermLabel("parade_attribut", value)}
                                   </option>
                                 ))}
                               </select>
@@ -1038,7 +1051,7 @@ export default function PerformanceStepForm({
                               {item.attackAttribute.map((token) => (
                                 <span key={token} className="builder-tag">
                                   <span className="builder-tag-value">
-                                    {token}
+                                    {resolveTermLabel("parade_attribut", token)}
                                   </span>
                                   <button
                                     type="button"

@@ -79,21 +79,34 @@ export default function StepInlineEditorModal({
     paradeComplementOptions,
     prepTypeList,
     attackMoveBaseValues,
+    resolveLabel,
   } = logic;
+  const resolveTermLabel = (type, value) => resolveLabel(type, value);
   const attackActionValue = getAttackActionValue(inlineItem);
   const attackActionOptions = withCurrentOption(
     offensiveOptions,
     attackActionValue,
+    "offensive",
   );
   const prepActionValue = getActionDetails(inlineItem)[0]?.action ?? "";
   const prepTypeOptions = withCurrentOption(
-    prepTypeList.map((value) => ({ value, label: value })),
+    prepTypeList.map((value) => ({
+      value,
+      label: resolveTermLabel("action", value),
+    })),
     prepActionValue,
+    "action",
   );
   const defenseActionValue = getDefenseActionValue(inlineItem);
   const defenseActionOptions = withCurrentOption(
     defensiveOptions,
     defenseActionValue,
+    "defensive",
+  );
+  const targetSelectOptions = withCurrentOption(
+    targetOptions,
+    inlineItem.target,
+    "target",
   );
 
   return (
@@ -235,8 +248,8 @@ export default function StepInlineEditorModal({
                 </div>
 
                 {!inlineItem.noteOverrides && v2Mode === "attack" ? (
-                  <div className="form-section">
-                    <div className="action-row action-row--two preparation-position-row">
+                  <div className="form-section form-section--attack-layout">
+                    <div className="action-row action-row--two preparation-position-row attack-layout-block attack-layout-block--offense">
                       <label>
                         {uiLabels.offensive}
                         <select
@@ -288,7 +301,9 @@ export default function StepInlineEditorModal({
                       <div className="builder-tags">
                         {inlineItem.attackAttribute.map((token) => (
                           <span key={token} className="builder-tag">
-                            <span className="builder-tag-value">{token}</span>
+                            <span className="builder-tag-value">
+                              {resolveTermLabel("attaque_attribut", token)}
+                            </span>
                             <button
                               type="button"
                               className="button-icon button-ghost builder-tag-remove"
@@ -303,7 +318,7 @@ export default function StepInlineEditorModal({
                       </div>
                     ) : null}
 
-                    <label>
+                    <label className="attack-layout-block attack-layout-block--target">
                       {uiLabels.target}
                       <select
                         value={inlineItem.target}
@@ -312,7 +327,7 @@ export default function StepInlineEditorModal({
                         }
                       >
                         <option value="">—</option>
-                        {targetOptions.map((option) => (
+                        {targetSelectOptions.map((option) => (
                           <option key={option.value} value={option.value}>
                             {option.label}
                           </option>
@@ -320,7 +335,7 @@ export default function StepInlineEditorModal({
                       </select>
                     </label>
 
-                    <div className="action-row action-row--two">
+                    <div className="action-row action-row--two attack-layout-block attack-layout-block--move">
                       <label>
                         {PERFORMANCE_STEP_LABELS.movementLabel}
                         <select
@@ -372,7 +387,7 @@ export default function StepInlineEditorModal({
                             <option value="">—</option>
                             {attackMoveComplementOptions.map((value) => (
                               <option key={value} value={value}>
-                                {value}
+                                {resolveTermLabel("deplacement_complement", value)}
                               </option>
                             ))}
                           </select>
@@ -381,13 +396,15 @@ export default function StepInlineEditorModal({
                     </div>
                     {getMoveParts(inlineItem.attackMove, attackMoveBaseValues)
                       .complements.length > 0 && (
-                      <div className="builder-tags">
+                      <div className="builder-tags attack-layout-full">
                         {getMoveParts(
                           inlineItem.attackMove,
                           attackMoveBaseValues,
                         ).complements.map((token) => (
                           <span key={token} className="builder-tag">
-                            <span className="builder-tag-value">{token}</span>
+                            <span className="builder-tag-value">
+                              {resolveTermLabel("deplacement_complement", token)}
+                            </span>
                             <button
                               type="button"
                               className="button-icon button-ghost builder-tag-remove"
@@ -510,7 +527,7 @@ export default function StepInlineEditorModal({
                                 <option value="">—</option>
                                 {paradeComplementOptions.map((value) => (
                                   <option key={value} value={value}>
-                                    {value}
+                                    {resolveTermLabel("parade_attribut", value)}
                                   </option>
                                 ))}
                               </select>
@@ -522,7 +539,7 @@ export default function StepInlineEditorModal({
                             {getDefenseAttributeTokens().map((token) => (
                               <span key={token} className="builder-tag">
                                 <span className="builder-tag-value">
-                                  {token}
+                                  {resolveTermLabel("parade_attribut", token)}
                                 </span>
                                 <button
                                   type="button"
@@ -621,7 +638,7 @@ export default function StepInlineEditorModal({
                                   <option value="">—</option>
                                   {attackMoveComplementOptions.map((value) => (
                                     <option key={value} value={value}>
-                                      {value}
+                                      {resolveTermLabel("deplacement_complement", value)}
                                     </option>
                                   ))}
                                 </select>
@@ -639,7 +656,7 @@ export default function StepInlineEditorModal({
                             ).complements.map((token) => (
                               <span key={token} className="builder-tag">
                                 <span className="builder-tag-value">
-                                  {token}
+                                  {resolveTermLabel("deplacement_complement", token)}
                                 </span>
                                 <button
                                   type="button"
@@ -696,7 +713,7 @@ export default function StepInlineEditorModal({
                         }
                       >
                         <option value="">—</option>
-                        {targetOptions.map((option) => (
+                        {targetSelectOptions.map((option) => (
                           <option key={option.value} value={option.value}>
                             {option.label}
                           </option>
@@ -746,7 +763,7 @@ export default function StepInlineEditorModal({
                             <option value="">—</option>
                             {paradeComplementOptions.map((value) => (
                               <option key={value} value={value}>
-                                {value}
+                                {resolveTermLabel("parade_attribut", value)}
                               </option>
                             ))}
                           </select>
@@ -758,7 +775,9 @@ export default function StepInlineEditorModal({
                         <div className="builder-tags">
                           {inlineItem.attackAttribute.map((token) => (
                             <span key={token} className="builder-tag">
-                              <span className="builder-tag-value">{token}</span>
+                              <span className="builder-tag-value">
+                                {resolveTermLabel("parade_attribut", token)}
+                              </span>
                               <button
                                 type="button"
                                 className="button-icon button-ghost builder-tag-remove"

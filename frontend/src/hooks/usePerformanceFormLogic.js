@@ -1,4 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import {
+  resolveLexiconTermId,
+  resolveLexiconTermLabel,
+} from "../lib/lexicon.js";
 
 /**
  * Hook layer pour les formulaires de passe (création + édition inline).
@@ -117,8 +121,11 @@ function joinTokens(values) {
  */
 function getMoveParts(value, baseOptions) {
   const tokens = splitTokens(value);
-  const base = tokens.find((token) => baseOptions.includes(token)) ?? "";
-  const complements = tokens.filter((token) => token !== base);
+  const baseFromOptions = tokens.find((token) => baseOptions.includes(token));
+  const base = baseFromOptions ?? tokens[0] ?? "";
+  const complements = tokens.filter((token, index) =>
+    index === 0 ? token !== base : true,
+  );
   return { base, complements };
 }
 
@@ -274,11 +281,20 @@ function isGenericAttackMarker(value) {
  * }}
  */
 function useLexiconOptions({ normalizedLexicon, favoriteKeys, orderOptions }) {
+  const resolveLabel = (type, value) =>
+    resolveLexiconTermLabel(normalizedLexicon, value, type);
+  const resolveId = (type, value) =>
+    resolveLexiconTermId(normalizedLexicon, type, value);
+
   // Normalize and order all option lists in one place
   // to guarantee the same behavior in main form and inline editor.
   const offensiveOptions = useMemo(
     () =>
-      orderOptions(normalizedLexicon.offensive ?? [], favoriteKeys.offensive),
+      orderOptions(
+        normalizedLexicon.offensive ?? [],
+        favoriteKeys.offensive,
+        (value) => resolveLabel("offensive", value),
+      ),
     [normalizedLexicon, favoriteKeys, orderOptions],
   );
   const attackAttributeOptions = useMemo(
@@ -286,6 +302,7 @@ function useLexiconOptions({ normalizedLexicon, favoriteKeys, orderOptions }) {
       orderOptions(
         normalizedLexicon.attackAttribute ?? [],
         favoriteKeys.attackAttribute,
+        (value) => resolveLabel("attaque_attribut", value),
       ),
     [normalizedLexicon, favoriteKeys, orderOptions],
   );
@@ -294,12 +311,17 @@ function useLexiconOptions({ normalizedLexicon, favoriteKeys, orderOptions }) {
       orderOptions(
         normalizedLexicon.target ?? normalizedLexicon.cible ?? [],
         favoriteKeys.target,
+        (value) => resolveLabel("target", value),
       ),
     [normalizedLexicon, favoriteKeys, orderOptions],
   );
   const defensiveOptions = useMemo(
     () =>
-      orderOptions(normalizedLexicon.defensive ?? [], favoriteKeys.defensive),
+      orderOptions(
+        normalizedLexicon.defensive ?? [],
+        favoriteKeys.defensive,
+        (value) => resolveLabel("defensive", value),
+      ),
     [normalizedLexicon, favoriteKeys, orderOptions],
   );
   const paradeNumberOptions = useMemo(
@@ -307,6 +329,7 @@ function useLexiconOptions({ normalizedLexicon, favoriteKeys, orderOptions }) {
       orderOptions(
         normalizedLexicon.paradeNumber ?? [],
         favoriteKeys.paradeNumber,
+        (value) => resolveLabel("parade_numero", value),
       ),
     [normalizedLexicon, favoriteKeys, orderOptions],
   );
@@ -315,6 +338,7 @@ function useLexiconOptions({ normalizedLexicon, favoriteKeys, orderOptions }) {
       orderOptions(
         normalizedLexicon.attackMoveBase ?? normalizedLexicon.attackMove ?? [],
         favoriteKeys.attackMove,
+        (value) => resolveLabel("deplacement", value),
       ),
     [normalizedLexicon, favoriteKeys, orderOptions],
   );
@@ -354,6 +378,8 @@ function useLexiconOptions({ normalizedLexicon, favoriteKeys, orderOptions }) {
     preparationTypeOptions,
     prepTypeList,
     attackMoveBaseValues,
+    resolveLabel,
+    resolveId,
   };
 }
 
@@ -583,13 +609,6 @@ function useSharedCombatStepLogic({
     const detailAction = String(getActionDetails(item ?? {})[0]?.action ?? "").trim();
     const legacyAction = String(item?.action ?? "").trim();
 
-    const optionByNormalized = new Map(
-      options.offensiveOptions.map((option) => [
-        normalizeLooseLabel(option.value),
-        option.value,
-      ]),
-    );
-
     const preferred = [];
     if (offensive && !isGenericAttackMarker(offensive)) preferred.push(offensive);
     if (detailAction) preferred.push(detailAction);
@@ -597,7 +616,10 @@ function useSharedCombatStepLogic({
     if (offensive) preferred.push(offensive);
 
     for (const candidate of preferred) {
-      const canonical = optionByNormalized.get(normalizeLooseLabel(candidate));
+      if (options.offensiveOptions.some((option) => option.value === candidate)) {
+        return candidate;
+      }
+      const canonical = options.resolveId("offensive", candidate);
       if (canonical) return canonical;
     }
     return preferred[0] ?? "";
@@ -620,13 +642,6 @@ function useSharedCombatStepLogic({
     const detailDefense = String(defenseDetail?.defense ?? "").trim();
     const legacyDefense = String(item?.defense ?? "").trim();
 
-    const optionByNormalized = new Map(
-      options.defensiveOptions.map((option) => [
-        normalizeLooseLabel(option.value),
-        option.value,
-      ]),
-    );
-
     const preferred = [];
     if (detailDefense && !normalizeLooseLabel(detailDefense).includes("parade")) {
       preferred.push(detailDefense);
@@ -638,7 +653,10 @@ function useSharedCombatStepLogic({
     if (legacyDefense) preferred.push(legacyDefense);
 
     for (const candidate of preferred) {
-      const canonical = optionByNormalized.get(normalizeLooseLabel(candidate));
+      if (options.defensiveOptions.some((option) => option.value === candidate)) {
+        return candidate;
+      }
+      const canonical = options.resolveId("defensive", candidate);
       if (canonical) return canonical;
     }
     return preferred[0] ?? "";
@@ -652,11 +670,14 @@ function useSharedCombatStepLogic({
    * @param {string} currentValue
    * @returns {OptionItem[]}
    */
-  function withCurrentOption(optionsList, currentValue) {
+  function withCurrentOption(optionsList, currentValue, type = "term") {
     const value = String(currentValue ?? "").trim();
     if (!value) return optionsList;
     if (optionsList.some((option) => option.value === value)) return optionsList;
-    return [{ value, label: value }, ...optionsList];
+    return [
+      { value, label: options.resolveLabel(type, value) },
+      ...optionsList,
+    ];
   }
 
   return {
