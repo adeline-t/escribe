@@ -1,0 +1,685 @@
+{
+  "titre": "Escrime au sabre laser - Lexique complet",
+  "categories": [
+    {
+      "id": "zones_touche",
+      "nom": "Zones de touche",
+      "elements": [
+        {
+          "id": "zone_1",
+          "nom": "Zone 1 - Tête"
+        },
+        {
+          "id": "zone_2",
+          "nom": "Zone 2 - Bras armé"
+        },
+        {
+          "id": "zone_3",
+          "nom": "Zone 3 - Torse"
+        },
+        {
+          "id": "zone_4",
+          "nom": "Zone 4 - Bras non armé"
+        },
+        {
+          "id": "zone_5",
+          "nom": "Zone 5 - Jambe armée"
+        }
+      ]
+    },
+    {
+      "id": "position_main",
+      "nom": "Position de la main",
+      "elements": [
+        {
+          "id": "pronation",
+          "nom": "Pronation"
+        },
+        {
+          "id": "supination",
+          "nom": "Supination"
+        }
+      ]
+    },
+    {
+      "id": "postures_base",
+      "nom": "Postures de base",
+      "elements": [
+        {
+          "id": "posture_attente",
+          "nom": "Posture d'attente",
+          "details": [
+            "Jambe dominante avancée",
+            "Pied avant vers l'adversaire",
+            "Pied arrière à 45°",
+            "Genoux légèrement fléchis",
+            "Écartement à l'aplomb des épaules"
+          ]
+        },
+        {
+          "id": "posture_front",
+          "nom": "Posture de front / Demi-fente",
+          "details": [
+            "Jambe arrière tendue",
+            "Jambe avant pliée",
+            "Genou avant à l'aplomb de l'orteil"
+          ]
+        },
+        {
+          "id": "posture_retrait",
+          "nom": "Posture de retrait / Demi-fente arrière",
+          "details": ["Poids sur jambe arrière", "Jambe avant tendue"]
+        },
+        {
+          "id": "fausse_posture",
+          "nom": "Fausse posture",
+          "details": [
+            "Poids sur jambe arrière",
+            "Jambe avant légèrement relevée",
+            "Feinte de distance pour esquive"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "garde_principale",
+      "nom": "garde principale",
+      "elements": [
+        {
+          "id": "prime",
+          "nom": "Prime",
+          "ferme": "Côté non armé / intérieur",
+          "pointe": "Basse (nadir)",
+          "main": "Pronation"
+        },
+        {
+          "id": "seconde",
+          "nom": "Seconde",
+          "ferme": "Côté armé / extérieur",
+          "pointe": "Basse (nadir)",
+          "main": "Pronation"
+        },
+        {
+          "id": "tierce",
+          "nom": "Tierce",
+          "ferme": "Côté armé / extérieur",
+          "pointe": "Haute (zenith)",
+          "main": "Pronation"
+        },
+        {
+          "id": "quarte",
+          "nom": "Quarte",
+          "ferme": "Côté non armé / intérieur",
+          "pointe": "Haute (zenith)",
+          "main": "Pronation"
+        },
+        {
+          "id": "quinte",
+          "nom": "Quinte",
+          "ferme": "Verticale descendante (tête)",
+          "pointe": "Basse",
+          "lame": "Perpendiculaire",
+          "main": "Pronation, épaule bras armé"
+        },
+        {
+          "id": "quinte_inverse",
+          "nom": "Quinte inverse",
+          "ferme": "Verticale descendante (tête)",
+          "pointe": "Basse",
+          "lame": "Perpendiculaire",
+          "main": "Pronation, épaule bras non armé"
+        },
+        {
+          "id": "sixte",
+          "nom": "Sixte",
+          "ferme": "Côté armé / extérieur",
+          "pointe": "Haute (zenith)",
+          "main": "Supination"
+        },
+        {
+          "id": "septime",
+          "nom": "Septime",
+          "ferme": "Côté non armé / intérieur",
+          "pointe": "Basse (nadir)",
+          "main": "Supination"
+        },
+        {
+          "id": "octave",
+          "nom": "Octave",
+          "ferme": "Côté armé / extérieur",
+          "pointe": "Basse (nadir)",
+          "main": "Supination"
+        }
+      ]
+    },
+    {
+      "id": "deplacements",
+      "nom": "Déplacements",
+      "sous_categories": [
+        {
+          "id": "deplacements_lineaires",
+          "nom": "Déplacements linéaires de base",
+          "elements": [
+            {
+              "id": "marche",
+              "nom": "Marche (glissement avant)"
+            },
+            {
+              "id": "retraite",
+              "nom": "Retraite (glissement arrière)"
+            },
+            {
+              "id": "pas_lateral",
+              "nom": "Pas latéral (glissement latéral)"
+            }
+          ]
+        },
+        {
+          "id": "fentes",
+          "nom": "Fentes",
+          "elements": [
+            {
+              "id": "fente_avant",
+              "nom": "Fente avant"
+            },
+            {
+              "id": "fente_arriere",
+              "nom": "Fente arrière"
+            },
+            {
+              "id": "fentes_laterales",
+              "nom": "Fentes latérales",
+              "variantes": ["droite", "gauche"]
+            },
+            {
+              "id": "fentes_diagonales",
+              "nom": "Fentes diagonales",
+              "variantes": [
+                "Fente avant-droite",
+                "Fente avant-gauche",
+                "Fente arrière-droite",
+                "Fente arrière-gauche"
+              ]
+            },
+            {
+              "id": "fente_inversee_avant",
+              "nom": "Fente inversée avant"
+            },
+            {
+              "id": "fente_inversee_arriere",
+              "nom": "Fente inversée arrière"
+            }
+          ]
+        },
+        {
+          "id": "redoublement",
+          "nom": "Redoublement"
+        },
+        {
+          "id": "changements_garde",
+          "nom": "Changements de garde",
+          "elements": [
+            {
+              "id": "changement_garde_avant",
+              "nom": "Changement de garde avant (Grande avancée)"
+            },
+            {
+              "id": "changement_garde_arriere",
+              "nom": "Changement de garde arrière (Grand recul)"
+            }
+          ]
+        },
+        {
+          "id": "retours_reprises_garde",
+          "nom": "Retours et reprises de garde",
+          "elements": [
+            {
+              "id": "retour_garde",
+              "nom": "Retour en garde"
+            },
+            {
+              "id": "reprise_garde",
+              "nom": "Reprise de garde"
+            }
+          ]
+        },
+        {
+          "id": "marche_trois_temps",
+          "nom": "Marche en trois temps"
+        },
+        {
+          "id": "passes",
+          "nom": "Passes (pas croisés)",
+          "elements": [
+            {
+              "id": "passe_avant",
+              "nom": "Passe avant (pas croisé avant)"
+            },
+            {
+              "id": "passe_arriere",
+              "nom": "Passe arrière (pas croisé arrière)"
+            },
+            {
+              "id": "passe_laterale",
+              "nom": "Passe latérale (pas croisé latéral)"
+            }
+          ]
+        },
+        {
+          "id": "deplacements_inverses",
+          "nom": "Déplacements inversés",
+          "elements": [
+            {
+              "id": "marche_inversee",
+              "nom": "Marche inversée"
+            },
+            {
+              "id": "retraite_inversee",
+              "nom": "Retraite inversée"
+            }
+          ]
+        },
+        {
+          "id": "bonds",
+          "nom": "Bonds",
+          "elements": [
+            {
+              "id": "bond_avant",
+              "nom": "Bond avant"
+            },
+            {
+              "id": "bond_arriere",
+              "nom": "Bond arrière"
+            }
+          ]
+        },
+        {
+          "id": "voltes_rotations",
+          "nom": "Voltes et rotations",
+          "elements": [
+            {
+              "id": "volte",
+              "nom": "Volte"
+            },
+            {
+              "id": "contre_volte",
+              "nom": "Contre-volte"
+            },
+            {
+              "id": "demi_volte",
+              "nom": "Demi-volte"
+            },
+            {
+              "id": "volte_sautee",
+              "nom": "Volte sautée"
+            }
+          ]
+        },
+        {
+          "id": "deplacements_sol",
+          "nom": "Déplacements au sol",
+          "elements": [
+            {
+              "id": "glissade",
+              "nom": "Glissade"
+            },
+            {
+              "id": "roulade",
+              "nom": "Roulade"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "actions_offensives",
+      "nom": "Actions offensives",
+      "sous_categories": [
+        {
+          "id": "types_attaques",
+          "nom": "Types d'attaques",
+          "elements": [
+            {
+              "id": "attaque_directe",
+              "nom": "Attaque directe"
+            },
+            {
+              "id": "attaque_indirecte",
+              "nom": "Attaque indirecte"
+            },
+            {
+              "id": "attaque_avec_preparation",
+              "nom": "Attaque avec préparation"
+            }
+          ]
+        },
+        {
+          "id": "trajectoires_attaque",
+          "nom": "Trajectoires d'attaque",
+          "elements": [
+            {
+              "id": "horizontales",
+              "nom": "Horizontales"
+            },
+            {
+              "id": "verticales",
+              "nom": "Verticales",
+              "variations": ["Descendante", "Ascendante"]
+            },
+            {
+              "id": "obliques",
+              "nom": "Obliques",
+              "variations": [
+                "Descendante",
+                "Ascendante",
+                "intérieur",
+                "extérieur",
+                "par-dessus",
+                "par-dessous"
+              ]
+            },
+            {
+              "id": "estoc",
+              "nom": "Estoc",
+              "variations": ["dessus", "dedans", "dehors", "dessous"]
+            },
+            {
+              "id": "couronne",
+              "nom": "Couronné"
+            },
+            {
+              "id": "balayage",
+              "nom": "Balayage"
+            }
+          ]
+        },
+        {
+          "id": "intensites_frappe",
+          "nom": "Intensités de frappe",
+          "elements": [
+            {
+              "id": "legere",
+              "nom": "Légère (shim)"
+            },
+            {
+              "id": "moderee",
+              "nom": "Modérée (cho)"
+            },
+            {
+              "id": "puissante",
+              "nom": "Puissante (sai)"
+            }
+          ]
+        },
+        {
+          "id": "varietes_attaques",
+          "nom": "Variétés d'attaques",
+          "elements": [
+            {
+              "id": "attaque_simple",
+              "nom": "Attaque simple"
+            },
+            {
+              "id": "attaque_composee",
+              "nom": "Attaque composée"
+            },
+            {
+              "id": "attaque_avec_remise",
+              "nom": "Attaque avec remise"
+            },
+            {
+              "id": "coule",
+              "nom": "Coulé"
+            },
+            {
+              "id": "derobement",
+              "nom": "Dérobement"
+            },
+            {
+              "id": "contre_temps",
+              "nom": "Contre-temps"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ripostes_contre_offensives",
+      "nom": "Ripostes et contre-offensives",
+      "sous_categories": [
+        {
+          "id": "ripostes",
+          "nom": "Ripostes",
+          "elements": [
+            {
+              "id": "types_ripostes",
+              "nom": "Types",
+              "variations": ["simples", "composées", "directes", "indirectes"]
+            },
+            {
+              "id": "tac_au_tac",
+              "nom": "Du tac-au-tac"
+            },
+            {
+              "id": "temps_perdu",
+              "nom": "À temps perdu"
+            },
+            {
+              "id": "contre_riposte",
+              "nom": "Contre-riposte"
+            }
+          ]
+        },
+        {
+          "id": "contre_attaques",
+          "nom": "Contre-attaques",
+          "variations": ["simples", "composées"]
+        },
+        {
+          "id": "derobements_co",
+          "nom": "Dérobements"
+        }
+      ]
+    },
+    {
+      "id": "actions_defensives",
+      "nom": "Actions défensives",
+      "sous_categories": [
+        {
+          "id": "parades",
+          "nom": "Parades",
+          "sous_categories": [
+            {
+              "id": "types_parades",
+              "nom": "Types de parades",
+              "elements": [
+                "Parades latérales",
+                "Parades circulaires",
+                "Parades semi-circulaires",
+                "Parades diagonales"
+              ]
+            },
+            {
+              "id": "mode_execution",
+              "nom": "Mode d'exécution",
+              "elements": [
+                {
+                  "id": "parade_passive",
+                  "nom": "Parade passive"
+                },
+                {
+                  "id": "parade_active",
+                  "nom": "Parade active"
+                }
+              ]
+            },
+            {
+              "id": "comportements_lame",
+              "nom": "Comportements de lame",
+              "elements": [
+                {
+                  "id": "du_tac",
+                  "nom": "Du tac"
+                },
+                {
+                  "id": "opposition",
+                  "nom": "D'opposition"
+                },
+                {
+                  "id": "en_cedant",
+                  "nom": "En cédant"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "esquives",
+          "nom": "Esquives",
+          "definition": "Actions défensives par déplacement du corps",
+          "elements": [
+            {
+              "id": "esquives_partielles",
+              "nom": "Esquives partielles",
+              "description": "Déplacement d'un segment, haut du corps ou un point d'appui"
+            },
+            {
+              "id": "esquives_totales",
+              "nom": "Esquives totales",
+              "description": "Déplacement de l'ensemble du corps, deux points d'appui"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "preparations",
+      "nom": "Préparations",
+      "sous_categories": [
+        {
+          "id": "preparations_sur_lame",
+          "nom": "Préparations sur lame (contact)",
+          "sous_categories": [
+            {
+              "id": "engagement",
+              "nom": "Engagement",
+              "elements": [
+                {
+                  "id": "engagement_definition",
+                  "nom": "Engagement"
+                },
+                {
+                  "id": "prendre_engagement",
+                  "nom": "Prendre l'engagement"
+                },
+                {
+                  "id": "changer_engagement",
+                  "nom": "Changer d'engagement"
+                }
+              ]
+            },
+            {
+              "id": "attaques_lame",
+              "nom": "Attaques de lame",
+              "elements": [
+                {
+                  "id": "battement",
+                  "nom": "Battement"
+                },
+                {
+                  "id": "pression",
+                  "nom": "Pression"
+                },
+                {
+                  "id": "froissement",
+                  "nom": "Froissement"
+                }
+              ]
+            },
+            {
+              "id": "prises_lame",
+              "nom": "Prises de lame",
+              "elements": [
+                {
+                  "id": "opposition_prise",
+                  "nom": "Opposition"
+                },
+                {
+                  "id": "croise",
+                  "nom": "Croisé"
+                },
+                {
+                  "id": "liement",
+                  "nom": "Liement"
+                },
+                {
+                  "id": "enveloppement",
+                  "nom": "Enveloppement"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "preparations_sans_contact",
+          "nom": "Préparations sans contact de lame",
+          "elements": [
+            {
+              "id": "feintes",
+              "nom": "Feintes"
+            },
+            {
+              "id": "invites",
+              "nom": "Invites"
+            },
+            {
+              "id": "armes",
+              "nom": "Armés",
+              "elements": [
+                {
+                  "id": "arme_engagement",
+                  "nom": "Armé d'engagement"
+                },
+                {
+                  "id": "arme_simple",
+                  "nom": "Armé simple"
+                }
+              ]
+            },
+            {
+              "id": "orbites",
+              "nom": "Orbites (moulinets)",
+              "elements": [
+                {
+                  "id": "orbites_horizontales",
+                  "nom": "Orbites horizontales (halo)",
+                  "variantes": [
+                    "Couronné : au-dessus de la tête",
+                    "Lame verticale, cercle horizontal"
+                  ]
+                },
+                {
+                  "id": "orbites_verticales",
+                  "nom": "Orbites verticales",
+                  "variantes": [
+                    "Majeures - Rotation épaule",
+                    "Mineures - Rotation poignet"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "preparations_positionnement",
+          "nom": "Préparations par positionnement",
+          "elements": [
+            "Changements de gardes",
+            "Changements de postures",
+            "Déplacements"
+          ]
+        }
+      ]
+    }
+  ]
+}

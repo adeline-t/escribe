@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import CombatRow from "../components/combat/CombatRow.jsx";
 import CombatShareModal from "../components/combat/CombatShareModal.jsx";
 import ConfirmDeleteModal from "../components/modals/ConfirmDeleteModal.jsx";
+import { useWorkerServices } from "../hooks/useWorkerServices.js";
 
 export default function CombatListPage({
   apiBase,
@@ -35,6 +36,7 @@ export default function CombatListPage({
   const [shareRole, setShareRole] = useState("read");
   const [exportingCombatId, setExportingCombatId] = useState(null);
   const [pendingCombatDelete, setPendingCombatDelete] = useState(null);
+  const { combats: combatService } = useWorkerServices(apiBase, authToken);
 
   // ==================== UTILITY FUNCTIONS ====================
 
@@ -44,14 +46,6 @@ export default function CombatListPage({
     const month = String(now.getMonth() + 1).padStart(2, "0");
     const year = String(now.getFullYear());
     return `Combat du ${day}-${month}-${year}`;
-  }
-
-  function authFetch(path, options = {}) {
-    const headers = { ...(options.headers || {}) };
-    if (authToken) {
-      headers.Authorization = `Bearer ${authToken}`;
-    }
-    return fetch(`${apiBase}${path}`, { ...options, headers });
   }
 
   function formatDate(value) {
@@ -66,17 +60,15 @@ export default function CombatListPage({
   // ==================== DATA LOADING ====================
 
   async function loadCombats(signal) {
-    const typeQuery = combatType
-      ? `&type=${encodeURIComponent(combatType)}`
-      : "";
-    const response = await authFetch(`/api/combats?archived=0${typeQuery}`, {
+    const result = await combatService.listCombats({
+      archived: 0,
+      type: combatType,
       signal,
     });
-    const payload = await response.json().catch(() => ({}));
-    if (response.ok) {
+    if (result.ok) {
       setAccessDenied(false);
-      setCombats(payload.combats ?? []);
-    } else if (response.status === 401) {
+      setCombats(result.combats ?? []);
+    } else if (result.status === 401) {
       setAccessDenied(true);
       setCombats([]);
       setStatus("");
@@ -89,7 +81,7 @@ export default function CombatListPage({
     const controller = new AbortController();
     loadCombats(controller.signal).catch(() => null);
     return () => controller.abort();
-  }, [combatType]);
+  }, [combatType, combatService]);
 
   useEffect(() => {
     if (autoOpenCreate) {
@@ -104,21 +96,17 @@ export default function CombatListPage({
     }
     const controller = new AbortController();
     const handle = setTimeout(() => {
-      authFetch(
-        `/api/combats/share-users?query=${encodeURIComponent(shareQuery.trim())}`,
-        {
+      combatService
+        .searchShareUsers({
+          query: shareQuery.trim(),
           signal: controller.signal,
-        },
-      )
-        .then(async (response) => {
-          if (!response.ok) {
-            setShareError("Impossible de charger les utilisateurs.");
-            return null;
-          }
-          return response.json().catch(() => ({}));
         })
-        .then((payload) => {
-          if (payload) setShareUsers(payload?.users ?? []);
+        .then((result) => {
+          if (!result.ok) {
+            setShareError("Impossible de charger les utilisateurs.");
+            return;
+          }
+          setShareUsers(result.users ?? []);
         })
         .catch(() => null);
     }, 250);
@@ -126,7 +114,7 @@ export default function CombatListPage({
       clearTimeout(handle);
       controller.abort();
     };
-  }, [shareCombat, shareQuery]);
+  }, [shareCombat, shareQuery, combatService]);
 
   useEffect(() => {
     if (combatType) {
@@ -231,13 +219,12 @@ export default function CombatListPage({
     if (!combat || exportingCombatId) return;
     setExportingCombatId(combat.id);
     try {
-      const response = await authFetch(`/api/combats/${combat.id}`);
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok || !payload?.state) {
+      const result = await combatService.getCombatById(combat.id);
+      if (!result.ok || !result.state) {
         setStatus("Export PDF impossible.");
         return;
       }
-      const state = payload.state;
+      const state = result.state;
       const { exportCombatPdf } = await import("../lib/combatPdf.jsx");
       const { blob, fileName } = await exportCombatPdf(
         {
@@ -293,10 +280,7 @@ export default function CombatListPage({
       setPendingCombatDelete(null);
       return;
     }
-    await authFetch(`/api/combats/${id}/delete`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-    });
+    await combatService.deleteCombat(id);
     await loadCombats();
     setPendingCombatDelete(null);
   }
@@ -310,21 +294,19 @@ export default function CombatListPage({
     setShareSelectedUser("");
     setShareRole("read");
     setShareLoading(true);
-    const response = await authFetch(`/api/combats/${combat.id}/shares`);
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
+    const sharesResult = await combatService.getShares(combat.id);
+    if (!sharesResult.ok) {
       setShareError("Impossible de charger les partages.");
       setShareList([]);
     } else {
-      setShareList(payload.shares ?? []);
+      setShareList(sharesResult.shares ?? []);
     }
-    const usersResponse = await authFetch(`/api/combats/share-users/all`);
-    const usersPayload = await usersResponse.json().catch(() => ({}));
-    if (usersResponse.ok) {
-      setShareAllUsers(usersPayload.users ?? []);
+    const usersResult = await combatService.listShareUsers();
+    if (usersResult.ok) {
+      setShareAllUsers(usersResult.users ?? []);
     } else {
       setShareError(
-        usersPayload?.error
+        usersResult?.payload?.error
           ? "Impossible de charger les utilisateurs."
           : "Erreur lors du chargement des utilisateurs.",
       );
@@ -337,17 +319,16 @@ export default function CombatListPage({
     if (!shareCombat) return;
     if (!userId) return;
     setShareError("");
-    const response = await authFetch(`/api/combats/${shareCombat.id}/shares`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, role: shareRole }),
+    const result = await combatService.addShare({
+      combatId: shareCombat.id,
+      userId,
+      role: shareRole,
     });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
+    if (!result.ok) {
       setShareError("Impossible d'ajouter le partage.");
       return;
     }
-    setShareList(payload.shares ?? []);
+    setShareList(result.shares ?? []);
     setShareQuery("");
     setShareUsers([]);
     setShareSelectedUser("");
@@ -355,17 +336,15 @@ export default function CombatListPage({
 
   async function removeShare(userId) {
     if (!shareCombat) return;
-    const response = await authFetch(`/api/combats/${shareCombat.id}/shares`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId }),
+    const result = await combatService.removeShare({
+      combatId: shareCombat.id,
+      userId,
     });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
+    if (!result.ok) {
       setShareError("Impossible de retirer le partage.");
       return;
     }
-    setShareList(payload.shares ?? []);
+    setShareList(result.shares ?? []);
   }
 
   // ==================== RENDER HELPERS ====================

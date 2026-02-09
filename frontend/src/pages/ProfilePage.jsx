@@ -1,18 +1,12 @@
 import { useState } from "react";
+import { useWorkerServices } from "../hooks/useWorkerServices.js";
 
 export default function ProfilePage({ apiBase, authToken, authUser, setAuthUser, onLogout }) {
   const [profileStatus, setProfileStatus] = useState("");
   const [profileError, setProfileError] = useState("");
   const [passwordStatus, setPasswordStatus] = useState("");
   const [passwordError, setPasswordError] = useState("");
-
-  function authFetch(path, options = {}) {
-    const headers = { ...(options.headers || {}) };
-    if (authToken) {
-      headers.Authorization = `Bearer ${authToken}`;
-    }
-    return fetch(`${apiBase}${path}`, { ...options, headers });
-  }
+  const { auth } = useWorkerServices(apiBase, authToken);
 
   async function saveProfile(event) {
     event.preventDefault();
@@ -21,12 +15,11 @@ export default function ProfilePage({ apiBase, authToken, authUser, setAuthUser,
     const formData = new FormData(event.currentTarget);
     const firstName = formData.get("firstName");
     const lastName = formData.get("lastName");
-    const response = await authFetch("/api/auth/profile", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ firstName, lastName })
+    const result = await auth.updateProfile({
+      firstName,
+      lastName,
     });
-    if (!response.ok) {
+    if (!result.ok) {
       setProfileError("Impossible de mettre à jour le profil.");
       return;
     }
@@ -41,14 +34,14 @@ export default function ProfilePage({ apiBase, authToken, authUser, setAuthUser,
     const formData = new FormData(event.currentTarget);
     const currentPassword = formData.get("currentPassword");
     const newPassword = formData.get("newPassword");
-    const response = await authFetch("/api/auth/change-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ currentPassword, newPassword })
+    const result = await auth.changePassword({
+      currentPassword,
+      newPassword,
     });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      setPasswordError(payload?.message || "Changement de mot de passe impossible.");
+    if (!result.ok) {
+      setPasswordError(
+        result?.message || "Changement de mot de passe impossible.",
+      );
       return;
     }
     setPasswordStatus("Mot de passe mis à jour avec succès.");

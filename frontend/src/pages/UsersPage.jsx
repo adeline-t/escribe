@@ -1,28 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { FaArrowRotateLeft, FaEye, FaEyeSlash } from "react-icons/fa6";
+import { useWorkerServices } from "../hooks/useWorkerServices.js";
 
-function AuditPanel({ apiBase, authToken }) {
+function AuditPanel({ admin }) {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  function authFetch(path, options = {}) {
-    const headers = { ...(options.headers || {}) };
-    if (authToken) {
-      headers.Authorization = `Bearer ${authToken}`;
-    }
-    return fetch(`${apiBase}${path}`, { ...options, headers });
-  }
 
   useEffect(() => {
     let isMounted = true;
     async function loadLogs() {
       setLoading(true);
       try {
-        const response = await authFetch("/api/admin/audit?limit=100");
-        const payload = await response.json().catch(() => ({}));
-        if (isMounted) setLogs(payload.logs ?? []);
-      } catch (error) {
+        const result = await admin.getAuditLogs({ limit: 100 });
+        if (isMounted) setLogs(result.logs ?? []);
+      } catch {
         setError("Impossible de charger l'audit.");
       } finally {
         if (isMounted) setLoading(false);
@@ -32,7 +24,7 @@ function AuditPanel({ apiBase, authToken }) {
     return () => {
       isMounted = false;
     };
-  }, [apiBase, authToken]);
+  }, [admin]);
 
   return (
     <div className="audit-panel">
@@ -80,26 +72,18 @@ export default function UsersPage({ apiBase, authToken }) {
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
-
-  function authFetch(path, options = {}) {
-    const headers = { ...(options.headers || {}) };
-    if (authToken) {
-      headers.Authorization = `Bearer ${authToken}`;
-    }
-    return fetch(`${apiBase}${path}`, { ...options, headers });
-  }
+  const { admin } = useWorkerServices(apiBase, authToken);
 
   useEffect(() => {
     let isMounted = true;
     async function loadUsers() {
       setLoading(true);
       try {
-        const response = await authFetch("/api/admin/users");
-        const payload = await response.json().catch(() => ({}));
+        const result = await admin.getUsers();
         if (isMounted) {
-          setUsers(payload.users ?? []);
+          setUsers(result.users ?? []);
         }
-      } catch (error) {
+      } catch {
         setError("Impossible de charger les utilisateurs.");
       } finally {
         if (isMounted) setLoading(false);
@@ -109,17 +93,16 @@ export default function UsersPage({ apiBase, authToken }) {
     return () => {
       isMounted = false;
     };
-  }, [apiBase, authToken]);
+  }, [admin]);
 
   async function updateRole(userId, role) {
     setError("");
     setRoleStatus((prev) => ({ ...prev, [userId]: "" }));
-    const response = await authFetch("/api/admin/users/role", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, role }),
+    const result = await admin.updateUserRole({
+      userId,
+      role,
     });
-    if (!response.ok) {
+    if (!result.ok) {
       setError("Mise à jour impossible.");
       return;
     }
@@ -141,18 +124,13 @@ export default function UsersPage({ apiBase, authToken }) {
       return;
     }
     setResetLoading(true);
-    const response = await authFetch("/api/admin/users/password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId: resetUser.id,
-        password: resetPassword,
-        forceReset: resetForce,
-      }),
+    const result = await admin.resetUserPassword({
+      userId: resetUser.id,
+      password: resetPassword,
+      forceReset: resetForce,
     });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      setResetError(payload?.message || "Réinitialisation impossible.");
+    if (!result.ok) {
+      setResetError(result?.message || "Réinitialisation impossible.");
       setResetLoading(false);
       return;
     }
@@ -346,7 +324,7 @@ export default function UsersPage({ apiBase, authToken }) {
           <div className="meta text-muted">Aucun utilisateur.</div>
         ) : null}
       </div>
-      <AuditPanel apiBase={apiBase} authToken={authToken} />
+      <AuditPanel admin={admin} />
 
       {resetUser ? (
         <div

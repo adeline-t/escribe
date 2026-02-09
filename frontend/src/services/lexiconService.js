@@ -1,0 +1,87 @@
+export function createLexiconService(client) {
+  function buildScopedPath(type, scope) {
+    if (scope === "personal") return `/api/lexicon/personal/${type}`;
+    return `/api/lexicon/${type}`;
+  }
+
+  return {
+    async getLexicon({ lexicon } = {}) {
+      const path = client.withQuery("/api/lexicon", { lexicon });
+      const { response, payload } = await client.requestJson(path);
+      return {
+        ok: response.ok,
+        lexicon: payload?.lexicon,
+        payload,
+        response,
+      };
+    },
+
+    async getFavorites({ lexicon, signal } = {}) {
+      const path = client.withQuery("/api/lexicon/favorites", { lexicon });
+      const { response, payload } = await client.requestJson(path, { signal });
+      return {
+        ok: response.ok,
+        favorites: payload?.favorites ?? {},
+        payload,
+        response,
+      };
+    },
+
+    async listItems({ type, scope = "global", lexicon, signal } = {}) {
+      const path = client.withQuery(buildScopedPath(type, scope), { lexicon });
+      const { response, payload } = await client.requestJson(path, { signal });
+      return {
+        ok: response.ok,
+        items: payload?.items ?? [],
+        payload,
+        response,
+      };
+    },
+
+    async addItem({ type, scope = "global", lexicon, label }) {
+      const path = client.withQuery(buildScopedPath(type, scope), { lexicon });
+      const { response, payload } = await client.requestJson(path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ label }),
+      });
+      return {
+        ok: response.ok,
+        item: payload?.item ?? null,
+        error: payload?.error,
+        payload,
+        response,
+      };
+    },
+
+    async deleteItem({ type, scope = "global", lexicon, id }) {
+      const path = client.withQuery(buildScopedPath(type, scope), { lexicon });
+      const { response, payload } = await client.requestJson(path, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      return {
+        ok: response.ok,
+        payload,
+        response,
+      };
+    },
+
+    async setFavorite({ type, label, favorite, lexicon }) {
+      const { response, payload } = await client.requestJson(
+        "/api/lexicon/favorites",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type, label, favorite, lexicon }),
+        },
+      );
+      return {
+        ok: response.ok,
+        payload,
+        response,
+      };
+    },
+  };
+}

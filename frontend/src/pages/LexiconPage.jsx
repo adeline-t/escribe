@@ -11,13 +11,12 @@ import {
   getLexiconTypesForMode,
 } from "../lib/lexicon.js";
 import ConfirmDeleteModal from "../components/modals/ConfirmDeleteModal.jsx";
+import { useWorkerServices } from "../hooks/useWorkerServices.js";
 
 export default function LexiconPage({
   apiBase,
   authToken,
   authUser,
-  favorites,
-  setFavorites,
   newFavorites,
   setNewFavorites,
   sabreFavorites,
@@ -52,19 +51,12 @@ export default function LexiconPage({
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const addInputRef = useRef(null);
+  const { lexicon: lexiconService } = useWorkerServices(apiBase, authToken);
 
   const activeLabel = useMemo(
     () => lexiconTypes.find((type) => type.key === activeType)?.label ?? "",
     [activeType, lexiconTypes],
   );
-
-  function authFetch(path, options = {}) {
-    const headers = { ...(options.headers || {}) };
-    if (authToken) {
-      headers.Authorization = `Bearer ${authToken}`;
-    }
-    return fetch(`${apiBase}${path}`, { ...options, headers });
-  }
 
   const canEditGlobal =
     authUser && ["admin", "superadmin"].includes(authUser.role);
@@ -85,33 +77,36 @@ export default function LexiconPage({
     setError("");
     try {
       if (scope === "all") {
-        const [globalResponse, personalResponse] = await Promise.all([
-          authFetch(`/api/lexicon/${activeType}?lexicon=${lexiconKey}`, {
+        const [globalResult, personalResult] = await Promise.all([
+          lexiconService.listItems({
+            type: activeType,
+            scope: "global",
+            lexicon: lexiconKey,
             signal,
           }),
-          authFetch(
-            `/api/lexicon/personal/${activeType}?lexicon=${lexiconKey}`,
-            { signal },
-          ),
+          lexiconService.listItems({
+            type: activeType,
+            scope: "personal",
+            lexicon: lexiconKey,
+            signal,
+          }),
         ]);
-        const globalPayload = await globalResponse.json().catch(() => ({}));
-        const personalPayload = await personalResponse.json().catch(() => ({}));
         const merged = new Map();
-        (personalPayload.items ?? []).forEach((item) => {
+        (personalResult.items ?? []).forEach((item) => {
           merged.set(item.label, item);
         });
-        (globalPayload.items ?? []).forEach((item) => {
+        (globalResult.items ?? []).forEach((item) => {
           if (!merged.has(item.label)) merged.set(item.label, item);
         });
         setItems(Array.from(merged.values()));
       } else {
-        const path =
-          scope === "personal"
-            ? `/api/lexicon/personal/${activeType}?lexicon=${lexiconKey}`
-            : `/api/lexicon/${activeType}?lexicon=${lexiconKey}`;
-        const response = await authFetch(path, { signal });
-        const payload = await response.json().catch(() => ({}));
-        setItems(payload.items ?? []);
+        const result = await lexiconService.listItems({
+          type: activeType,
+          scope,
+          lexicon: lexiconKey,
+          signal,
+        });
+        setItems(result.items ?? []);
       }
     } catch (error) {
       if (error?.name !== "AbortError") {
@@ -128,28 +123,27 @@ export default function LexiconPage({
     return () => {
       controller.abort();
     };
-  }, [apiBase, activeType, scope, lexiconKey]);
+  }, [activeType, scope, lexiconKey, lexiconService]);
 
   useEffect(() => {
     if (!authUser) return;
     const controller = new AbortController();
-    authFetch(`/api/lexicon/favorites?lexicon=${lexiconKey}`, {
-      signal: controller.signal,
-    })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((payload) => {
-        if (!payload?.favorites) return;
+    lexiconService
+      .getFavorites({ lexicon: lexiconKey, signal: controller.signal })
+      .then((result) => {
+        if (!result.ok) return;
+        const nextFavorites = result.favorites ?? {};
         if (lexiconKey === "classic-v2") {
-          setNewFavorites?.(payload.favorites);
+          setNewFavorites?.(nextFavorites);
         } else if (setSabreFavorites) {
-          setSabreFavorites(payload.favorites);
+          setSabreFavorites(nextFavorites);
         } else {
-          setLocalFavorites(payload.favorites);
+          setLocalFavorites(nextFavorites);
         }
       })
       .catch(() => null);
     return () => controller.abort();
-  }, [apiBase, authUser, lexiconKey, setFavorites, setNewFavorites, setSabreFavorites]);
+  }, [authUser, lexiconKey, setNewFavorites, setSabreFavorites, lexiconService]);
 
   useEffect(() => {
     setActiveType(lexiconTypes[0]?.key ?? "");
@@ -233,24 +227,20 @@ export default function LexiconPage({
       return;
     }
     setError("");
-    const path =
-      scope === "personal"
-        ? `/api/lexicon/personal/${activeType}?lexicon=${lexiconKey}`
-        : `/api/lexicon/${activeType}?lexicon=${lexiconKey}`;
-    const response = await authFetch(path, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ label }),
+    const result = await lexiconService.addItem({
+      type: activeType,
+      scope,
+      lexicon: lexiconKey,
+      label,
     });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      if (payload?.error === "duplicate") {
+    if (!result.ok) {
+      if (result.error === "duplicate") {
         setError("Valeur déjà présente.");
       }
       return;
     }
-    if (payload?.item) {
-      setItems((prev) => [...prev, payload.item]);
+    if (result.item) {
+      setItems((prev) => [...prev, result.item]);
       setDraft("");
       setIsAddOpen(false);
     }
@@ -260,33 +250,26 @@ export default function LexiconPage({
     if (!canEdit) {
       return;
     }
-    const path =
-      scope === "personal"
-        ? `/api/lexicon/personal/${activeType}?lexicon=${lexiconKey}`
-        : `/api/lexicon/${activeType}?lexicon=${lexiconKey}`;
-    const response = await authFetch(path, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
+    const result = await lexiconService.deleteItem({
+      type: activeType,
+      scope,
+      lexicon: lexiconKey,
+      id,
     });
-    if (!response.ok) return;
+    if (!result.ok) return;
     setItems((prev) => prev.filter((item) => item.id !== id));
   }
 
   async function toggleFavorite(label) {
     if (!authUser) return;
     const next = !favoriteSet.has(label);
-    const response = await authFetch("/api/lexicon/favorites", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        type: activeType,
-        label,
-        favorite: next,
-        lexicon: lexiconKey,
-      }),
+    const result = await lexiconService.setFavorite({
+      type: activeType,
+      label,
+      favorite: next,
+      lexicon: lexiconKey,
     });
-    if (!response.ok) return;
+    if (!result.ok) return;
     const updateFavorites = (prev) => {
       const copy = { ...(prev || {}) };
       const list = new Set(copy[activeType] ?? []);

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 import AuthPage from "./pages/AuthPage.jsx";
 import HomePage from "./pages/HomePage.jsx";
@@ -22,9 +22,7 @@ import {
   FaAngleLeft,
 } from "react-icons/fa6";
 import {
-  DEFAULT_LEXICON,
   DEFAULT_PARTICIPANTS,
-  DEFAULT_SABRE_LEXICON,
   normalizeLexicon,
   normalizeNewLexicon,
   normalizeSabreLexicon,
@@ -36,14 +34,13 @@ import {
 } from "./lib/combats.js";
 import {
   buildParticipantLabel,
-  labelForParticipant,
-  emptyParticipantState,
-  normalizeHiddenParticipantIndexes,
   normalizeState,
   toggleAttribute,
   buildSummaryLine,
   buildSummaryLines,
 } from "./lib/participants.js";
+import { useCombatStateManager } from "./hooks/useCombatStateManager.js";
+import { useAppBootstrap } from "./hooks/useAppBootstrap.js";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:4000";
 const TOKEN_KEY = "escribe_token";
@@ -51,54 +48,82 @@ const FRONT_ENV =
   import.meta.env.VITE_ENVIRONMENT ?? import.meta.env.MODE ?? "";
 
 export default function App() {
-  const [authUser, setAuthUser] = useState(null);
-  const [authToken, setAuthToken] = useState(() =>
-    localStorage.getItem(TOKEN_KEY),
-  );
-  const [authLoading, setAuthLoading] = useState(true);
-  const [authError, setAuthError] = useState("");
   const [page, setPage] = useState("home");
-
-  const [participants, setParticipants] = useState(() =>
-    DEFAULT_PARTICIPANTS.map((participant) => ({ ...participant })),
-  );
-  const [phrases, setPhrases] = useState([]);
-  const [activePhraseId, setActivePhraseId] = useState(null);
-  const [form, setForm] = useState(
-    DEFAULT_PARTICIPANTS.map(() => emptyParticipantState()),
-  );
-  const [editingStepId, setEditingStepId] = useState(null);
-  const [insertStepIndex, setInsertStepIndex] = useState(null);
-  const [insertionMode, setInsertionMode] = useState(false);
-  const [deletionMode, setDeletionMode] = useState(false);
-  const [combatId, setCombatId] = useState(null);
-  const [combatName, setCombatName] = useState("Combat sans nom");
-  const [combatDescription, setCombatDescription] = useState("");
-  const [combatType, setCombatType] = useState("classic");
-  const [combatShareRole, setCombatShareRole] = useState("read");
-  const [isHydrated, setIsHydrated] = useState(false);
-  const [lexiconData, setLexiconData] = useState(() => DEFAULT_LEXICON);
-  const [newLexiconData, setNewLexiconData] = useState(() => ({}));
-  const [sabreLexiconData, setSabreLexiconData] = useState(
-    () => DEFAULT_SABRE_LEXICON,
-  );
-  const [favorites, setFavorites] = useState({});
-  const [newFavorites, setNewFavorites] = useState({});
-  const [sabreFavorites, setSabreFavorites] = useState({});
-  const [stepLexiconKey, setStepLexiconKey] = useState("classic-v2");
-  const saveTimerRef = useRef(null);
   const [isMenuCollapsed, setIsMenuCollapsed] = useState(false);
-  const [backendVersion, setBackendVersion] = useState(null);
-
-  const participantLabels = useMemo(
-    () => participants.map((name, index) => labelForParticipant(name, index)),
-    [participants],
-  );
-
-  const activePhrase = useMemo(
-    () => phrases.find((phrase) => phrase.id === activePhraseId) ?? null,
-    [phrases, activePhraseId],
-  );
+  const bootstrap = useAppBootstrap({
+    apiBase: API_BASE,
+    tokenKey: TOKEN_KEY,
+  });
+  const {
+    services,
+    authUser,
+    setAuthUser,
+    authToken,
+    authLoading,
+    authError,
+    lexiconData,
+    newLexiconData,
+    sabreLexiconData,
+    favorites,
+    newFavorites,
+    sabreFavorites,
+    setNewFavorites,
+    setSabreFavorites,
+    backendVersion,
+    login,
+    register,
+    logout,
+  } = bootstrap;
+  const { combats } = services;
+  const combatState = useCombatStateManager({
+    isSaveEnabled: Boolean(authUser),
+    saveState: (state) => combats.saveState(state),
+  });
+  const {
+    participants,
+    phrases,
+    activePhraseId,
+    form,
+    editingStepId,
+    insertStepIndex,
+    insertionMode,
+    deletionMode,
+    combatId,
+    combatName,
+    combatDescription,
+    combatType,
+    combatShareRole,
+    stepLexiconKey,
+    participantLabels,
+    activePhrase,
+    setCombatName,
+    setCombatDescription,
+    applyNormalizedCombatState,
+    initializeNewCombat,
+    markHydrated,
+    updateParticipantName,
+    updateParticipantWeapon,
+    updateParticipantCount,
+    updateForm,
+    updateStepParticipant,
+    updateStepLexicon,
+    resetForm,
+    addStep,
+    insertEmptyStep,
+    removeStep,
+    editStep,
+    cancelEditStep,
+    selectPhrase,
+    togglePhraseParticipantVisibility,
+    createPhrase,
+    renamePhrase,
+    movePhrase,
+    movePhraseToIndex,
+    deletePhrase,
+    startInsertStep,
+    toggleInsertionMode,
+    toggleDeletionMode,
+  } = combatState;
 
   const normalizedLexicon = useMemo(
     () => normalizeLexicon(lexiconData),
@@ -115,214 +140,39 @@ export default function App() {
     [sabreLexiconData],
   );
 
-  function apiFetch(path, options = {}) {
-    const headers = { ...(options.headers || {}) };
-    if (authToken) {
-      headers.Authorization = `Bearer ${authToken}`;
-    }
-    return fetch(`${API_BASE}${path}`, { ...options, headers });
-  }
-
-  useEffect(() => {
-    let isMounted = true;
-    async function loadAuth() {
-      if (!authToken) {
-        setAuthLoading(false);
-        return;
-      }
-      try {
-        const response = await apiFetch("/api/auth/me");
-        if (!response.ok) throw new Error("Auth failed");
-        const payload = await response.json();
-        if (isMounted) {
-          setAuthUser(payload.user ?? null);
-        }
-      } catch {
-        if (isMounted) {
-          setAuthUser(null);
-          setAuthToken(null);
-          localStorage.removeItem(TOKEN_KEY);
-        }
-      } finally {
-        if (isMounted) setAuthLoading(false);
-      }
-    }
-    loadAuth();
-    return () => {
-      isMounted = false;
-    };
-  }, [authToken]);
-
   useEffect(() => {
     let isMounted = true;
     async function loadState() {
       try {
-        const lexiconResponse = await apiFetch("/api/lexicon");
-        if (lexiconResponse.ok) {
-          const lexiconPayload = await lexiconResponse.json();
-          if (lexiconPayload?.lexicon) {
-            setLexiconData(lexiconPayload.lexicon);
-          }
-        }
-        const [sabreLexiconResponse, newLexiconResponse] = await Promise.all([
-          apiFetch("/api/lexicon?lexicon=sabre-laser"),
-          apiFetch("/api/lexicon?lexicon=classic-v2"),
-        ]);
-        if (sabreLexiconResponse.ok) {
-          const sabrePayload = await sabreLexiconResponse.json();
-          if (sabrePayload?.lexicon) {
-            setSabreLexiconData(sabrePayload.lexicon);
-          }
-        }
-        if (newLexiconResponse.ok) {
-          const newPayload = await newLexiconResponse.json();
-          if (newPayload?.lexicon) {
-            setNewLexiconData(newPayload.lexicon);
-          }
-        }
-
-        if (authUser) {
-          const favoritesResponse = await apiFetch("/api/lexicon/favorites");
-          if (favoritesResponse.ok) {
-            const favoritesPayload = await favoritesResponse.json();
-            if (favoritesPayload?.favorites) {
-              setFavorites(favoritesPayload.favorites);
-            }
-          }
-          const [sabreFavoritesResponse, newFavoritesResponse] =
-            await Promise.all([
-              apiFetch("/api/lexicon/favorites?lexicon=sabre-laser"),
-              apiFetch("/api/lexicon/favorites?lexicon=classic-v2"),
-            ]);
-          if (sabreFavoritesResponse.ok) {
-            const sabreFavoritesPayload = await sabreFavoritesResponse.json();
-            if (sabreFavoritesPayload?.favorites) {
-              setSabreFavorites(sabreFavoritesPayload.favorites);
-            }
-          }
-          if (newFavoritesResponse.ok) {
-            const newFavoritesPayload = await newFavoritesResponse.json();
-            if (newFavoritesPayload?.favorites) {
-              setNewFavorites(newFavoritesPayload.favorites);
-            }
-          }
-        }
-
         if (!authUser) return;
-        const response = await apiFetch("/api/state");
-        if (!response.ok) throw new Error("Failed to load state");
-        const data = await response.json();
-        const normalized = normalizeState(data?.state, DEFAULT_PARTICIPANTS);
+        const stateResult = await combats.getState();
+        if (!stateResult.ok) throw new Error("Failed to load state");
+        const normalized = normalizeState(
+          stateResult.state,
+          DEFAULT_PARTICIPANTS,
+        );
         if (isMounted && normalized) {
-          setParticipants(normalized.participants);
-          setPhrases(normalized.phrases ?? []);
-          setForm(normalized.form);
-          setCombatId(normalized.combatId ?? null);
-          setCombatName(normalized.combatName ?? "Combat sans nom");
-          setCombatDescription(normalized.combatDescription ?? "");
-          setCombatType(normalized.combatType ?? "classic");
-          setCombatShareRole(normalized.combatShareRole ?? "read");
-          if (normalized.phrases?.length) {
-            setActivePhraseId(normalized.phrases[0].id);
-          } else {
-            setActivePhraseId(null);
-          }
+          applyNormalizedCombatState(normalized);
         }
       } catch (error) {
         console.warn("State load skipped:", error);
       } finally {
-        if (isMounted) setIsHydrated(true);
+        if (isMounted) markHydrated(true);
       }
     }
     loadState();
     return () => {
       isMounted = false;
     };
-  }, [authUser]);
-
-  useEffect(() => {
-    let isMounted = true;
-    fetch(`${API_BASE}/api/version`)
-      .then((response) => (response.ok ? response.json() : null))
-      .then((payload) => {
-        if (isMounted && payload) {
-          setBackendVersion(payload);
-        }
-      })
-      .catch(() => null);
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!isHydrated || !authUser) return;
-    if (saveTimerRef.current) {
-      clearTimeout(saveTimerRef.current);
-    }
-    const payload = {
-      combatId,
-      combatName,
-      combatDescription,
-      combatType,
-      participants,
-      phrases,
-      form,
-    };
-    saveTimerRef.current = setTimeout(() => {
-      apiFetch("/api/state", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ state: payload }),
-      })
-        .then((response) => response?.json?.())
-        .then((data) => {
-          if (data?.combatId && !combatId) {
-            setCombatId(data.combatId);
-          }
-        })
-        .catch((error) => {
-          console.warn("State save skipped:", error);
-        });
-    }, 400);
-    return () => {
-      if (saveTimerRef.current) {
-        clearTimeout(saveTimerRef.current);
-      }
-    };
-  }, [
-    participants,
-    phrases,
-    form,
-    combatName,
-    combatDescription,
-    combatId,
-    combatType,
-    combatShareRole,
-    isHydrated,
-    authUser,
-  ]);
+  }, [authUser, combats]);
 
   async function loadCombatById(id) {
     if (!id) return;
-    const response = await apiFetch(`/api/state?combatId=${id}`);
-    if (!response.ok) return;
-    const data = await response.json();
-    const normalized = normalizeState(data?.state, DEFAULT_PARTICIPANTS);
+    const result = await combats.getState({ combatId: id });
+    if (!result.ok) return;
+    const normalized = normalizeState(result.state, DEFAULT_PARTICIPANTS);
     if (normalized) {
-      setParticipants(normalized.participants);
-      setPhrases(normalized.phrases ?? []);
-      setForm(normalized.form);
-      setCombatId(normalized.combatId ?? id);
-      setCombatName(normalized.combatName ?? "Combat sans nom");
-      setCombatDescription(normalized.combatDescription ?? "");
-      setCombatType(normalized.combatType ?? "classic");
-      setCombatShareRole(normalized.combatShareRole ?? "read");
-      if (normalized.phrases?.length) {
-        setActivePhraseId(normalized.phrases[0].id);
-      } else {
-        setActivePhraseId(null);
-      }
+      applyNormalizedCombatState(normalized, { fallbackCombatId: id });
       return normalized.combatType ?? "classic";
     }
     return null;
@@ -333,469 +183,44 @@ export default function App() {
     const defaultParticipants = DEFAULT_PARTICIPANTS.map((participant) => ({
       ...participant,
     }));
-    const response = await apiFetch("/api/combats", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: payload?.name,
-        description: payload?.description,
-        participants: defaultParticipants,
-        type,
-      }),
+    const result = await combats.createCombat({
+      name: payload?.name,
+      description: payload?.description,
+      participants: defaultParticipants,
+      type,
     });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok || !data?.combat?.id) return null;
-    const newId = data.combat.id;
-    const initialPhrase = {
-      id: crypto.randomUUID(),
-      name: "Phrase 1",
-      steps: [],
-    };
-    setCombatId(newId);
-    setCombatName(data.combat.name ?? "Combat sans nom");
-    setCombatDescription(data.combat.description ?? "");
-    setCombatType(type);
-    setCombatShareRole("owner");
-    setParticipants(defaultParticipants);
-    setPhrases([initialPhrase]);
-    setActivePhraseId(initialPhrase.id);
-    setForm(defaultParticipants.map(() => emptyParticipantState()));
-    return { id: newId, type };
+    if (!result.ok || !result.combat?.id) return null;
+    initializeNewCombat({
+      id: result.combat.id,
+      name: result.combat.name,
+      description: result.combat.description,
+      type,
+      participants: defaultParticipants,
+    });
+    return { id: result.combat.id, type };
   }
 
   async function handleLogin(event) {
     event.preventDefault();
-    setAuthError("");
     const formData = new FormData(event.currentTarget);
     const email = formData.get("email");
     const password = formData.get("password");
-    try {
-      const response = await fetch(`${API_BASE}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        setAuthError(payload?.error || "Identifiants invalides.");
-        return;
-      }
-      setAuthToken(payload.token);
-      localStorage.setItem(TOKEN_KEY, payload.token);
-      setAuthUser(payload.user);
-    } catch {
-      setAuthError("Impossible de se connecter. Vérifie ta connexion.");
-    }
+    await login({ email, password });
   }
 
   async function handleRegister(event) {
     event.preventDefault();
-    setAuthError("");
     const formData = new FormData(event.currentTarget);
     const email = formData.get("email");
     const password = formData.get("password");
     const firstName = formData.get("firstName");
     const lastName = formData.get("lastName");
-    try {
-      const response = await fetch(`${API_BASE}/api/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, firstName, lastName }),
-      });
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        setAuthError(payload?.error || "Inscription impossible.");
-        return;
-      }
-      const loginResponse = await fetch(`${API_BASE}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      const loginPayload = await loginResponse.json().catch(() => ({}));
-      if (!loginResponse.ok) {
-        setAuthError(loginPayload?.error || "Connexion impossible.");
-        return;
-      }
-      setAuthToken(loginPayload.token);
-      localStorage.setItem(TOKEN_KEY, loginPayload.token);
-      setAuthUser(loginPayload.user);
-    } catch {
-      setAuthError("Impossible de créer le compte. Vérifie ta connexion.");
-    }
+    await register({ email, password, firstName, lastName });
   }
 
   async function handleLogout() {
-    await apiFetch("/api/auth/logout", { method: "POST" }).catch(() => null);
-    setAuthToken(null);
-    setAuthUser(null);
-    localStorage.removeItem(TOKEN_KEY);
+    await logout();
     setPage("home");
-  }
-
-  function updateParticipantName(index, value) {
-    setParticipants((prev) => {
-      const next = [...prev];
-      const current =
-        next[index] && typeof next[index] === "object"
-          ? next[index]
-          : { name: "", weapon: "" };
-      next[index] = { ...current, name: value };
-      return next;
-    });
-  }
-
-  function updateParticipantWeapon(index, value) {
-    setParticipants((prev) => {
-      const next = [...prev];
-      const current =
-        next[index] && typeof next[index] === "object"
-          ? next[index]
-          : { name: "", weapon: "" };
-      next[index] = { ...current, weapon: value };
-      return next;
-    });
-  }
-
-  function updateParticipantCount(value) {
-    const count = Number(value);
-    setParticipants((prev) => {
-      const next = [...prev];
-      if (count > next.length) {
-        for (let i = next.length; i < count; i += 1) {
-          next.push({ name: "", weapon: "" });
-        }
-      }
-      if (count < next.length) {
-        next.splice(count);
-      }
-      return next;
-    });
-
-    setForm((prev) => {
-      const next = [...prev];
-      if (count > next.length) {
-        for (let i = next.length; i < count; i += 1) {
-          next.push(emptyParticipantState());
-        }
-      }
-      if (count < next.length) {
-        next.splice(count);
-      }
-      return next;
-    });
-
-    setPhrases((prev) =>
-      prev.map((phrase) => ({
-        ...phrase,
-        hiddenParticipantIndexes: normalizeHiddenParticipantIndexes(
-          phrase?.hiddenParticipantIndexes,
-          count,
-        ),
-      })),
-    );
-  }
-
-  function updateForm(index, patch) {
-    setForm((prev) => {
-      const next = [...prev];
-      next[index] = { ...next[index], ...patch };
-      return next;
-    });
-  }
-
-  function updateStepParticipant(stepId, participantIndex, updates) {
-    setPhrases((prev) =>
-      prev.map((phrase) => {
-        if (phrase.id !== activePhraseId) return phrase;
-        return {
-          ...phrase,
-          steps: phrase.steps.map((step) => {
-            if (step.id !== stepId) return step;
-            return {
-              ...step,
-              participants: step.participants.map((item, index) =>
-                index === participantIndex ? { ...item, ...updates } : item,
-              ),
-            };
-          }),
-        };
-      }),
-    );
-  }
-
-  function updateStepLexicon(stepId, lexiconKey) {
-    if (!lexiconKey) return;
-    setPhrases((prev) =>
-      prev.map((phrase) => {
-        if (phrase.id !== activePhraseId) return phrase;
-        return {
-          ...phrase,
-          steps: phrase.steps.map((step) =>
-            step.id === stepId ? { ...step, lexicon: lexiconKey } : step,
-          ),
-        };
-      }),
-    );
-  }
-
-  function resetForm() {
-    setForm(participants.map(() => emptyParticipantState()));
-    setStepLexiconKey("classic-v2");
-    setEditingStepId(null);
-    setInsertStepIndex(null);
-    setInsertionMode(false);
-    setDeletionMode(false);
-  }
-
-  function addStep() {
-    const hasContent = form.some((item) => {
-      if (item.mode === "combat") {
-        return item.role !== "none";
-      }
-      if (item.mode === "choregraphie") {
-        return Boolean(item.chorePhase) || Boolean(item.note);
-      }
-      if (item.mode === "note") {
-        return Boolean(item.note);
-      }
-      return false;
-    });
-    if (!hasContent) return;
-
-    if (!activePhraseId) return;
-
-    if (editingStepId) {
-      setPhrases((prev) =>
-        prev.map((phrase) => {
-          if (phrase.id !== activePhraseId) return phrase;
-          return {
-            ...phrase,
-            steps: phrase.steps.map((step) =>
-              step.id === editingStepId
-                ? {
-                    ...step,
-                    lexicon: stepLexiconKey,
-                    participants: form.map((item) => ({ ...item })),
-                  }
-                : step,
-            ),
-          };
-        }),
-      );
-      setEditingStepId(null);
-      setForm(participants.map(() => emptyParticipantState()));
-      setStepLexiconKey("classic-v2");
-      setInsertStepIndex(null);
-      setInsertionMode(false);
-      setDeletionMode(false);
-      return;
-    }
-
-    const step = {
-      id: crypto.randomUUID(),
-      lexicon: stepLexiconKey,
-      participants: form.map((item) => ({ ...item })),
-    };
-    setPhrases((prev) =>
-      prev.map((phrase) => {
-        if (phrase.id !== activePhraseId) return phrase;
-        if (insertStepIndex == null) {
-          return { ...phrase, steps: [...phrase.steps, step] };
-        }
-        const nextSteps = [...phrase.steps];
-        const index = Math.max(0, Math.min(insertStepIndex, nextSteps.length));
-        nextSteps.splice(index, 0, step);
-        return { ...phrase, steps: nextSteps };
-      }),
-    );
-    setEditingStepId(null);
-    setForm(participants.map(() => emptyParticipantState()));
-    setStepLexiconKey("classic-v2");
-    setInsertStepIndex(null);
-    setInsertionMode(false);
-    setDeletionMode(false);
-  }
-
-  function insertEmptyStep(index) {
-    if (!activePhraseId) return;
-    const step = {
-      id: crypto.randomUUID(),
-      lexicon: stepLexiconKey,
-      participants: participants.map(() => ({
-        mode: "note",
-        role: "none",
-        offensive: "",
-        action: "",
-        target: "",
-        attackMove: "",
-        attackAttribute: [],
-        defense: "",
-        paradeNumber: "",
-        paradeAttribute: "",
-        defendMove: "",
-        chorePhase: "",
-        note: "",
-        noteOverrides: true,
-      })),
-    };
-    setPhrases((prev) =>
-      prev.map((phrase) => {
-        if (phrase.id !== activePhraseId) return phrase;
-        const nextSteps = [...phrase.steps];
-        const insertAt = Math.max(0, Math.min(index, nextSteps.length));
-        nextSteps.splice(insertAt, 0, step);
-        return { ...phrase, steps: nextSteps };
-      }),
-    );
-  }
-
-  function removeStep(id) {
-    if (!activePhraseId) return;
-    setPhrases((prev) =>
-      prev.map((phrase) =>
-        phrase.id === activePhraseId
-          ? { ...phrase, steps: phrase.steps.filter((step) => step.id !== id) }
-          : phrase,
-      ),
-    );
-    if (editingStepId === id) {
-      setEditingStepId(null);
-    }
-    setStepLexiconKey("classic-v2");
-    setInsertStepIndex(null);
-    setInsertionMode(false);
-    setDeletionMode(false);
-  }
-
-  function editStep(id) {
-    if (!activePhraseId) return;
-    setEditingStepId(id);
-    setInsertStepIndex(null);
-    setInsertionMode(false);
-    setDeletionMode(false);
-  }
-
-  useEffect(() => {
-    if (!editingStepId || !activePhraseId) return;
-    const phrase = phrases.find((item) => item.id === activePhraseId);
-    const step = phrase?.steps?.find((item) => item.id === editingStepId);
-    if (!step) return;
-    setStepLexiconKey(
-      typeof step.lexicon === "string" ? step.lexicon : "classic",
-    );
-    setForm(
-      step.participants.map((item) => ({
-        ...emptyParticipantState(),
-        ...item,
-        attackAttribute: Array.isArray(item.attackAttribute)
-          ? item.attackAttribute
-          : [],
-      })),
-    );
-  }, [editingStepId, activePhraseId, phrases]);
-
-  function cancelEditStep() {
-    setEditingStepId(null);
-    setForm(participants.map(() => emptyParticipantState()));
-    setStepLexiconKey("classic-v2");
-    setInsertStepIndex(null);
-    setInsertionMode(false);
-    setDeletionMode(false);
-  }
-
-  function selectPhrase(id) {
-    setActivePhraseId(id);
-    setEditingStepId(null);
-    setForm(participants.map(() => emptyParticipantState()));
-    setStepLexiconKey("classic-v2");
-    setInsertStepIndex(null);
-    setInsertionMode(false);
-    setDeletionMode(false);
-  }
-
-  function togglePhraseParticipantVisibility(phraseId, participantIndex) {
-    const index = Number(participantIndex);
-    if (!Number.isInteger(index)) return;
-    setPhrases((prev) =>
-      prev.map((phrase) => {
-        if (phrase.id !== phraseId) return phrase;
-        const current = normalizeHiddenParticipantIndexes(
-          phrase?.hiddenParticipantIndexes,
-          participants.length,
-        );
-        const nextSet = new Set(current);
-        if (nextSet.has(index)) {
-          nextSet.delete(index);
-        } else {
-          const visibleCount = Math.max(0, participants.length - nextSet.size);
-          if (visibleCount <= 1) return phrase;
-          nextSet.add(index);
-        }
-        return {
-          ...phrase,
-          hiddenParticipantIndexes: [...nextSet].sort((a, b) => a - b),
-        };
-      }),
-    );
-  }
-
-  function createPhrase() {
-    const nextNumber = phrases.length + 1;
-    const newPhrase = {
-      id: crypto.randomUUID(),
-      name: `Phrase ${nextNumber}`,
-      hiddenParticipantIndexes: [],
-      steps: [],
-    };
-    setPhrases((prev) => [...prev, newPhrase]);
-    setActivePhraseId(newPhrase.id);
-    setEditingStepId(null);
-    setForm(participants.map(() => emptyParticipantState()));
-    setStepLexiconKey("classic-v2");
-  }
-
-  function renamePhrase(id, name) {
-    setPhrases((prev) =>
-      prev.map((phrase) => (phrase.id === id ? { ...phrase, name } : phrase)),
-    );
-  }
-
-  function movePhrase(id, direction) {
-    setPhrases((prev) => {
-      const index = prev.findIndex((phrase) => phrase.id === id);
-      if (index < 0) return prev;
-      const nextIndex = direction === "up" ? index - 1 : index + 1;
-      if (nextIndex < 0 || nextIndex >= prev.length) return prev;
-      const copy = [...prev];
-      const [moved] = copy.splice(index, 1);
-      copy.splice(nextIndex, 0, moved);
-      return copy;
-    });
-  }
-
-  function movePhraseToIndex(id, targetIndex) {
-    setPhrases((prev) => {
-      const index = prev.findIndex((phrase) => phrase.id === id);
-      if (index < 0) return prev;
-      if (targetIndex < 0 || targetIndex >= prev.length) return prev;
-      if (index === targetIndex) return prev;
-      const copy = [...prev];
-      const [moved] = copy.splice(index, 1);
-      copy.splice(targetIndex, 0, moved);
-      return copy;
-    });
-  }
-
-  function deletePhrase(id) {
-    setPhrases((prev) => prev.filter((phrase) => phrase.id !== id));
-    if (activePhraseId === id) {
-      const remaining = phrases.filter((phrase) => phrase.id !== id);
-      setActivePhraseId(remaining[0]?.id ?? null);
-      setEditingStepId(null);
-      setForm(participants.map(() => emptyParticipantState()));
-      setStepLexiconKey("classic-v2");
-    }
   }
 
   if (!authUser) {
@@ -1077,25 +502,14 @@ export default function App() {
             onUpdateStepLexicon={updateStepLexicon}
             onResetForm={resetForm}
             insertStepIndex={insertStepIndex}
-            onInsertStep={(index) => {
-              setInsertStepIndex(index);
-              setEditingStepId(null);
-              setForm(participants.map(() => emptyParticipantState()));
-              setStepLexiconKey("classic-v2");
-              setInsertionMode(false);
-              setDeletionMode(false);
-            }}
+            onInsertStep={(index) =>
+              startInsertStep(index, { resetLexicon: true })
+            }
             insertionMode={insertionMode}
-            onToggleInsertionMode={() => {
-              setInsertionMode((prev) => !prev);
-              setDeletionMode(false);
-            }}
+            onToggleInsertionMode={toggleInsertionMode}
             onInsertEmptyStep={insertEmptyStep}
             deletionMode={deletionMode}
-            onToggleDeletionMode={() => {
-              setDeletionMode((prev) => !prev);
-              setInsertionMode(false);
-            }}
+            onToggleDeletionMode={toggleDeletionMode}
             onDeleteStep={removeStep}
             lexiconOptions={CLASSIC_LEXICON_OPTIONS}
           />
@@ -1149,24 +563,12 @@ export default function App() {
             onUpdateStepParticipant={updateStepParticipant}
             onResetForm={resetForm}
             insertStepIndex={insertStepIndex}
-            onInsertStep={(index) => {
-              setInsertStepIndex(index);
-              setEditingStepId(null);
-              setForm(participants.map(() => emptyParticipantState()));
-              setInsertionMode(false);
-              setDeletionMode(false);
-            }}
+            onInsertStep={startInsertStep}
             insertionMode={insertionMode}
-            onToggleInsertionMode={() => {
-              setInsertionMode((prev) => !prev);
-              setDeletionMode(false);
-            }}
+            onToggleInsertionMode={toggleInsertionMode}
             onInsertEmptyStep={insertEmptyStep}
             deletionMode={deletionMode}
-            onToggleDeletionMode={() => {
-              setDeletionMode((prev) => !prev);
-              setInsertionMode(false);
-            }}
+            onToggleDeletionMode={toggleDeletionMode}
             onDeleteStep={removeStep}
           />
         ) : null}
@@ -1190,8 +592,6 @@ export default function App() {
             apiBase={API_BASE}
             authToken={authToken}
             authUser={authUser}
-            favorites={favorites}
-            setFavorites={setFavorites}
             newFavorites={newFavorites}
             setNewFavorites={setNewFavorites}
             sabreFavorites={sabreFavorites}
