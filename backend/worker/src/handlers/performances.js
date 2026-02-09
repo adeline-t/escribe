@@ -1,8 +1,22 @@
-import { buildCorsHeaders, jsonResponse, listCombats, createCombat, getCombatState, updateCombat, archiveCombat, deleteCombat, listCombatShares, addCombatShare, removeCombatShare, listShareUsers, listShareUsersAll } from "../db.js";
+import {
+  buildCorsHeaders,
+  jsonResponse,
+  listPerformances,
+  createPerformance,
+  getPerformanceState,
+  updatePerformance,
+  archivePerformance,
+  deletePerformance,
+  listPerformanceShares,
+  addPerformanceShare,
+  removePerformanceShare,
+  listShareUsers,
+  listShareUsersAll,
+} from "../db.js";
 import { requireAuth, requireRole } from "../auth.js";
 import { logAudit } from "../audit.js";
 
-export async function handleCombats(request, env) {
+export async function handlePerformances(request, env) {
   const corsHeaders = buildCorsHeaders(request, env);
   const session = await requireAuth(request, env);
   if (!session) return jsonResponse({ error: "unauthorized" }, 401, corsHeaders);
@@ -10,39 +24,55 @@ export async function handleCombats(request, env) {
   if (request.method === "GET") {
     const url = new URL(request.url);
     const includeArchived = url.searchParams.get("archived") === "1";
-    const combatType = url.searchParams.get("type");
-    const type = combatType === "sabre-laser" ? "sabre-laser" : combatType === "classic" ? "classic" : null;
+    const rawType = url.searchParams.get("type");
+    const performanceType =
+      rawType === "sabre-laser"
+        ? "sabre-laser"
+        : rawType === "classic"
+          ? "classic"
+          : null;
     const isSuperAdmin = requireRole(session, ["superadmin"]);
-    const combats = await listCombats(env, session.user.id, includeArchived, type, isSuperAdmin);
-    return jsonResponse({ combats }, 200, corsHeaders);
+    const performances = await listPerformances(
+      env,
+      session.user.id,
+      includeArchived,
+      performanceType,
+      isSuperAdmin
+    );
+    return jsonResponse({ performances }, 200, corsHeaders);
   }
 
   if (request.method === "POST") {
     const body = await request.json().catch(() => null);
-    const combat = await createCombat(env, session.user.id, body ?? {});
-    if (!combat?.id) {
+    const performance = await createPerformance(env, session.user.id, body ?? {});
+    if (!performance?.id) {
       return jsonResponse({ error: "create_failed" }, 500, corsHeaders);
     }
-    await logAudit(env, "combat.create", session.user.id, combat.id, {});
-    return jsonResponse({ combat }, 201, corsHeaders);
+    await logAudit(env, "performance.create", session.user.id, performance.id, {});
+    return jsonResponse({ performance }, 201, corsHeaders);
   }
 
   return jsonResponse({ error: "method_not_allowed" }, 405, corsHeaders);
 }
 
-export async function handleCombat(request, env, params) {
+export async function handlePerformance(request, env, params) {
   const corsHeaders = buildCorsHeaders(request, env);
   const session = await requireAuth(request, env);
   if (!session) return jsonResponse({ error: "unauthorized" }, 401, corsHeaders);
 
-  const combatId = Number(params?.id);
-  if (!Number.isFinite(combatId)) {
+  const performanceId = Number(params?.id);
+  if (!Number.isFinite(performanceId)) {
     return jsonResponse({ error: "invalid_id" }, 400, corsHeaders);
   }
 
   if (request.method === "GET") {
     const isSuperAdmin = requireRole(session, ["superadmin"]);
-    const state = await getCombatState(env, session.user.id, combatId, isSuperAdmin);
+    const state = await getPerformanceState(
+      env,
+      session.user.id,
+      performanceId,
+      isSuperAdmin
+    );
     if (!state) return jsonResponse({ error: "not_found" }, 404, corsHeaders);
     return jsonResponse({ state }, 200, corsHeaders);
   }
@@ -50,38 +80,45 @@ export async function handleCombat(request, env, params) {
   if (request.method === "POST") {
     const body = await request.json().catch(() => null);
     const isSuperAdmin = requireRole(session, ["superadmin"]);
-    const state = await getCombatState(env, session.user.id, combatId, isSuperAdmin);
+    const state = await getPerformanceState(
+      env,
+      session.user.id,
+      performanceId,
+      isSuperAdmin
+    );
     if (!state) return jsonResponse({ error: "not_found" }, 404, corsHeaders);
-    const canWrite = state.combatShareRole !== "read";
-    if (state.combatIsDemo && !isSuperAdmin) {
+    const shareRole = state.performanceShareRole;
+    const isDemo = Boolean(state.performanceIsDemo);
+    const ownerId = state.performanceOwnerId ?? session.user.id;
+    const canWrite = shareRole !== "read";
+    if (isDemo && !isSuperAdmin) {
       return jsonResponse({ error: "forbidden" }, 403, corsHeaders);
     }
     if (!canWrite) {
       return jsonResponse({ error: "forbidden" }, 403, corsHeaders);
     }
-    const ownerId =
-      isSuperAdmin && state.combatIsDemo
-        ? state.combatOwnerId
-        : session.user.id;
-    await updateCombat(env, ownerId, combatId, body ?? {});
-    await logAudit(env, "combat.update", session.user.id, combatId, {});
+    const writeOwnerId = isSuperAdmin && isDemo ? ownerId : session.user.id;
+    await updatePerformance(env, writeOwnerId, performanceId, body ?? {});
+    await logAudit(env, "performance.update", session.user.id, performanceId, {});
     return jsonResponse({ ok: true }, 200, corsHeaders);
   }
 
   return jsonResponse({ error: "method_not_allowed" }, 405, corsHeaders);
 }
 
-export async function handleCombatArchive(request, env, params) {
+export async function handlePerformanceArchive(request, env, params) {
   const corsHeaders = buildCorsHeaders(request, env);
   const session = await requireAuth(request, env);
   if (!session) return jsonResponse({ error: "unauthorized" }, 401, corsHeaders);
 
-  const combatId = Number(params?.id);
-  if (!Number.isFinite(combatId)) {
+  const performanceId = Number(params?.id);
+  if (!Number.isFinite(performanceId)) {
     return jsonResponse({ error: "invalid_id" }, 400, corsHeaders);
   }
-  const ownerRow = await env.DB.prepare("SELECT id, user_id, is_demo FROM combats WHERE id = ?1")
-    .bind(combatId)
+  const ownerRow = await env.DB.prepare(
+    "SELECT id, user_id, is_demo FROM performances WHERE id = ?1"
+  )
+    .bind(performanceId)
     .first();
   const isSuperAdmin = requireRole(session, ["superadmin"]);
   const isOwner = ownerRow?.user_id === session.user.id;
@@ -92,22 +129,26 @@ export async function handleCombatArchive(request, env, params) {
   const body = await request.json().catch(() => null);
   const archived = Boolean(body?.archived);
   const ownerId = isOwner ? session.user.id : ownerRow.user_id;
-  await archiveCombat(env, ownerId, combatId, archived);
-  await logAudit(env, "combat.archive", session.user.id, combatId, { archived });
+  await archivePerformance(env, ownerId, performanceId, archived);
+  await logAudit(env, "performance.archive", session.user.id, performanceId, {
+    archived,
+  });
   return jsonResponse({ ok: true }, 200, corsHeaders);
 }
 
-export async function handleCombatDelete(request, env, params) {
+export async function handlePerformanceDelete(request, env, params) {
   const corsHeaders = buildCorsHeaders(request, env);
   const session = await requireAuth(request, env);
   if (!session) return jsonResponse({ error: "unauthorized" }, 401, corsHeaders);
 
-  const combatId = Number(params?.id);
-  if (!Number.isFinite(combatId)) {
+  const performanceId = Number(params?.id);
+  if (!Number.isFinite(performanceId)) {
     return jsonResponse({ error: "invalid_id" }, 400, corsHeaders);
   }
-  const ownerRow = await env.DB.prepare("SELECT id, user_id, is_demo FROM combats WHERE id = ?1")
-    .bind(combatId)
+  const ownerRow = await env.DB.prepare(
+    "SELECT id, user_id, is_demo FROM performances WHERE id = ?1"
+  )
+    .bind(performanceId)
     .first();
   const isSuperAdmin = requireRole(session, ["superadmin"]);
   const isOwner = ownerRow?.user_id === session.user.id;
@@ -117,23 +158,27 @@ export async function handleCombatDelete(request, env, params) {
   }
 
   const ownerId = isOwner ? session.user.id : ownerRow.user_id;
-  const result = await deleteCombat(env, ownerId, combatId);
-  await logAudit(env, "combat.delete", session.user.id, combatId, { mode: result.mode });
+  const result = await deletePerformance(env, ownerId, performanceId);
+  await logAudit(env, "performance.delete", session.user.id, performanceId, {
+    mode: result.mode,
+  });
   return jsonResponse({ ok: true, mode: result.mode }, 200, corsHeaders);
 }
 
-export async function handleCombatShares(request, env, params) {
+export async function handlePerformanceShares(request, env, params) {
   const corsHeaders = buildCorsHeaders(request, env);
   const session = await requireAuth(request, env);
   if (!session) return jsonResponse({ error: "unauthorized" }, 401, corsHeaders);
 
-  const combatId = Number(params?.id);
-  if (!Number.isFinite(combatId)) {
+  const performanceId = Number(params?.id);
+  if (!Number.isFinite(performanceId)) {
     return jsonResponse({ error: "invalid_id" }, 400, corsHeaders);
   }
 
-  const ownerRow = await env.DB.prepare("SELECT id, user_id, is_demo FROM combats WHERE id = ?1")
-    .bind(combatId)
+  const ownerRow = await env.DB.prepare(
+    "SELECT id, user_id, is_demo FROM performances WHERE id = ?1"
+  )
+    .bind(performanceId)
     .first();
   const isSuperAdmin = requireRole(session, ["superadmin"]);
   const isOwner = ownerRow?.user_id === session.user.id;
@@ -144,7 +189,7 @@ export async function handleCombatShares(request, env, params) {
 
   if (request.method === "GET") {
     const ownerId = isOwner ? session.user.id : ownerRow.user_id;
-    const shares = await listCombatShares(env, ownerId, combatId);
+    const shares = await listPerformanceShares(env, ownerId, performanceId);
     return jsonResponse({ shares }, 200, corsHeaders);
   }
 
@@ -156,9 +201,12 @@ export async function handleCombatShares(request, env, params) {
       return jsonResponse({ error: "invalid_payload" }, 400, corsHeaders);
     }
     const ownerId = isOwner ? session.user.id : ownerRow.user_id;
-    await addCombatShare(env, ownerId, combatId, sharedUserId, role);
-    await logAudit(env, "combat.share.add", session.user.id, combatId, { sharedUserId, role });
-    const shares = await listCombatShares(env, ownerId, combatId);
+    await addPerformanceShare(env, ownerId, performanceId, sharedUserId, role);
+    await logAudit(env, "performance.share.add", session.user.id, performanceId, {
+      sharedUserId,
+      role,
+    });
+    const shares = await listPerformanceShares(env, ownerId, performanceId);
     return jsonResponse({ shares }, 200, corsHeaders);
   }
 
@@ -169,9 +217,11 @@ export async function handleCombatShares(request, env, params) {
       return jsonResponse({ error: "invalid_payload" }, 400, corsHeaders);
     }
     const ownerId = isOwner ? session.user.id : ownerRow.user_id;
-    await removeCombatShare(env, ownerId, combatId, sharedUserId);
-    await logAudit(env, "combat.share.remove", session.user.id, combatId, { sharedUserId });
-    const shares = await listCombatShares(env, ownerId, combatId);
+    await removePerformanceShare(env, ownerId, performanceId, sharedUserId);
+    await logAudit(env, "performance.share.remove", session.user.id, performanceId, {
+      sharedUserId,
+    });
+    const shares = await listPerformanceShares(env, ownerId, performanceId);
     return jsonResponse({ shares }, 200, corsHeaders);
   }
 

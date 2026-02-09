@@ -1,5 +1,5 @@
-export default function CombatShareModal({
-  combat,
+export default function PerformanceShareModal({
+  performance,
   shareLoading,
   shareError,
   shareList,
@@ -16,7 +16,7 @@ export default function CombatShareModal({
   onQueryChange,
   onQuickAddShare,
 }) {
-  if (!combat) return null;
+  if (!performance) return null;
 
   return (
     <div className="modal-backdrop" role="presentation" onClick={onClose}>
@@ -27,7 +27,7 @@ export default function CombatShareModal({
         aria-label="Partager le combat"
         onClick={(event) => event.stopPropagation()}
       >
-        <h3 className="title mb-2">Partager le combat : {combat.name}</h3>
+        <h3 className="title mb-2">Partager le combat : {performance.name}</h3>
         {shareLoading ? (
           <div className="meta text-muted">Chargement...</div>
         ) : null}

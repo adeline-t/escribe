@@ -1,15 +1,15 @@
 import { FaXmark } from "react-icons/fa6";
-import { COMBAT_STEP_LABELS } from "../../lib/combats.js";
+import { PERFORMANCE_STEP_LABELS } from "../../lib/performances.js";
 import {
   useClassicInlineStepFormLogic,
   useSabreInlineStepFormLogic,
-} from "../../hooks/useCombatFormLogic.js";
+} from "../../hooks/usePerformanceFormLogic.js";
 
 export default function StepInlineEditorModal({
   isOpen,
   inlineEdit,
   inlineItem,
-  participantLabels,
+  performerLabels,
   inlineStepIndex,
   showPhase,
   phaseOptions,
@@ -26,9 +26,9 @@ export default function StepInlineEditorModal({
 }) {
   if (!isOpen || !inlineEdit || !inlineItem) return null;
 
-  const participantName = participantLabels[inlineEdit.participantIndex] || "—";
+  const performerName = performerLabels[inlineEdit.performerIndex] || "—";
   const isSabre = lexiconKey === "sabre-laser";
-  // Même principe que CombatStepForm: wrappers distincts, logique partagée.
+  // Same principle as PerformanceStepForm: distinct wrappers, shared logic.
   const classicLogic = useClassicInlineStepFormLogic({
     inlineItem,
     inlineEdit,
@@ -46,7 +46,7 @@ export default function StepInlineEditorModal({
     onUpdateInlineItem,
   });
   const logic = isSabre ? sabreLogic : classicLogic;
-  // Le hook expose directement les fonctions adaptées au mode inline (single item).
+  // The hook exposes functions already adapted to inline mode (single item).
   const {
     builderSelection,
     updateBuilderSelection,
@@ -102,21 +102,21 @@ export default function StepInlineEditorModal({
         className="modal"
         role="dialog"
         aria-modal="true"
-        aria-label={COMBAT_STEP_LABELS.editStepAria}
+        aria-label={PERFORMANCE_STEP_LABELS.editStepAria}
         onClick={(event) => event.stopPropagation()}
       >
         <h3 className="subtitle">
-          {COMBAT_STEP_LABELS.editStepTitle(inlineStepIndex, participantName)}
+          {PERFORMANCE_STEP_LABELS.editStepTitle(inlineStepIndex, performerName)}
         </h3>
 
-        <div className="participant-card participant-card--inline-modal">
-          <div className="participant-card-header">
-            <div className="text-strong">{participantName}</div>
+        <div className="performer-card performer-card--inline-modal">
+          <div className="performer-card-header">
+            <div className="text-strong">{performerName}</div>
             {lexiconKey === "sabre-laser" ? (
               <div
                 className="segmented segmented--solid"
                 role="radiogroup"
-                aria-label={COMBAT_STEP_LABELS.modeLabelInline}
+                aria-label={PERFORMANCE_STEP_LABELS.modeLabelInline}
               >
                 <button
                   type="button"
@@ -127,18 +127,18 @@ export default function StepInlineEditorModal({
                   onClick={() => updateInlineItem({ mode: "note" })}
                   disabled={isReadOnly}
                 >
-                  {COMBAT_STEP_LABELS.modeNote}
+                  {PERFORMANCE_STEP_LABELS.modeNote}
                 </button>
                 {showPhase ? (
                   <button
                     type="button"
                     className={`segmented-button ${
-                      inlineItem.mode === "choregraphie" ? "is-active" : ""
+                      inlineItem.mode === "choreography" ? "is-active" : ""
                     }`}
-                    aria-pressed={inlineItem.mode === "choregraphie"}
-                    onClick={() => updateInlineItem({ mode: "choregraphie" })}
+                    aria-pressed={inlineItem.mode === "choreography"}
+                    onClick={() => updateInlineItem({ mode: "choreography" })}
                   >
-                    {COMBAT_STEP_LABELS.modeChoregraphie}
+                    {PERFORMANCE_STEP_LABELS.modeChoregraphie}
                   </button>
                 ) : null}
                 <button
@@ -152,19 +152,19 @@ export default function StepInlineEditorModal({
                   }
                   disabled={isReadOnly}
                 >
-                  {COMBAT_STEP_LABELS.modeCombat}
+                  {PERFORMANCE_STEP_LABELS.modeCombat}
                 </button>
               </div>
             ) : null}
           </div>
 
           {inlineItem.mode === "combat" ? (
-            <div className="participant-fields">
+            <div className="performer-fields">
               <>
                 <div
                   className="segmented segmented--outline segmented--compact"
                   role="radiogroup"
-                  aria-label={COMBAT_STEP_LABELS.roleLabelInline}
+                  aria-label={PERFORMANCE_STEP_LABELS.roleLabelInline}
                 >
                   <button
                     type="button"
@@ -182,7 +182,7 @@ export default function StepInlineEditorModal({
                     }
                     disabled={isReadOnly}
                   >
-                    {COMBAT_STEP_LABELS.roleAttack}
+                    {PERFORMANCE_STEP_LABELS.roleAttack}
                   </button>
                   <button
                     type="button"
@@ -198,7 +198,7 @@ export default function StepInlineEditorModal({
                     }
                     disabled={isReadOnly}
                   >
-                    {COMBAT_STEP_LABELS.roleDefense}
+                    {PERFORMANCE_STEP_LABELS.roleDefense}
                   </button>
                   <button
                     type="button"
@@ -219,7 +219,7 @@ export default function StepInlineEditorModal({
                     }
                     disabled={isReadOnly}
                   >
-                    {COMBAT_STEP_LABELS.rolePreparation}
+                    {PERFORMANCE_STEP_LABELS.rolePreparation}
                   </button>
                   <button
                     type="button"
@@ -230,7 +230,7 @@ export default function StepInlineEditorModal({
                     onClick={() => updateInlineItem({ role: "none" })}
                     disabled={isReadOnly}
                   >
-                    {COMBAT_STEP_LABELS.roleNote}
+                    {PERFORMANCE_STEP_LABELS.roleNote}
                   </button>
                 </div>
 
@@ -255,7 +255,7 @@ export default function StepInlineEditorModal({
                       </label>
                         <label>
                           {uiLabels.attackAttributeLabel ??
-                            COMBAT_STEP_LABELS.complement}
+                            PERFORMANCE_STEP_LABELS.complement}
                         <div className="input-row">
                           <select
                             value={builderSelection.attackComplement}
@@ -322,7 +322,7 @@ export default function StepInlineEditorModal({
 
                     <div className="action-row action-row--two">
                       <label>
-                        {COMBAT_STEP_LABELS.movementLabel}
+                        {PERFORMANCE_STEP_LABELS.movementLabel}
                         <select
                           value={
                             getMoveParts(
@@ -347,7 +347,7 @@ export default function StepInlineEditorModal({
                         </select>
                       </label>
                       <label>
-                        {COMBAT_STEP_LABELS.attributeLabel}
+                        {PERFORMANCE_STEP_LABELS.attributeLabel}
                         <div className="input-row">
                           <select
                             value={builderSelection.attackMoveComplement}
@@ -413,7 +413,7 @@ export default function StepInlineEditorModal({
                 {!inlineItem.noteOverrides && v2Mode === "defense" ? (
                   <div className="form-section">
                     <label>
-                        {COMBAT_STEP_LABELS.defenseType}
+                        {PERFORMANCE_STEP_LABELS.defenseType}
                       <select
                         value={defenseType}
                         onChange={(event) => {
@@ -456,10 +456,10 @@ export default function StepInlineEditorModal({
                       >
                         <option value="">—</option>
                         <option value="parade">
-                          {COMBAT_STEP_LABELS.defenseParade}
+                          {PERFORMANCE_STEP_LABELS.defenseParade}
                         </option>
                         <option value="esquive">
-                          {COMBAT_STEP_LABELS.defenseEsquive}
+                          {PERFORMANCE_STEP_LABELS.defenseEsquive}
                         </option>
                       </select>
                     </label>
@@ -486,7 +486,7 @@ export default function StepInlineEditorModal({
                             </select>
                           </label>
                           <label>
-                            {COMBAT_STEP_LABELS.attributeLabel}
+                            {PERFORMANCE_STEP_LABELS.attributeLabel}
                             <div className="input-row">
                               <select
                                 value={builderSelection.paradeComplement}
@@ -571,7 +571,7 @@ export default function StepInlineEditorModal({
                         <div className="form-section form-section--soft">
                           <div className="action-row action-row--two">
                             <label>
-                              {COMBAT_STEP_LABELS.movementLabel}
+                              {PERFORMANCE_STEP_LABELS.movementLabel}
                               <select
                                 value={
                                   getMoveParts(
@@ -596,7 +596,7 @@ export default function StepInlineEditorModal({
                               </select>
                             </label>
                             <label>
-                              {COMBAT_STEP_LABELS.attributeLabel}
+                              {PERFORMANCE_STEP_LABELS.attributeLabel}
                               <div className="input-row">
                                 <select
                                   value={builderSelection.defendMoveComplement}
@@ -668,7 +668,7 @@ export default function StepInlineEditorModal({
                 {!inlineItem.noteOverrides && v2Mode === "preparation" ? (
                   <div className="form-section">
                     <label>
-                      {COMBAT_STEP_LABELS.preparationType}
+                      {PERFORMANCE_STEP_LABELS.preparationType}
                       <select
                         value={prepActionValue}
                         onChange={(event) =>
@@ -685,7 +685,7 @@ export default function StepInlineEditorModal({
                     </label>
 
                     <label>
-                      {COMBAT_STEP_LABELS.target}
+                      {PERFORMANCE_STEP_LABELS.target}
                       <select
                         value={inlineItem.target ?? ""}
                         onChange={(event) =>
@@ -725,7 +725,7 @@ export default function StepInlineEditorModal({
                         </select>
                       </label>
                       <label>
-                        {COMBAT_STEP_LABELS.positionComplement}
+                        {PERFORMANCE_STEP_LABELS.positionComplement}
                         <div className="input-row">
                           <select
                             value={builderSelection.prepPositionComplement}
@@ -778,8 +778,8 @@ export default function StepInlineEditorModal({
             </div>
           ) : null}
 
-          {inlineItem.mode === "choregraphie" ? (
-            <div className="participant-fields">
+          {inlineItem.mode === "choreography" ? (
+            <div className="performer-fields">
               <label>
                 Phase de chorégraphie
                 <select
@@ -799,7 +799,7 @@ export default function StepInlineEditorModal({
             </div>
           ) : null}
 
-          <div className="participant-fields">
+          <div className="performer-fields">
             <label>
               {uiLabels.notes}
               <div className="input-with-clear">
@@ -814,7 +814,7 @@ export default function StepInlineEditorModal({
                     type="button"
                     className="input-clear"
                     onClick={() => updateInlineItem({ note: "" })}
-                    aria-label={COMBAT_STEP_LABELS.noteClear}
+                    aria-label={PERFORMANCE_STEP_LABELS.noteClear}
                     title="Effacer"
                   />
                 ) : null}
@@ -825,10 +825,10 @@ export default function StepInlineEditorModal({
 
         <div className="modal-actions">
           <button type="button" className="button-secondary" onClick={onClose}>
-            {COMBAT_STEP_LABELS.modalCancel}
+            {PERFORMANCE_STEP_LABELS.modalCancel}
           </button>
           <button type="button" className="button-primary" onClick={onSave}>
-            {COMBAT_STEP_LABELS.modalSave}
+            {PERFORMANCE_STEP_LABELS.modalSave}
           </button>
         </div>
       </div>

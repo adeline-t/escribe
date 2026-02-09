@@ -1,23 +1,23 @@
 import {
-  DEFAULT_COMBAT_NAME,
-  DEFAULT_COMBAT_SHARE_ROLE,
-  DEFAULT_COMBAT_TYPE,
-  normalizeCombatShareRole,
-  normalizeCombatType,
-  normalizeHiddenParticipantIndexes as normalizeHiddenParticipantIndexesFromModel,
-} from "../../../shared/combatModel.js";
-import { createPhraseModel } from "../../../shared/phraseModel.js";
+  DEFAULT_PERFORMANCE_NAME,
+  DEFAULT_PERFORMANCE_SHARE_ROLE,
+  DEFAULT_PERFORMANCE_TYPE,
+  normalizePerformanceShareRole,
+  normalizePerformanceType,
+  normalizeHiddenPerformerIndexes as normalizeHiddenPerformerIndexesFromModel,
+} from "../../../shared/performanceModel.js";
+import { createSequenceModel } from "../../../shared/sequenceModel.js";
 import {
   createStepModel,
-  createStepParticipantModel,
+  createStepPerformerModel,
   LEGACY_STEP_LEXICON_KEY,
 } from "../../../shared/stepModel.js";
 
-export function buildParticipantLabel(index) {
+export function buildPerformerLabel(index) {
   return `Combattant ${index + 1}`;
 }
 
-export function normalizeParticipantIdentity(item, index, fallbackName) {
+export function normalizePerformerIdentity(item, index, fallbackName) {
   if (typeof item === "string") {
     return { name: item, weapon: "" };
   }
@@ -29,48 +29,48 @@ export function normalizeParticipantIdentity(item, index, fallbackName) {
   return { name: fallbackName || "", weapon: "" };
 }
 
-export function getParticipantName(participant, index) {
+export function getPerformerName(performer, index) {
   const name =
-    typeof participant === "string"
-      ? participant
-      : typeof participant?.name === "string"
-        ? participant.name
+    typeof performer === "string"
+      ? performer
+      : typeof performer?.name === "string"
+        ? performer.name
         : "";
-  return name && name.trim() ? name : buildParticipantLabel(index);
+  return name && name.trim() ? name : buildPerformerLabel(index);
 }
 
-export function getParticipantWeapon(participant) {
+export function getPerformerWeapon(performer) {
   if (
-    participant &&
-    typeof participant === "object" &&
-    typeof participant.weapon === "string"
+    performer &&
+    typeof performer === "object" &&
+    typeof performer.weapon === "string"
   ) {
-    return participant.weapon.trim();
+    return performer.weapon.trim();
   }
   return "";
 }
 
-export function formatParticipantSummary(participant, index) {
-  const name = getParticipantName(participant, index);
-  const weapon = getParticipantWeapon(participant);
+export function formatPerformerSummary(performer, index) {
+  const name = getPerformerName(performer, index);
+  const weapon = getPerformerWeapon(performer);
   return weapon ? `${name} (${weapon})` : name;
 }
 
-export function labelForParticipant(participant, index) {
-  return getParticipantName(participant, index);
+export function labelForPerformer(performer, index) {
+  return getPerformerName(performer, index);
 }
 
-export function emptyParticipantState() {
-  return createStepParticipantModel();
+export function emptyPerformerState() {
+  return createStepPerformerModel();
 }
 
-export function normalizeHiddenParticipantIndexes(raw, participantCount) {
-  return normalizeHiddenParticipantIndexesFromModel(raw, participantCount);
+export function normalizeHiddenPerformerIndexes(raw, performerCount) {
+  return normalizeHiddenPerformerIndexesFromModel(raw, performerCount);
 }
 
-export function getVisibleParticipantIndexes(participantCount, hiddenIndexes) {
-  const total = Math.max(0, Number(participantCount) || 0);
-  const hidden = new Set(normalizeHiddenParticipantIndexes(hiddenIndexes, total));
+export function getVisiblePerformerIndexes(performerCount, hiddenIndexes) {
+  const total = Math.max(0, Number(performerCount) || 0);
+  const hidden = new Set(normalizeHiddenPerformerIndexes(hiddenIndexes, total));
   const visible = [];
   for (let index = 0; index < total; index += 1) {
     if (!hidden.has(index)) visible.push(index);
@@ -78,73 +78,88 @@ export function getVisibleParticipantIndexes(participantCount, hiddenIndexes) {
   return visible;
 }
 
-export function normalizeParticipant(item) {
-  return createStepParticipantModel(item);
+export function normalizePerformer(item) {
+  return createStepPerformerModel(item);
 }
 
-export function normalizeState(raw, defaultParticipants) {
+export function normalizeState(raw, defaultPerformers) {
   if (!raw || typeof raw !== "object") return null;
-  const combatId = Number.isFinite(Number(raw.combatId))
-    ? Number(raw.combatId)
+  const performanceId = Number.isFinite(Number(raw.performanceId))
+    ? Number(raw.performanceId)
     : null;
-  const combatName =
-    typeof raw.combatName === "string" ? raw.combatName : DEFAULT_COMBAT_NAME;
-  const combatDescription =
-    typeof raw.combatDescription === "string" ? raw.combatDescription : "";
-  const participantsRaw =
-    Array.isArray(raw.participants) && raw.participants.length
-      ? raw.participants
-      : defaultParticipants;
-  const participants = participantsRaw.map((item, index) =>
-    normalizeParticipantIdentity(item, index, buildParticipantLabel(index)),
+  const performanceName =
+    typeof raw.performanceName === "string"
+      ? raw.performanceName
+      : DEFAULT_PERFORMANCE_NAME;
+  const performanceDescription =
+    typeof raw.performanceDescription === "string"
+      ? raw.performanceDescription
+      : "";
+  const performersRaw =
+    Array.isArray(raw.performers) && raw.performers.length
+      ? raw.performers
+      : Array.isArray(raw.participants) && raw.participants.length
+        ? raw.participants
+      : defaultPerformers;
+  const performers = performersRaw.map((item, index) =>
+    normalizePerformerIdentity(item, index, buildPerformerLabel(index)),
   );
   const formRaw = Array.isArray(raw.form) ? raw.form : [];
-  const form = participants.map((_, index) =>
-    normalizeParticipant(formRaw[index] ?? {}),
+  const form = performers.map((_, index) =>
+    normalizePerformer(formRaw[index] ?? {}),
   );
-  const phrasesRaw = Array.isArray(raw.phrases) ? raw.phrases : [];
-  const phrases = phrasesRaw.map((phrase, phraseIndex) => {
-    const stepsRaw = Array.isArray(phrase?.steps) ? phrase.steps : [];
+  const sequencesRaw = Array.isArray(raw.sequences)
+    ? raw.sequences
+    : Array.isArray(raw.phrases)
+      ? raw.phrases
+      : [];
+  const sequences = sequencesRaw.map((sequence, sequenceIndex) => {
+    const stepsRaw = Array.isArray(sequence?.steps) ? sequence.steps : [];
     const steps = stepsRaw.map((step) => {
-      const stepParticipantsRaw = Array.isArray(step?.participants)
-        ? step.participants
+      const stepPerformersRaw = Array.isArray(step?.performers)
+        ? step.performers
+        : Array.isArray(step?.participants)
+          ? step.participants
         : [];
       return createStepModel(
         {
           id: step?.id,
           lexicon: step?.lexicon,
-          participants: participants.map((_, index) =>
-            normalizeParticipant(stepParticipantsRaw[index] ?? {}),
+          performers: performers.map((_, index) =>
+            normalizePerformer(stepPerformersRaw[index] ?? {}),
           ),
         },
         {
-          // Compat legacy: une passe sans champ lexicon est traitée comme v1.
+          // Legacy compatibility: a step without lexicon is treated as v1.
           fallbackLexicon: LEGACY_STEP_LEXICON_KEY,
         },
       );
     });
-    return createPhraseModel({
-      id: phrase?.id,
-      name: phrase?.name,
-      index: phraseIndex,
-      hiddenParticipantIndexes: phrase?.hiddenParticipantIndexes,
-      participantCount: participants.length,
+    return createSequenceModel({
+      id: sequence?.id,
+      name: sequence?.name,
+      index: sequenceIndex,
+      hiddenPerformerIndexes:
+        sequence?.hiddenPerformerIndexes ?? sequence?.hiddenParticipantIndexes,
+      performerCount: performers.length,
       steps,
     });
   });
-  const combatType = normalizeCombatType(raw.combatType ?? DEFAULT_COMBAT_TYPE);
-  const combatShareRole = normalizeCombatShareRole(
-    raw.combatShareRole ?? DEFAULT_COMBAT_SHARE_ROLE,
+  const performanceType = normalizePerformanceType(
+    raw.performanceType ?? DEFAULT_PERFORMANCE_TYPE,
+  );
+  const performanceShareRole = normalizePerformanceShareRole(
+    raw.performanceShareRole ?? DEFAULT_PERFORMANCE_SHARE_ROLE,
   );
   return {
-    combatId,
-    combatName,
-    combatDescription,
-    participants,
+    performanceId,
+    performanceName,
+    performanceDescription,
+    performers,
     form,
-    phrases,
-    combatType,
-    combatShareRole,
+    sequences,
+    performanceType,
+    performanceShareRole,
   };
 }
 
@@ -168,7 +183,7 @@ function formatDelimitedBits(value) {
     .join(" · ");
 }
 
-function buildChoregraphieSummary(item, { includeNoteWhenEmpty }) {
+function buildChoreographySummary(item, { includeNoteWhenEmpty }) {
   const note = item.note ? ` (${item.note})` : "";
   if (item.chorePhase) return `${item.chorePhase}${note}`;
   if (item.note && includeNoteWhenEmpty) return `${item.note}`;
@@ -284,8 +299,8 @@ function buildCombatSummary(item) {
 }
 
 export function buildSummaryLine(item) {
-  if (item.mode === "choregraphie") {
-    return buildChoregraphieSummary(item, { includeNoteWhenEmpty: true });
+  if (item.mode === "choreography") {
+    return buildChoreographySummary(item, { includeNoteWhenEmpty: true });
   }
 
   if (item.mode === "note") {
@@ -296,8 +311,8 @@ export function buildSummaryLine(item) {
 }
 
 export function buildSummaryLines(item) {
-  if (item.mode === "choregraphie") {
-    return [buildChoregraphieSummary(item, { includeNoteWhenEmpty: false })];
+  if (item.mode === "choreography") {
+    return [buildChoreographySummary(item, { includeNoteWhenEmpty: false })];
   }
 
   if (item.mode === "note") {

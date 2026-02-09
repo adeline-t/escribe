@@ -8,21 +8,21 @@ import {
   FaTrash,
 } from "react-icons/fa6";
 import StepCard, { StepSummaryCard } from "./StepCard.jsx";
-import { COMBAT_STEP_LABELS } from "../../lib/combats.js";
+import { PERFORMANCE_STEP_LABELS } from "../../lib/performances.js";
 import {
-  emptyParticipantState,
-  getVisibleParticipantIndexes,
-  labelForParticipant,
-  normalizeHiddenParticipantIndexes,
-} from "../../lib/participants.js";
-import { resolvePhraseName } from "../../../../shared/phraseModel.js";
+  emptyPerformerState,
+  getVisiblePerformerIndexes,
+  labelForPerformer,
+  normalizeHiddenPerformerIndexes,
+} from "../../lib/performers.js";
+import { resolveSequenceName } from "../../../../shared/sequenceModel.js";
 
-export default function CombatReading({
+export default function PerformanceReading({
   mode = "edit",
-  activePhrase,
-  phrases = [],
-  participants = [],
-  participantLabels = [],
+  activeSequence,
+  sequences = [],
+  performers = [],
+  performerLabels = [],
   isReadOnly,
   onEditCard,
   onInsertEmptyStep,
@@ -31,80 +31,80 @@ export default function CombatReading({
   onDeleteStep,
   onToggleInsertionMode,
   onToggleDeletionMode,
-  onSelectPhrase,
-  onRenamePhrase,
-  onTogglePhraseParticipantVisibility,
+  onSelectSequence,
+  onRenameSequence,
+  onToggleSequencePerformerVisibility,
 }) {
   const readOnly = mode === "read" || isReadOnly;
-  const canEditPhraseVisibility =
-    typeof onTogglePhraseParticipantVisibility === "function" && !isReadOnly;
-  const activePhraseIndex = activePhrase
-    ? phrases.findIndex((phrase) => phrase.id === activePhrase.id)
+  const canEditSequenceVisibility =
+    typeof onToggleSequencePerformerVisibility === "function" && !isReadOnly;
+  const activeSequenceIndex = activeSequence
+    ? sequences.findIndex((sequence) => sequence.id === activeSequence.id)
     : -1;
-  const hasMultiplePhrases = phrases.length > 1;
-  const hasPrevPhrase = activePhraseIndex > 0;
-  const hasNextPhrase =
-    activePhraseIndex >= 0 && activePhraseIndex < phrases.length - 1;
-  const hasSteps = Boolean(activePhrase?.steps?.length);
-  const phraseName = resolvePhraseName(
-    activePhrase?.name,
-    activePhraseIndex >= 0 ? activePhraseIndex : 0,
+  const hasMultipleSequences = sequences.length > 1;
+  const hasPreviousSequence = activeSequenceIndex > 0;
+  const hasNextSequence =
+    activeSequenceIndex >= 0 && activeSequenceIndex < sequences.length - 1;
+  const hasSteps = Boolean(activeSequence?.steps?.length);
+  const sequenceName = resolveSequenceName(
+    activeSequence?.name,
+    activeSequenceIndex >= 0 ? activeSequenceIndex : 0,
   );
-  const activeVisibleParticipantIndexes = activePhrase
-    ? getPhraseVisibleIndexes(activePhrase)
+  const activeVisiblePerformerIndexes = activeSequence
+    ? getSequenceVisibleIndexes(activeSequence)
     : [];
-  const showActiveIndexColumn = activeVisibleParticipantIndexes.length > 1;
-  const [phraseDraft, setPhraseDraft] = useState(phraseName);
+  const showActiveIndexColumn = activeVisiblePerformerIndexes.length > 1;
+  const [sequenceDraft, setSequenceDraft] = useState(sequenceName);
 
   useEffect(() => {
-    setPhraseDraft(phraseName);
-  }, [activePhrase?.id, phraseName]);
+    setSequenceDraft(sequenceName);
+  }, [activeSequence?.id, sequenceName]);
 
-  function getPhraseHiddenIndexes(phrase) {
-    return normalizeHiddenParticipantIndexes(
-      phrase?.hiddenParticipantIndexes,
-      participants.length,
+  function getSequenceHiddenIndexes(sequence) {
+    return normalizeHiddenPerformerIndexes(
+      sequence?.hiddenPerformerIndexes,
+      performers.length,
     );
   }
 
-  function getPhraseVisibleIndexes(phrase) {
-    const hidden = getPhraseHiddenIndexes(phrase);
-    const visible = getVisibleParticipantIndexes(participants.length, hidden);
-    if (!visible.length && participants.length > 0) return [0];
+  function getSequenceVisibleIndexes(sequence) {
+    const hidden = getSequenceHiddenIndexes(sequence);
+    const visible = getVisiblePerformerIndexes(performers.length, hidden);
+    if (!visible.length && performers.length > 0) return [0];
     return visible;
   }
 
-  function togglePhraseParticipantVisibility(phraseId, participantIndex) {
-    if (!canEditPhraseVisibility) return;
-    onTogglePhraseParticipantVisibility?.(phraseId, participantIndex);
+  function toggleSequencePerformerVisibility(sequenceId, performerIndex) {
+    if (!canEditSequenceVisibility) return;
+    onToggleSequencePerformerVisibility?.(sequenceId, performerIndex);
   }
 
-  function renderPhraseVisibilityControls(phrase) {
-    if (participants.length <= 1) return null;
-    const hiddenIndexes = new Set(getPhraseHiddenIndexes(phrase));
-    const visibleIndexes = getPhraseVisibleIndexes(phrase);
+  function renderSequenceVisibilityControls(sequence) {
+    if (performers.length <= 1) return null;
+    const hiddenIndexes = new Set(getSequenceHiddenIndexes(sequence));
+    const visibleIndexes = getSequenceVisibleIndexes(sequence);
     return (
-      <div className="participant-visibility-toolbar phrase-visibility-toolbar">
-        <span className="participant-visibility-label">
-          {COMBAT_STEP_LABELS.columnVisibility}
+      <div className="performer-visibility-toolbar phrase-visibility-toolbar">
+        <span className="performer-visibility-label">
+          {PERFORMANCE_STEP_LABELS.columnVisibility}
         </span>
-        <div className="participant-visibility-chips">
-          {participants.map((participant, index) => {
+        <div className="performer-visibility-chips">
+          {performers.map((performer, index) => {
             const label =
-              participantLabels[index] ?? labelForParticipant(participant, index);
+              performerLabels[index] ?? labelForPerformer(performer, index);
             const isHidden = hiddenIndexes.has(index);
             const canHide = !isHidden && visibleIndexes.length > 1;
             return (
               <button
-                key={`phrase-${phrase?.id ?? "unknown"}-visibility-${index}`}
+                key={`phrase-${sequence?.id ?? "unknown"}-visibility-${index}`}
                 type="button"
-                className={`participant-visibility-chip ${
+                className={`performer-visibility-chip ${
                   isHidden ? "is-hidden" : ""
                 }`}
                 onClick={() =>
-                  togglePhraseParticipantVisibility(phrase?.id, index)
+                  toggleSequencePerformerVisibility(sequence?.id, index)
                 }
-                disabled={!canEditPhraseVisibility || !phrase?.id || !canHide && !isHidden}
+                disabled={!canEditSequenceVisibility || !sequence?.id || !canHide && !isHidden}
                 aria-pressed={!isHidden}
                 title={isHidden ? `Afficher ${label}` : `Masquer ${label}`}
               >
@@ -115,20 +115,20 @@ export default function CombatReading({
         </div>
         <button
           type="button"
-          className="button-ghost participant-visibility-reset"
+          className="button-ghost performer-visibility-reset"
           onClick={() => {
-            const hidden = getPhraseHiddenIndexes(phrase);
+            const hidden = getSequenceHiddenIndexes(sequence);
             hidden.forEach((index) =>
-              togglePhraseParticipantVisibility(phrase?.id, index),
+              toggleSequencePerformerVisibility(sequence?.id, index),
             );
           }}
           disabled={
-            !canEditPhraseVisibility ||
-            !phrase?.id ||
-            getPhraseHiddenIndexes(phrase).length === 0
+            !canEditSequenceVisibility ||
+            !sequence?.id ||
+            getSequenceHiddenIndexes(sequence).length === 0
           }
         >
-          {COMBAT_STEP_LABELS.showAllColumns}
+          {PERFORMANCE_STEP_LABELS.showAllColumns}
         </button>
       </div>
     );
@@ -140,7 +140,7 @@ export default function CombatReading({
     if (item.mode === "note") {
       return Boolean(note);
     }
-    if (item.mode === "choregraphie") {
+    if (item.mode === "choreography") {
       return Boolean(item.chorePhase || note);
     }
     if (note) return true;
@@ -200,7 +200,7 @@ export default function CombatReading({
     if (item.role === "preparation") return "preparation";
     if (
       item.role === "attack" ||
-      item.mode === "choregraphie" ||
+      item.mode === "choreography" ||
       item.mode === "note"
     ) {
       return "action";
@@ -331,11 +331,11 @@ export default function CombatReading({
     );
   }
 
-  function renderParticipantCell({
+  function renderPerformerCell({
     item,
     stepId,
     stepIndex,
-    participantIndex,
+    performerIndex,
   }) {
     const role = item.role;
     const hasCard =
@@ -350,8 +350,8 @@ export default function CombatReading({
           type="action"
           item={item}
           inactiveLabel="inactif"
-          onEdit={() => onEditCard(stepId, participantIndex, item)}
-          onLongPress={() => onEditCard(stepId, participantIndex, item)}
+          onEdit={() => onEditCard(stepId, performerIndex, item)}
+          onLongPress={() => onEditCard(stepId, performerIndex, item)}
           editLabel={`Modifier la passe ${stepIndex + 1}`}
           disabled={readOnly}
         />
@@ -364,8 +364,8 @@ export default function CombatReading({
           type="preparation"
           item={item}
           inactiveLabel="inactif"
-          onEdit={() => onEditCard(stepId, participantIndex, item)}
-          onLongPress={() => onEditCard(stepId, participantIndex, item)}
+          onEdit={() => onEditCard(stepId, performerIndex, item)}
+          onLongPress={() => onEditCard(stepId, performerIndex, item)}
           editLabel={`Modifier la passe ${stepIndex + 1}`}
           disabled={readOnly}
         />
@@ -378,8 +378,8 @@ export default function CombatReading({
           type="reaction"
           item={item}
           inactiveLabel="inactif"
-          onEdit={() => onEditCard(stepId, participantIndex, item)}
-          onLongPress={() => onEditCard(stepId, participantIndex, item)}
+          onEdit={() => onEditCard(stepId, performerIndex, item)}
+          onLongPress={() => onEditCard(stepId, performerIndex, item)}
           editLabel={`Modifier la passe ${stepIndex + 1}`}
           disabled={readOnly}
         />
@@ -391,8 +391,8 @@ export default function CombatReading({
         <StepCard
           type="neutral"
           lines={[item.note]}
-          onEdit={() => onEditCard(stepId, participantIndex, item)}
-          onLongPress={() => onEditCard(stepId, participantIndex, item)}
+          onEdit={() => onEditCard(stepId, performerIndex, item)}
+          onLongPress={() => onEditCard(stepId, performerIndex, item)}
           editLabel={`Modifier la passe ${stepIndex + 1}`}
           disabled={readOnly}
         />
@@ -405,13 +405,13 @@ export default function CombatReading({
           type="button"
           className="card-mini-plus-button"
           onClick={() =>
-            onEditCard(stepId, participantIndex, {
-              ...emptyParticipantState(),
+            onEditCard(stepId, performerIndex, {
+              ...emptyPerformerState(),
               ...(item ?? {}),
             })
           }
           disabled={readOnly}
-          aria-label={`Ajouter une action pour ${participantLabels[participantIndex]}`}
+          aria-label={`Ajouter une action pour ${performerLabels[performerIndex]}`}
           title="Ajouter"
         >
           <span className="card-mini-plus">
@@ -425,7 +425,7 @@ export default function CombatReading({
   }
 
   if (readOnly) {
-    if (phrases.length === 0) {
+    if (sequences.length === 0) {
       return (
         <div className="empty">
           <div className="text-strong">Aucune phrase.</div>
@@ -438,55 +438,55 @@ export default function CombatReading({
 
     return (
       <div className="stack-4 combat-reading-readonly">
-        {phrases.map((phrase, phraseIndex) => {
-          const visibleParticipantIndexes = getPhraseVisibleIndexes(phrase);
-          const showIndexColumn = visibleParticipantIndexes.length > 1;
+        {sequences.map((sequence, sequenceIndex) => {
+          const visiblePerformerIndexes = getSequenceVisibleIndexes(sequence);
+          const showIndexColumn = visiblePerformerIndexes.length > 1;
           return (
-            <div key={phrase.id} className="phrase-block">
+            <div key={sequence.id} className="phrase-block">
               <div className="panel-header">
                 <div>
                   <h3 className="subtitle">
-                    {resolvePhraseName(phrase?.name, phraseIndex)}
+                    {resolveSequenceName(sequence?.name, sequenceIndex)}
                   </h3>
                   <p className="meta text-muted">
-                    {phrase.steps?.length ?? 0} étape
-                    {(phrase.steps?.length ?? 0) > 1 ? "s" : ""}
+                    {sequence.steps?.length ?? 0} étape
+                    {(sequence.steps?.length ?? 0) > 1 ? "s" : ""}
                   </p>
                 </div>
               </div>
-              {renderPhraseVisibilityControls(phrase)}
+              {renderSequenceVisibilityControls(sequence)}
               <div className="phrase--reading stack-3">
                 <div
-                  className={`phrase-header cols-index-${visibleParticipantIndexes.length} index-wide ${
+                  className={`phrase-header cols-index-${visiblePerformerIndexes.length} index-wide ${
                     !showIndexColumn ? "index-hidden" : ""
                   }`}
                 >
                   {showIndexColumn ? (
                     <div className="phrase-index phrase-index--header">#</div>
                   ) : null}
-                  {visibleParticipantIndexes.map((participantIndex) => (
-                    <div key={participantIndex} className="phrase-name">
-                      {labelForParticipant(
-                        participants[participantIndex],
-                        participantIndex,
+                  {visiblePerformerIndexes.map((performerIndex) => (
+                    <div key={performerIndex} className="phrase-name">
+                      {labelForPerformer(
+                        performers[performerIndex],
+                        performerIndex,
                       )}
                     </div>
                   ))}
                 </div>
                 <div className="stack-2">
-                  {phrase.steps?.length ? (
-                    phrase.steps.map((step, index) => {
-                      const visibleStepParticipants = visibleParticipantIndexes.map(
-                        (participantIndex) =>
-                          step?.participants?.[participantIndex] ??
-                          emptyParticipantState(),
+                  {sequence.steps?.length ? (
+                    sequence.steps.map((step, index) => {
+                      const visibleStepPerformers = visiblePerformerIndexes.map(
+                        (performerIndex) =>
+                          step?.performers?.[performerIndex] ??
+                          emptyPerformerState(),
                       );
-                      const stepCardTypes = visibleStepParticipants.map(
+                      const stepCardTypes = visibleStepPerformers.map(
                         getReadCardType,
                       );
-                      const stepConnectorRoles = visibleStepParticipants.map(
-                        (item, participantIndex) =>
-                          stepCardTypes[participantIndex]
+                      const stepConnectorRoles = visibleStepPerformers.map(
+                        (item, performerIndex) =>
+                          stepCardTypes[performerIndex]
                             ? getReadConnectorRole(item)
                             : null,
                       );
@@ -497,7 +497,7 @@ export default function CombatReading({
                       return (
                         <div
                           key={step.id}
-                          className={`phrase-grid-row cols-index-${visibleParticipantIndexes.length} index-wide ${
+                          className={`phrase-grid-row cols-index-${visiblePerformerIndexes.length} index-wide ${
                             !showIndexColumn ? "index-hidden" : ""
                           }`}
                         >
@@ -508,7 +508,7 @@ export default function CombatReading({
                               </div>
                             </div>
                           ) : null}
-                          {visibleStepParticipants.map((item, colIndex) => {
+                          {visibleStepPerformers.map((item, colIndex) => {
                             const cardType = stepCardTypes[colIndex];
                             const incomingLinks = connectorLinks.filter(
                               (link) => link.toIndex === colIndex,
@@ -598,7 +598,7 @@ export default function CombatReading({
     );
   }
 
-  if (!activePhrase) {
+  if (!activeSequence) {
     return (
       <div className="stack-3">
         {renderReadingHeader({
@@ -623,25 +623,25 @@ export default function CombatReading({
           <>
             <input
               className="input"
-              value={phraseDraft}
-              onChange={(event) => setPhraseDraft(event.target.value)}
+              value={sequenceDraft}
+              onChange={(event) => setSequenceDraft(event.target.value)}
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
                   event.preventDefault();
-                  const nextName = phraseDraft.trim();
-                  if (nextName && nextName !== phraseName) {
-                    onRenamePhrase?.(activePhrase.id, nextName);
+                  const nextName = sequenceDraft.trim();
+                  if (nextName && nextName !== sequenceName) {
+                    onRenameSequence?.(activeSequence.id, nextName);
                   }
                 }
               }}
               aria-label="Nom de la phrase"
             />
-            {phraseDraft.trim() !== phraseName ? (
+            {sequenceDraft.trim() !== sequenceName ? (
               <button
                 type="button"
                 className="button-icon button-secondary"
                 onClick={() =>
-                  onRenamePhrase?.(activePhrase.id, phraseDraft.trim())
+                  onRenameSequence?.(activeSequence.id, sequenceDraft.trim())
                 }
                 aria-label="Valider le nom de la phrase"
                 title="Valider"
@@ -655,16 +655,16 @@ export default function CombatReading({
         showStepDelete: true,
         disableStepActions: !hasSteps,
         centerControls:
-          !readOnly && hasMultiplePhrases ? (
+          !readOnly && hasMultipleSequences ? (
             <div className="phrase-reading-nav">
               <button
                 type="button"
                 className="button-icon button-secondary"
                 onClick={() =>
-                  hasPrevPhrase &&
-                  onSelectPhrase?.(phrases[activePhraseIndex - 1]?.id)
+                  hasPreviousSequence &&
+                  onSelectSequence?.(sequences[activeSequenceIndex - 1]?.id)
                 }
-                disabled={!hasPrevPhrase}
+                disabled={!hasPreviousSequence}
                 aria-label="Phrase précédente"
                 title="Phrase précédente"
               >
@@ -674,10 +674,10 @@ export default function CombatReading({
                 type="button"
                 className="button-icon button-secondary"
                 onClick={() =>
-                  hasNextPhrase &&
-                  onSelectPhrase?.(phrases[activePhraseIndex + 1]?.id)
+                  hasNextSequence &&
+                  onSelectSequence?.(sequences[activeSequenceIndex + 1]?.id)
                 }
-                disabled={!hasNextPhrase}
+                disabled={!hasNextSequence}
                 aria-label="Phrase suivante"
                 title="Phrase suivante"
               >
@@ -686,20 +686,20 @@ export default function CombatReading({
             </div>
           ) : null,
       })}
-      {renderPhraseVisibilityControls(activePhrase)}
+      {renderSequenceVisibilityControls(activeSequence)}
       {hasSteps ? (
         <div
-          className={`phrase-header cols-index-${activeVisibleParticipantIndexes.length} index-compact ${
+          className={`phrase-header cols-index-${activeVisiblePerformerIndexes.length} index-compact ${
             !showActiveIndexColumn ? "index-hidden" : ""
           }`}
         >
           {showActiveIndexColumn ? (
             <div className="phrase-index phrase-index--header" />
           ) : null}
-          {activeVisibleParticipantIndexes.map((participantIndex) => (
-            <div key={participantIndex} className="phrase-name">
-              {participantLabels[participantIndex] ??
-                labelForParticipant(participants[participantIndex], participantIndex)}
+          {activeVisiblePerformerIndexes.map((performerIndex) => (
+            <div key={performerIndex} className="phrase-name">
+              {performerLabels[performerIndex] ??
+                labelForPerformer(performers[performerIndex], performerIndex)}
             </div>
           ))}
         </div>
@@ -713,7 +713,7 @@ export default function CombatReading({
           <>
             {insertionMode ? (
               <div
-                className={`phrase-insert-row cols-index-${activeVisibleParticipantIndexes.length} index-compact`}
+                className={`phrase-insert-row cols-index-${activeVisiblePerformerIndexes.length} index-compact`}
               >
                 <div className="phrase-insert-cell">
                   <button
@@ -729,7 +729,7 @@ export default function CombatReading({
                 </div>
               </div>
             ) : null}
-            {activePhrase.steps.map((step, index) => (
+            {activeSequence.steps.map((step, index) => (
               <div
                 key={step.id}
                 className={`stack-2 phrase-row ${
@@ -737,7 +737,7 @@ export default function CombatReading({
                 }`}
               >
                 <div
-                  className={`phrase-grid-row cols-index-${activeVisibleParticipantIndexes.length} index-compact ${
+                  className={`phrase-grid-row cols-index-${activeVisiblePerformerIndexes.length} index-compact ${
                     !showActiveIndexColumn ? "index-hidden" : ""
                   }`}
                 >
@@ -747,25 +747,25 @@ export default function CombatReading({
                     </div>
                   ) : null}
                   {(() => {
-                    const visibleStepParticipants = activeVisibleParticipantIndexes.map(
-                      (participantIndex) =>
-                        step?.participants?.[participantIndex] ??
-                        emptyParticipantState(),
+                    const visibleStepPerformers = activeVisiblePerformerIndexes.map(
+                      (performerIndex) =>
+                        step?.performers?.[performerIndex] ??
+                        emptyPerformerState(),
                     );
-                    const editCardTypes = visibleStepParticipants.map(
+                    const editCardTypes = visibleStepPerformers.map(
                       getEditCardType,
                     );
-                    const editConnectorRoles = visibleStepParticipants.map(
-                      (item, participantIndex) =>
-                        editCardTypes[participantIndex]
+                    const editConnectorRoles = visibleStepPerformers.map(
+                      (item, performerIndex) =>
+                        editCardTypes[performerIndex]
                           ? getEditConnectorRole(item)
                           : null,
                     );
                     const connectorLinks = buildConnectorLinks(editConnectorRoles);
 
-                    return visibleStepParticipants.map((item, colIndex) => {
-                      const participantIndex =
-                        activeVisibleParticipantIndexes[colIndex];
+                    return visibleStepPerformers.map((item, colIndex) => {
+                      const performerIndex =
+                        activeVisiblePerformerIndexes[colIndex];
                       const incomingLinks = connectorLinks.filter(
                         (link) => link.toIndex === colIndex,
                       );
@@ -780,7 +780,7 @@ export default function CombatReading({
 
                       return (
                         <div
-                          key={`${step.id}-${participantIndex}`}
+                          key={`${step.id}-${performerIndex}`}
                           className="phrase-cell"
                         >
                           {!showActiveIndexColumn ? (
@@ -789,11 +789,11 @@ export default function CombatReading({
                             </div>
                           ) : null}
                           <div className="phrase-cell-card-wrap">
-                            {renderParticipantCell({
+                            {renderPerformerCell({
                               item,
                               stepId: step.id,
                               stepIndex: index,
-                              participantIndex,
+                              performerIndex,
                             })}
                             {showRightColumnDot ? (
                               <span
@@ -849,7 +849,7 @@ export default function CombatReading({
                 ) : null}
                 {insertionMode ? (
                   <div
-                    className={`phrase-insert-row cols-index-${activeVisibleParticipantIndexes.length} index-compact`}
+                    className={`phrase-insert-row cols-index-${activeVisiblePerformerIndexes.length} index-compact`}
                   >
                     <div className="phrase-insert-cell">
                       <button

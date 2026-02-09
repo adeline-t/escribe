@@ -1,10 +1,10 @@
 export const DEFAULT_STEP_LEXICON_KEY = "classic-v2";
 export const LEGACY_STEP_LEXICON_KEY = "classic";
-export const STEP_PARTICIPANT_MODES = ["combat", "note", "choregraphie"];
-export const STEP_PARTICIPANT_ROLES = ["none", "attack", "defense", "preparation"];
+export const STEP_PERFORMER_MODES = ["combat", "note", "choreography"];
+export const STEP_PERFORMER_ROLES = ["none", "attack", "defense", "preparation"];
 
-// Canonical structure for one participant inside a step.
-export const DEFAULT_STEP_PARTICIPANT = Object.freeze({
+// Canonical structure for one performer inside a step.
+export const DEFAULT_STEP_PERFORMER = Object.freeze({
   mode: "combat",
   role: "attack",
   offensive: "",
@@ -44,16 +44,22 @@ function normalizeStringArray(raw) {
   return Array.isArray(raw) ? raw : [];
 }
 
-export function createStepParticipantModel(overrides = {}) {
-  const mode = STEP_PARTICIPANT_MODES.includes(overrides?.mode)
-    ? overrides.mode
-    : DEFAULT_STEP_PARTICIPANT.mode;
-  const role = STEP_PARTICIPANT_ROLES.includes(overrides?.role)
+function normalizeStepMode(mode) {
+  if (mode === "choregraphie") return "choreography";
+  return mode;
+}
+
+export function createStepPerformerModel(overrides = {}) {
+  const normalizedMode = normalizeStepMode(overrides?.mode);
+  const mode = STEP_PERFORMER_MODES.includes(normalizedMode)
+    ? normalizedMode
+    : DEFAULT_STEP_PERFORMER.mode;
+  const role = STEP_PERFORMER_ROLES.includes(overrides?.role)
     ? overrides.role
-    : DEFAULT_STEP_PARTICIPANT.role;
+    : DEFAULT_STEP_PERFORMER.role;
 
   return {
-    ...DEFAULT_STEP_PARTICIPANT,
+    ...DEFAULT_STEP_PERFORMER,
     ...(overrides || {}),
     mode,
     role,
@@ -64,8 +70,8 @@ export function createStepParticipantModel(overrides = {}) {
   };
 }
 
-export function createInsertedStepParticipantModel(overrides = {}) {
-  return createStepParticipantModel({
+export function createInsertedStepPerformerModel(overrides = {}) {
+  return createStepPerformerModel({
     mode: "note",
     role: "none",
     noteOverrides: true,
@@ -73,28 +79,28 @@ export function createInsertedStepParticipantModel(overrides = {}) {
   });
 }
 
-export function normalizeStepParticipants(
-  participants,
-  { participantCount = null, fillParticipant } = {},
+export function normalizeStepPerformers(
+  performers,
+  { performerCount = null, fillPerformer } = {},
 ) {
-  const normalized = Array.isArray(participants)
-    ? participants.map((item) => createStepParticipantModel(item))
+  const normalized = Array.isArray(performers)
+    ? performers.map((item) => createStepPerformerModel(item))
     : [];
 
-  if (!Number.isInteger(participantCount) || participantCount < 0) {
+  if (!Number.isInteger(performerCount) || performerCount < 0) {
     return normalized;
   }
 
-  while (normalized.length < participantCount) {
-    if (typeof fillParticipant === "function") {
-      normalized.push(createStepParticipantModel(fillParticipant(normalized.length)));
+  while (normalized.length < performerCount) {
+    if (typeof fillPerformer === "function") {
+      normalized.push(createStepPerformerModel(fillPerformer(normalized.length)));
       continue;
     }
-    normalized.push(createStepParticipantModel());
+    normalized.push(createStepPerformerModel());
   }
 
-  if (normalized.length > participantCount) {
-    return normalized.slice(0, participantCount);
+  if (normalized.length > performerCount) {
+    return normalized.slice(0, performerCount);
   }
   return normalized;
 }
@@ -108,19 +114,35 @@ export function resolveStepLexiconKey(
 }
 
 export function createStepModel(
-  { id, lexicon, participants } = {},
+  { id, lexicon, performers, participants } = {},
   {
     fallbackLexicon = DEFAULT_STEP_LEXICON_KEY,
+    performerCount = null,
     participantCount = null,
+    fillPerformer,
     fillParticipant,
   } = {},
 ) {
+  const resolvedPerformers = performers ?? participants;
+  const resolvedPerformerCount = performerCount ?? participantCount;
+  const resolvedFillPerformer = fillPerformer ?? fillParticipant;
+  const normalizedPerformers = normalizeStepPerformers(resolvedPerformers, {
+    performerCount: resolvedPerformerCount,
+    fillPerformer: resolvedFillPerformer,
+  });
   return {
     id: id ?? crypto.randomUUID(),
     lexicon: resolveStepLexiconKey(lexicon, { fallbackLexicon }),
-    participants: normalizeStepParticipants(participants, {
-      participantCount,
-      fillParticipant,
-    }),
+    performers: normalizedPerformers,
+    // Legacy compatibility during participant -> performer migration.
+    participants: normalizedPerformers,
   };
 }
+
+// Legacy aliases kept while the codebase is migrated.
+export const STEP_PARTICIPANT_MODES = STEP_PERFORMER_MODES;
+export const STEP_PARTICIPANT_ROLES = STEP_PERFORMER_ROLES;
+export const DEFAULT_STEP_PARTICIPANT = DEFAULT_STEP_PERFORMER;
+export const createStepParticipantModel = createStepPerformerModel;
+export const createInsertedStepParticipantModel = createInsertedStepPerformerModel;
+export const normalizeStepParticipants = normalizeStepPerformers;

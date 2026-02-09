@@ -12,7 +12,7 @@ function withQuery(path, query = {}) {
 export function createApiClient({ apiBase, token } = {}) {
   async function request(path, options = {}) {
     const headers = { ...(options.headers || {}) };
-    // Tous les appels passent ici pour garantir l'injection du token.
+    // All requests go through this layer to guarantee token injection.
     if (token && !headers.Authorization) {
       headers.Authorization = `Bearer ${token}`;
     }

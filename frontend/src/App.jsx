@@ -5,9 +5,9 @@ import HomePage from "./pages/HomePage.jsx";
 import LexiconPage from "./pages/LexiconPage.jsx";
 import ProfilePage from "./pages/ProfilePage.jsx";
 import UsersPage from "./pages/UsersPage.jsx";
-import CombatReaderPage from "./pages/CombatReaderPage.jsx";
-import CombatFormPage from "./pages/CombatFormPage.jsx";
-import CombatListPage from "./pages/CombatListPage.jsx";
+import PerformanceReaderPage from "./pages/PerformanceReaderPage.jsx";
+import PerformanceFormPage from "./pages/PerformanceFormPage.jsx";
+import PerformanceListPage from "./pages/PerformanceListPage.jsx";
 import VersionFooter from "./components/VersionFooter.jsx";
 import frontendVersion from "./version.json";
 import {
@@ -22,7 +22,7 @@ import {
   FaAngleLeft,
 } from "react-icons/fa6";
 import {
-  DEFAULT_PARTICIPANTS,
+  DEFAULT_PERFORMERS,
   normalizeLexicon,
   normalizeNewLexicon,
   normalizeSabreLexicon,
@@ -31,15 +31,15 @@ import {
   CLASSIC_LEXICON_OPTIONS,
   SABRE_FAVORITE_TYPE_KEYS,
   SABRE_UI_LABELS,
-} from "./lib/combats.js";
+} from "./lib/performances.js";
 import {
-  buildParticipantLabel,
+  buildPerformerLabel,
   normalizeState,
   toggleAttribute,
   buildSummaryLine,
   buildSummaryLines,
-} from "./lib/participants.js";
-import { useCombatStateManager } from "./hooks/useCombatStateManager.js";
+} from "./lib/performers.js";
+import { usePerformanceStateManager } from "./hooks/usePerformanceStateManager.js";
 import { useAppBootstrap } from "./hooks/useAppBootstrap.js";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:4000";
@@ -74,38 +74,38 @@ export default function App() {
     register,
     logout,
   } = bootstrap;
-  const { combats } = services;
-  const combatState = useCombatStateManager({
+  const { performances } = services;
+  const performanceState = usePerformanceStateManager({
     isSaveEnabled: Boolean(authUser),
-    saveState: (state) => combats.saveState(state),
+    saveState: (state) => performances.saveState(state),
   });
   const {
-    participants,
-    phrases,
-    activePhraseId,
+    performers,
+    sequences,
+    activeSequenceId,
     form,
     editingStepId,
     insertStepIndex,
     insertionMode,
     deletionMode,
-    combatId,
-    combatName,
-    combatDescription,
-    combatType,
-    combatShareRole,
+    performanceId,
+    performanceName,
+    performanceDescription,
+    performanceType,
+    performanceShareRole,
     stepLexiconKey,
-    participantLabels,
-    activePhrase,
-    setCombatName,
-    setCombatDescription,
-    applyNormalizedCombatState,
-    initializeNewCombat,
+    performerLabels,
+    activeSequence,
+    setPerformanceName,
+    setPerformanceDescription,
+    applyNormalizedPerformanceState,
+    initializeNewPerformance,
     markHydrated,
-    updateParticipantName,
-    updateParticipantWeapon,
-    updateParticipantCount,
+    updatePerformerName,
+    updatePerformerWeapon,
+    updatePerformerCount,
     updateForm,
-    updateStepParticipant,
+    updateStepPerformer,
     updateStepLexicon,
     resetForm,
     addStep,
@@ -113,17 +113,17 @@ export default function App() {
     removeStep,
     editStep,
     cancelEditStep,
-    selectPhrase,
-    togglePhraseParticipantVisibility,
-    createPhrase,
-    renamePhrase,
-    movePhrase,
-    movePhraseToIndex,
-    deletePhrase,
+    selectSequence,
+    toggleSequencePerformerVisibility,
+    createSequence,
+    renameSequence,
+    moveSequence,
+    moveSequenceToIndex,
+    deleteSequence,
     startInsertStep,
     toggleInsertionMode,
     toggleDeletionMode,
-  } = combatState;
+  } = performanceState;
 
   const normalizedLexicon = useMemo(
     () => normalizeLexicon(lexiconData),
@@ -145,14 +145,14 @@ export default function App() {
     async function loadState() {
       try {
         if (!authUser) return;
-        const stateResult = await combats.getState();
+        const stateResult = await performances.getState();
         if (!stateResult.ok) throw new Error("Failed to load state");
         const normalized = normalizeState(
           stateResult.state,
-          DEFAULT_PARTICIPANTS,
+          DEFAULT_PERFORMERS,
         );
         if (isMounted && normalized) {
-          applyNormalizedCombatState(normalized);
+          applyNormalizedPerformanceState(normalized);
         }
       } catch (error) {
         console.warn("State load skipped:", error);
@@ -164,40 +164,40 @@ export default function App() {
     return () => {
       isMounted = false;
     };
-  }, [authUser, combats]);
+  }, [authUser, performances]);
 
-  async function loadCombatById(id) {
+  async function loadPerformanceById(id) {
     if (!id) return;
-    const result = await combats.getState({ combatId: id });
+    const result = await performances.getState({ performanceId: id });
     if (!result.ok) return;
-    const normalized = normalizeState(result.state, DEFAULT_PARTICIPANTS);
+    const normalized = normalizeState(result.state, DEFAULT_PERFORMERS);
     if (normalized) {
-      applyNormalizedCombatState(normalized, { fallbackCombatId: id });
-      return normalized.combatType ?? "classic";
+      applyNormalizedPerformanceState(normalized, { fallbackPerformanceId: id });
+      return normalized.performanceType ?? "classic";
     }
     return null;
   }
 
-  async function handleCreateCombat(payload) {
+  async function handleCreatePerformance(payload) {
     const type = payload?.type === "sabre-laser" ? "sabre-laser" : "classic";
-    const defaultParticipants = DEFAULT_PARTICIPANTS.map((participant) => ({
-      ...participant,
+    const defaultPerformers = DEFAULT_PERFORMERS.map((performer) => ({
+      ...performer,
     }));
-    const result = await combats.createCombat({
+    const result = await performances.createPerformance({
       name: payload?.name,
       description: payload?.description,
-      participants: defaultParticipants,
+      performers: defaultPerformers,
       type,
     });
-    if (!result.ok || !result.combat?.id) return null;
-    initializeNewCombat({
-      id: result.combat.id,
-      name: result.combat.name,
-      description: result.combat.description,
+    if (!result.ok || !result.performance?.id) return null;
+    initializeNewPerformance({
+      id: result.performance.id,
+      name: result.performance.name,
+      description: result.performance.description,
       type,
-      participants: defaultParticipants,
+      performers: defaultPerformers,
     });
-    return { id: result.combat.id, type };
+    return { id: result.performance.id, type };
   }
 
   async function handleLogin(event) {
@@ -241,9 +241,10 @@ export default function App() {
     );
   }
 
-  const isSabreList = page === "combats-sabre" || page === "combats-sabre-new";
-  const autoOpenSabreCreate = page === "combats-sabre-new";
-  const autoOpenCreate = page === "combats-new";
+  const isSabreList =
+    page === "performances-sabre" || page === "performances-sabre-new";
+  const autoOpenSabreCreate = page === "performances-sabre-new";
+  const autoOpenCreate = page === "performances-new";
 
   return (
     <div
@@ -305,9 +306,9 @@ export default function App() {
           </button>
           <button
             type="button"
-            className={`menu-item ${page === "combats" ? "is-active" : ""}`}
+            className={`menu-item ${page === "performances" ? "is-active" : ""}`}
             onClick={() => {
-              setPage("combats-new");
+              setPage("performances-new");
               setIsMenuCollapsed(true);
             }}
           >
@@ -318,9 +319,9 @@ export default function App() {
           </button>
           <button
             type="button"
-            className={`menu-item ${page === "combats" ? "is-active" : ""}`}
+            className={`menu-item ${page === "performances" ? "is-active" : ""}`}
             onClick={() => {
-              setPage("combats");
+              setPage("performances");
               setIsMenuCollapsed(true);
             }}
           >
@@ -392,75 +393,79 @@ export default function App() {
         {page === "home" ? (
           <HomePage
             authUser={authUser}
-            combatName={combatName}
-            combatDescription={combatDescription}
-            combatId={combatId}
-            stepsCount={activePhrase?.steps?.length ?? 0}
-            participantsCount={participants.length}
+            performanceName={performanceName}
+            performanceDescription={performanceDescription}
+            performanceId={performanceId}
+            stepsCount={activeSequence?.steps?.length ?? 0}
+            performersCount={performers.length}
             onNavigate={setPage}
-            onOpenCombat={(id) => {
+            onOpenPerformance={(id) => {
               if (!id) return;
-              loadCombatById(id).then((type) => {
+              loadPerformanceById(id).then((type) => {
                 if (!type) return;
-                setPage(type === "sabre-laser" ? "create-sabre" : "create");
+                setPage(
+                  type === "sabre-laser"
+                    ? "performance-create-sabre"
+                    : "performance-create"
+                );
               });
             }}
           />
         ) : null}
 
-        {page === "combats-new" ? (
-          <CombatListPage
+        {page === "performances-new" ? (
+          <PerformanceListPage
             apiBase={API_BASE}
             authToken={authToken}
-            combatId={combatId}
+            performanceId={performanceId}
             title="Créer un combat"
             subtitle="Choisis le type et démarre un combat."
             autoOpenCreate
-            onSelectCombat={loadCombatById}
-            onCreateCombat={handleCreateCombat}
+            onSelectPerformance={loadPerformanceById}
+            onCreatePerformance={handleCreatePerformance}
             onNavigate={setPage}
           />
         ) : null}
 
-        {page === "combats" ? (
-          <CombatListPage
+        {page === "performances" ? (
+          <PerformanceListPage
             apiBase={API_BASE}
             authToken={authToken}
-            combatId={combatId}
+            performanceId={performanceId}
             title="Mes combats"
             subtitle="Tous les combats, regroupés par type."
-            onSelectCombat={loadCombatById}
-            onCreateCombat={handleCreateCombat}
+            onSelectPerformance={loadPerformanceById}
+            onCreatePerformance={handleCreatePerformance}
             onNavigate={setPage}
           />
         ) : null}
 
         {isSabreList ? (
-          <CombatListPage
+          <PerformanceListPage
             apiBase={API_BASE}
             authToken={authToken}
-            combatId={combatId}
-            combatType="sabre-laser"
+            performanceId={performanceId}
+            performanceType="sabre-laser"
             title="Combats sabre laser"
             subtitle="Crée, sélectionne et archive des combats sabre laser."
             autoOpenCreate={autoOpenSabreCreate}
-            onSelectCombat={loadCombatById}
-            onCreateCombat={handleCreateCombat}
+            onSelectPerformance={loadPerformanceById}
+            onCreatePerformance={handleCreatePerformance}
             onNavigate={setPage}
           />
         ) : null}
 
-        {page === "create" ? (
-          <CombatFormPage
-            participants={participants}
+        {page === "performance-create" ? (
+          <PerformanceFormPage
+            performers={performers}
             form={form}
-            combatName={combatName}
-            combatDescription={combatDescription}
-            phrases={phrases}
-            activePhraseId={activePhraseId}
-            activePhrase={activePhrase}
-            stepsCount={activePhrase?.steps?.length ?? 0}
-            participantLabels={participantLabels}
+            performanceName={performanceName}
+            performanceDescription={performanceDescription}
+            sequences={sequences}
+            activeSequenceId={activeSequenceId}
+            activeSequence={activeSequence}
+            stepsCount={activeSequence?.steps?.length ?? 0}
+            performerLabels={performerLabels}
             normalizedLexicon={normalizedLexicon}
             lexiconByKey={{
               classic: normalizedLexicon,
@@ -472,33 +477,33 @@ export default function App() {
               "classic-v2": newFavorites,
             }}
             lexiconKey={stepLexiconKey}
-            isReadOnly={combatShareRole === "read"}
-            onParticipantCountChange={updateParticipantCount}
-            onParticipantNameChange={updateParticipantName}
-            onParticipantWeaponChange={updateParticipantWeapon}
+            isReadOnly={performanceShareRole === "read"}
+            onPerformerCountChange={updatePerformerCount}
+            onPerformerNameChange={updatePerformerName}
+            onPerformerWeaponChange={updatePerformerWeapon}
             onFormChange={updateForm}
             onAddStep={addStep}
-            onCombatNameChange={setCombatName}
-            onCombatDescriptionChange={setCombatDescription}
-            onCreatePhrase={createPhrase}
-            onSelectPhrase={selectPhrase}
-            onRenamePhrase={renamePhrase}
-            onTogglePhraseParticipantVisibility={
-              togglePhraseParticipantVisibility
+            onPerformanceNameChange={setPerformanceName}
+            onPerformanceDescriptionChange={setPerformanceDescription}
+            onCreateSequence={createSequence}
+            onSelectSequence={selectSequence}
+            onRenameSequence={renameSequence}
+            onToggleSequencePerformerVisibility={
+              toggleSequencePerformerVisibility
             }
-            onMovePhrase={movePhrase}
-            onMovePhraseToIndex={movePhraseToIndex}
-            onDeletePhrase={deletePhrase}
+            onMoveSequence={moveSequence}
+            onMoveSequenceToIndex={moveSequenceToIndex}
+            onDeleteSequence={deleteSequence}
             onEditStep={editStep}
             onRemoveStep={removeStep}
             onCancelEditStep={cancelEditStep}
             editingStepId={editingStepId}
-            buildParticipantLabel={buildParticipantLabel}
+            buildPerformerLabel={buildPerformerLabel}
             buildSummaryLine={buildSummaryLine}
             buildSummaryLines={buildSummaryLines}
             toggleAttribute={toggleAttribute}
             onNavigate={setPage}
-            onUpdateStepParticipant={updateStepParticipant}
+            onUpdateStepPerformer={updateStepPerformer}
             onUpdateStepLexicon={updateStepLexicon}
             onResetForm={resetForm}
             insertStepIndex={insertStepIndex}
@@ -515,52 +520,52 @@ export default function App() {
           />
         ) : null}
 
-        {page === "create-sabre" ? (
-          <CombatFormPage
-            participants={participants}
+        {page === "performance-create-sabre" ? (
+          <PerformanceFormPage
+            performers={performers}
             form={form}
-            combatName={combatName}
-            combatDescription={combatDescription}
-            phrases={phrases}
-            activePhraseId={activePhraseId}
-            activePhrase={activePhrase}
-            stepsCount={activePhrase?.steps?.length ?? 0}
-            participantLabels={participantLabels}
+            performanceName={performanceName}
+            performanceDescription={performanceDescription}
+            sequences={sequences}
+            activeSequenceId={activeSequenceId}
+            activeSequence={activeSequence}
+            stepsCount={activeSequence?.steps?.length ?? 0}
+            performerLabels={performerLabels}
             normalizedLexicon={normalizedSabreLexicon}
             lexiconKey="sabre-laser"
             favorites={sabreFavorites}
             labels={SABRE_UI_LABELS}
             favoriteTypeKeys={SABRE_FAVORITE_TYPE_KEYS}
             showParadeNumber={false}
-            participantWeaponOptions={normalizedSabreLexicon.armes ?? []}
-            isReadOnly={combatShareRole === "read"}
-            onParticipantCountChange={updateParticipantCount}
-            onParticipantNameChange={updateParticipantName}
-            onParticipantWeaponChange={updateParticipantWeapon}
+            performerWeaponOptions={normalizedSabreLexicon.armes ?? []}
+            isReadOnly={performanceShareRole === "read"}
+            onPerformerCountChange={updatePerformerCount}
+            onPerformerNameChange={updatePerformerName}
+            onPerformerWeaponChange={updatePerformerWeapon}
             onFormChange={updateForm}
             onAddStep={addStep}
-            onCombatNameChange={setCombatName}
-            onCombatDescriptionChange={setCombatDescription}
-            onCreatePhrase={createPhrase}
-            onSelectPhrase={selectPhrase}
-            onRenamePhrase={renamePhrase}
-            onTogglePhraseParticipantVisibility={
-              togglePhraseParticipantVisibility
+            onPerformanceNameChange={setPerformanceName}
+            onPerformanceDescriptionChange={setPerformanceDescription}
+            onCreateSequence={createSequence}
+            onSelectSequence={selectSequence}
+            onRenameSequence={renameSequence}
+            onToggleSequencePerformerVisibility={
+              toggleSequencePerformerVisibility
             }
-            onMovePhrase={movePhrase}
-            onMovePhraseToIndex={movePhraseToIndex}
-            onDeletePhrase={deletePhrase}
+            onMoveSequence={moveSequence}
+            onMoveSequenceToIndex={moveSequenceToIndex}
+            onDeleteSequence={deleteSequence}
             onEditStep={editStep}
             onRemoveStep={removeStep}
             onCancelEditStep={cancelEditStep}
             editingStepId={editingStepId}
             phaseOptions={normalizedSabreLexicon.phases ?? []}
-            buildParticipantLabel={buildParticipantLabel}
+            buildPerformerLabel={buildPerformerLabel}
             buildSummaryLine={buildSummaryLine}
             buildSummaryLines={buildSummaryLines}
             toggleAttribute={toggleAttribute}
             onNavigate={setPage}
-            onUpdateStepParticipant={updateStepParticipant}
+            onUpdateStepPerformer={updateStepPerformer}
             onResetForm={resetForm}
             insertStepIndex={insertStepIndex}
             onInsertStep={startInsertStep}
@@ -573,15 +578,15 @@ export default function App() {
           />
         ) : null}
 
-        {page === "overview" ? (
-          <CombatReaderPage
-            combatName={combatName}
-            combatDescription={combatDescription}
-            participants={participants}
-            phrases={phrases}
-            isReadOnly={combatShareRole === "read"}
-            onTogglePhraseParticipantVisibility={
-              togglePhraseParticipantVisibility
+        {page === "performance-reader" ? (
+          <PerformanceReaderPage
+            performanceName={performanceName}
+            performanceDescription={performanceDescription}
+            performers={performers}
+            sequences={sequences}
+            isReadOnly={performanceShareRole === "read"}
+            onToggleSequencePerformerVisibility={
+              toggleSequencePerformerVisibility
             }
             onNavigate={setPage}
           />

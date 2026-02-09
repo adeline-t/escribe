@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { FaCheckSquare } from "react-icons/fa";
 import { FaCheck, FaPen } from "react-icons/fa6";
 
-export default function CombatDetails({
-  combatName,
-  combatDescription,
-  onCombatNameChange,
-  onCombatDescriptionChange,
+export default function PerformanceDetails({
+  performanceName,
+  performanceDescription,
+  onPerformanceNameChange,
+  onPerformanceDescriptionChange,
   isReadOnly,
   mode = "edit",
 }) {
@@ -18,9 +17,9 @@ export default function CombatDetails({
       <div className="card mb-3">
         <div className="row-between">
           <div>
-            <div className="title">{combatName}</div>
+            <div className="title">{performanceName}</div>
             <div className="subtitle text-muted">
-              {combatDescription || "Aucune description."}
+              {performanceDescription || "Aucune description."}
             </div>
           </div>
           {!readOnly ? (
@@ -44,9 +43,9 @@ export default function CombatDetails({
       <label className="col-span-2">
         Nom du combat
         <input
-          value={combatName}
+          value={performanceName}
           onChange={(event) =>
-            readOnly ? undefined : onCombatNameChange(event.target.value)
+            readOnly ? undefined : onPerformanceNameChange(event.target.value)
           }
           disabled={readOnly}
           readOnly={readOnly}
@@ -55,9 +54,9 @@ export default function CombatDetails({
       <label className="col-span-2">
         Description
         <input
-          value={combatDescription}
+          value={performanceDescription}
           onChange={(event) =>
-            readOnly ? undefined : onCombatDescriptionChange(event.target.value)
+            readOnly ? undefined : onPerformanceDescriptionChange(event.target.value)
           }
           disabled={readOnly}
           readOnly={readOnly}

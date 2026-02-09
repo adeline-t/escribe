@@ -1,4 +1,4 @@
-export default function CombatPageLayout({
+export default function PerformancePageLayout({
   title,
   subtitle,
   backLabel = "Retour à la liste",

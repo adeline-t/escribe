@@ -24,70 +24,120 @@ const CLASSIC_TYPE_MAP = {
   offensive: "offensive",
   action: "action",
   defensive: "defensive",
-  cible: "cible",
-  deplacement: "deplacement",
-  "parade-numero": "parade_numero",
-  "parade-attribut": "parade_attribut",
-  "attaque-attribut": "attaque_attribut"
+  cible: "target",
+  target: "target",
+  deplacement: "movement",
+  movement: "movement",
+  "parade-numero": "guard_number",
+  "guard-number": "guard_number",
+  "parade-attribut": "guard_attribute",
+  "guard-attribute": "guard_attribute",
+  "attaque-attribut": "attack_attribute",
+  "attack-attribute": "attack_attribute"
 };
 
 const CLASSIC_USER_TYPE_MAP = {
   offensive: "user_offensive",
   action: "user_action",
   defensive: "user_defensive",
-  cible: "user_cible",
-  deplacement: "user_deplacement",
-  "parade-numero": "user_parade_numero",
-  "parade-attribut": "user_parade_attribut",
-  "attaque-attribut": "user_attaque_attribut"
+  cible: "user_target",
+  target: "user_target",
+  deplacement: "user_movement",
+  movement: "user_movement",
+  "parade-numero": "user_guard_number",
+  "guard-number": "user_guard_number",
+  "parade-attribut": "user_guard_attribute",
+  "guard-attribute": "user_guard_attribute",
+  "attaque-attribut": "user_attack_attribute",
+  "attack-attribute": "user_attack_attribute"
 };
 
 const NEW_TYPE_MAP = {
   offensive: "nl_offensive",
   action: "nl_action",
   defensive: "nl_defensive",
-  cible: "nl_cible",
-  deplacement: "nl_deplacement",
-  deplacement_complement: "nl_deplacement_complement",
-  "parade-numero": "nl_parade_numero",
-  "parade-attribut": "nl_parade_attribut",
-  "attaque-attribut": "nl_attaque_attribut"
+  cible: "nl_target",
+  target: "nl_target",
+  deplacement: "nl_movement",
+  movement: "nl_movement",
+  deplacement_complement: "nl_movement_complement",
+  movement_complement: "nl_movement_complement",
+  "movement-complement": "nl_movement_complement",
+  "parade-numero": "nl_guard_number",
+  "guard-number": "nl_guard_number",
+  "parade-attribut": "nl_guard_attribute",
+  "guard-attribute": "nl_guard_attribute",
+  "attaque-attribut": "nl_attack_attribute",
+  "attack-attribute": "nl_attack_attribute"
 };
 
 const NEW_USER_TYPE_MAP = {
   offensive: "user_nl_offensive",
   action: "user_nl_action",
   defensive: "user_nl_defensive",
-  cible: "user_nl_cible",
-  deplacement: "user_nl_deplacement",
-  deplacement_complement: "user_nl_deplacement_complement",
-  "parade-numero": "user_nl_parade_numero",
-  "parade-attribut": "user_nl_parade_attribut",
-  "attaque-attribut": "user_nl_attaque_attribut"
+  cible: "user_nl_target",
+  target: "user_nl_target",
+  deplacement: "user_nl_movement",
+  movement: "user_nl_movement",
+  deplacement_complement: "user_nl_movement_complement",
+  movement_complement: "user_nl_movement_complement",
+  "movement-complement": "user_nl_movement_complement",
+  "parade-numero": "user_nl_guard_number",
+  "guard-number": "user_nl_guard_number",
+  "parade-attribut": "user_nl_guard_attribute",
+  "guard-attribute": "user_nl_guard_attribute",
+  "attaque-attribut": "user_nl_attack_attribute",
+  "attack-attribute": "user_nl_attack_attribute"
 };
 
 const SABRE_TYPE_MAP = {
-  armes: "sl_armes",
-  phases_choregraphie: "sl_phases_choregraphie",
-  cibles: "sl_cibles",
-  techniques_offensives: "sl_techniques_offensives",
-  attributs_offensifs: "sl_attributs_offensifs",
-  techniques_defensives: "sl_techniques_defensives",
-  attributs_defensifs: "sl_attributs_defensifs",
+  armes: "sl_weapons",
+  weapons: "sl_weapons",
+  phases_choregraphie: "sl_choreography_phases",
+  choreography_phases: "sl_choreography_phases",
+  "choreography-phases": "sl_choreography_phases",
+  cibles: "sl_targets",
+  targets: "sl_targets",
+  techniques_offensives: "sl_offensive_techniques",
+  offensive_techniques: "sl_offensive_techniques",
+  "offensive-techniques": "sl_offensive_techniques",
+  attributs_offensifs: "sl_offensive_attributes",
+  offensive_attributes: "sl_offensive_attributes",
+  "offensive-attributes": "sl_offensive_attributes",
+  techniques_defensives: "sl_defensive_techniques",
+  defensive_techniques: "sl_defensive_techniques",
+  "defensive-techniques": "sl_defensive_techniques",
+  attributs_defensifs: "sl_defensive_attributes",
+  defensive_attributes: "sl_defensive_attributes",
+  "defensive-attributes": "sl_defensive_attributes",
   preparations: "sl_preparations",
-  deplacements: "sl_deplacements"
+  deplacements: "sl_movements",
+  movements: "sl_movements"
 };
 
 const SABRE_USER_TYPE_MAP = {
-  armes: "user_sl_armes",
-  phases_choregraphie: "user_sl_phases_choregraphie",
-  cibles: "user_sl_cibles",
-  techniques_offensives: "user_sl_techniques_offensives",
-  attributs_offensifs: "user_sl_attributs_offensifs",
-  techniques_defensives: "user_sl_techniques_defensives",
-  attributs_defensifs: "user_sl_attributs_defensifs",
+  armes: "user_sl_weapons",
+  weapons: "user_sl_weapons",
+  phases_choregraphie: "user_sl_choreography_phases",
+  choreography_phases: "user_sl_choreography_phases",
+  "choreography-phases": "user_sl_choreography_phases",
+  cibles: "user_sl_targets",
+  targets: "user_sl_targets",
+  techniques_offensives: "user_sl_offensive_techniques",
+  offensive_techniques: "user_sl_offensive_techniques",
+  "offensive-techniques": "user_sl_offensive_techniques",
+  attributs_offensifs: "user_sl_offensive_attributes",
+  offensive_attributes: "user_sl_offensive_attributes",
+  "offensive-attributes": "user_sl_offensive_attributes",
+  techniques_defensives: "user_sl_defensive_techniques",
+  defensive_techniques: "user_sl_defensive_techniques",
+  "defensive-techniques": "user_sl_defensive_techniques",
+  attributs_defensifs: "user_sl_defensive_attributes",
+  defensive_attributes: "user_sl_defensive_attributes",
+  "defensive-attributes": "user_sl_defensive_attributes",
   preparations: "user_sl_preparations",
-  deplacements: "user_sl_deplacements"
+  deplacements: "user_sl_movements",
+  movements: "user_sl_movements"
 };
 
 const FAVORITE_TYPES = {

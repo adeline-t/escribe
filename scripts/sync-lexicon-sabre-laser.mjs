@@ -7,15 +7,15 @@ const workerPath = path.join(root, "backend", "worker", "src", "lexicon-sabre-la
 const sqlPath = path.join(root, "db", "lexicon-sabre-laser.sql");
 
 const mapTable = {
-  armes: "sl_armes",
-  phases_choregraphie: "sl_phases_choregraphie",
-  cibles: "sl_cibles",
-  techniques_offensives: "sl_techniques_offensives",
-  attributs_offensifs: "sl_attributs_offensifs",
-  techniques_defensives: "sl_techniques_defensives",
-  attributs_defensifs: "sl_attributs_defensifs",
+  armes: "sl_weapons",
+  phases_choregraphie: "sl_choreography_phases",
+  cibles: "sl_targets",
+  techniques_offensives: "sl_offensive_techniques",
+  attributs_offensifs: "sl_offensive_attributes",
+  techniques_defensives: "sl_defensive_techniques",
+  attributs_defensifs: "sl_defensive_attributes",
   preparations: "sl_preparations",
-  deplacements: "sl_deplacements"
+  deplacements: "sl_movements"
 };
 
 function sqlQuote(value) {

@@ -16,8 +16,8 @@ export function useDebouncedStateSave({
       clearTimeout(timerRef.current);
     }
 
-    // Centralise le debounce des sauvegardes d'état pour éviter
-    // les writes D1 trop fréquents à chaque frappe.
+    // Centralize state-save debounce to avoid
+    // overly frequent D1 writes on every keystroke.
     timerRef.current = setTimeout(() => {
       Promise.resolve(onSave(state))
         .then((result) => {

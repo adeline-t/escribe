@@ -9,37 +9,38 @@ import {
   FaUpRightFromSquare,
 } from "react-icons/fa6";
 
-export default function CombatRow({
-  combat,
+export default function PerformanceRow({
+  performance,
   isActive,
   formatDate,
-  onOpenCombat,
-  onReadCombat,
+  onOpenPerformance,
+  onReadPerformance,
   onRowOpen,
-  onExportCombat,
+  onExportPerformance,
   onShare,
   onDelete,
   isExporting = false,
 }) {
   const rowClass = `row-card row-grid-3 row-card--soft ${isActive ? "is-active" : ""}`;
-  const rowLabel = `Ouvrir ${combat.name}`;
+  const rowLabel = `Ouvrir ${performance.name}`;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const canWrite =
-    combat?.isOwner ||
-    combat?.shareRole === "write" ||
-    combat?.shareRole === "owner";
+    performance?.isOwner ||
+    performance?.shareRole === "write" ||
+    performance?.shareRole === "owner";
+  const performersCount = Number(performance?.performersCount ?? 0);
 
   function handleRowClick() {
     if (!onRowOpen) return;
-    onRowOpen(combat);
+    onRowOpen(performance);
   }
 
   function handleRowKeyDown(event) {
     if (!onRowOpen) return;
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
-      onRowOpen(combat);
+      onRowOpen(performance);
     }
   }
 
@@ -73,22 +74,23 @@ export default function CombatRow({
       onKeyDown={handleRowKeyDown}
     >
       <div className="combat-row-title">
-        <div className="meta combat-id">#{combat.id}</div>
+        <div className="meta combat-id">#{performance.id}</div>
         <div className="inline-center">
-          <div className="text-strong">{combat.name}</div>
-          {combat.hasLegacyLexicon ? (
+          <div className="text-strong">{performance.name}</div>
+          {performance.hasLegacyLexicon ? (
             <span className="chip chip--danger">Lexique obsolète</span>
           ) : null}
         </div>
       </div>
       <div className="combat-row-meta stack-1">
         <div className="meta">
-          {combat.participantsCount} combattant
-          {combat.participantsCount > 1 ? "s" : ""}
+          {performersCount} combattant
+          {performersCount > 1 ? "s" : ""}
         </div>
-        <div className="meta">{formatDate(combat.createdAt)}</div>
+        <div className="meta">{formatDate(performance.createdAt)}</div>
         <div className="meta">
-          {combat.phraseCount} phrase{combat.phraseCount > 1 ? "s" : ""}
+          {performance.sequenceCount} phrase
+          {performance.sequenceCount > 1 ? "s" : ""}
         </div>
       </div>
       <div className="align-end">
@@ -99,7 +101,7 @@ export default function CombatRow({
               className="chip icon-button"
               onClick={(event) => {
                 stopRowClick(event);
-                onOpenCombat(combat.id, combat.type);
+                onOpenPerformance(performance.id, performance.type);
               }}
               aria-label="Ouvrir le combat"
               title="Ouvrir"
@@ -112,7 +114,7 @@ export default function CombatRow({
             className="chip icon-button"
             onClick={(event) => {
               stopRowClick(event);
-              onReadCombat(combat.id);
+              onReadPerformance(performance.id);
             }}
             aria-label="Lire le combat"
             title="Lire"
@@ -124,7 +126,7 @@ export default function CombatRow({
             className="chip icon-button"
             onClick={(event) => {
               stopRowClick(event);
-              onExportCombat?.(combat);
+              onExportPerformance?.(performance);
             }}
             aria-label="Exporter le combat en PDF"
             title="Exporter PDF"
@@ -137,7 +139,7 @@ export default function CombatRow({
             className="chip icon-button"
             onClick={(event) => {
               stopRowClick(event);
-              onExportCombat?.(combat, { theme: "bw" });
+              onExportPerformance?.(performance, { theme: "bw" });
             }}
             aria-label="Exporter le combat en PDF noir et blanc"
             title="Exporter PDF N&B"
@@ -145,14 +147,14 @@ export default function CombatRow({
           >
             <FaPrint />
           </button>
-          {combat.isOwner ? (
+          {performance.isOwner ? (
             <>
               <button
                 type="button"
                 className="chip icon-button"
                 onClick={(event) => {
                   stopRowClick(event);
-                  onShare(combat);
+                  onShare(performance);
                 }}
                 aria-label="Partager le combat"
                 title="Partager"
@@ -164,7 +166,7 @@ export default function CombatRow({
                 className="icon-button button-danger"
                 onClick={(event) => {
                   stopRowClick(event);
-                  onDelete(combat);
+                  onDelete(performance);
                 }}
                 aria-label="Supprimer le combat"
                 title="Supprimer"
@@ -192,7 +194,7 @@ export default function CombatRow({
                   className="icon-button"
                   onClick={(event) => {
                     stopRowClick(event);
-                    onOpenCombat(combat.id, combat.type);
+                    onOpenPerformance(performance.id, performance.type);
                     setIsMenuOpen(false);
                   }}
                   aria-label="Ouvrir"
@@ -206,7 +208,7 @@ export default function CombatRow({
                 className="icon-button"
                 onClick={(event) => {
                   stopRowClick(event);
-                  onReadCombat(combat.id);
+                  onReadPerformance(performance.id);
                   setIsMenuOpen(false);
                 }}
                 aria-label="Lire"
@@ -219,7 +221,7 @@ export default function CombatRow({
                 className="icon-button"
                 onClick={(event) => {
                   stopRowClick(event);
-                  onExportCombat?.(combat);
+                  onExportPerformance?.(performance);
                   setIsMenuOpen(false);
                 }}
                 aria-label="Exporter PDF"
@@ -233,7 +235,7 @@ export default function CombatRow({
                 className="icon-button"
                 onClick={(event) => {
                   stopRowClick(event);
-                  onExportCombat?.(combat, { theme: "bw" });
+                  onExportPerformance?.(performance, { theme: "bw" });
                   setIsMenuOpen(false);
                 }}
                 aria-label="Exporter PDF N&B"
@@ -242,14 +244,14 @@ export default function CombatRow({
               >
                 <FaPrint />
               </button>
-              {combat.isOwner ? (
+              {performance.isOwner ? (
                 <>
                   <button
                     type="button"
                     className="icon-button"
                     onClick={(event) => {
                       stopRowClick(event);
-                      onShare(combat);
+                      onShare(performance);
                       setIsMenuOpen(false);
                     }}
                     aria-label="Partager"
@@ -262,7 +264,7 @@ export default function CombatRow({
                     className="icon-button button-danger"
                     onClick={(event) => {
                       stopRowClick(event);
-                      onDelete(combat);
+                      onDelete(performance);
                       setIsMenuOpen(false);
                     }}
                     aria-label="Supprimer"

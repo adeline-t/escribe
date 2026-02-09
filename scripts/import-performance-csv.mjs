@@ -3,7 +3,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 
 const docDir = path.resolve("doc");
-const outputFile = path.resolve("db/import-combats.sql");
+const outputFile = path.resolve("db/import-performances.sql");
 const lexiconFile = path.resolve("frontend/src/data/lexicon.json");
 
 const args = process.argv.slice(2);
@@ -95,7 +95,7 @@ function findHeaderRow(rows, startIndex) {
   return null;
 }
 
-function buildSteps(rows, startIndex, endIndex, groupStarts, groupIndices, globalParticipants, lexicon) {
+function buildSteps(rows, startIndex, endIndex, groupStarts, groupIndices, globalPerformers, lexicon) {
   const steps = [];
   for (let i = startIndex; i < endIndex; i += 1) {
     const row = rows[i] || [];
@@ -107,7 +107,7 @@ function buildSteps(rows, startIndex, endIndex, groupStarts, groupIndices, globa
     });
     if (!hasData) continue;
 
-    const participants = globalParticipants.map(() => ({
+    const performers = globalPerformers.map(() => ({
       mode: "combat",
       role: "none",
       offensive: "",
@@ -134,8 +134,8 @@ function buildSteps(rows, startIndex, endIndex, groupStarts, groupIndices, globa
       let pvar = (row[baseIndex + 5] || "").trim();
       let deplacement = (row[baseIndex + 6] || "").trim();
 
-      const participantIndex = groupIndices[groupIndex];
-      const item = { ...participants[participantIndex] };
+      const performerIndex = groupIndices[groupIndex];
+      const item = { ...performers[performerIndex] };
 
       const noteParts = [];
 
@@ -212,18 +212,18 @@ function buildSteps(rows, startIndex, endIndex, groupStarts, groupIndices, globa
         item.note = noteParts.join(" · ");
       }
 
-      participants[participantIndex] = item;
+      performers[performerIndex] = item;
     });
 
     steps.push({
       id: crypto.randomUUID(),
-      participants
+      performers
     });
   }
   return steps;
 }
 
-function parseCombat(filePath) {
+function parsePerformance(filePath) {
   const rows = readCsv(filePath);
   const lexicon = buildLexiconSets();
   const markers = [];
@@ -238,7 +238,7 @@ function parseCombat(filePath) {
   }
 
   const phrases = [];
-  const participantsGlobal = [];
+  const performersGlobal = [];
 
   markers.forEach((markerIndex, markerPos) => {
     const headerInfo = findHeaderRow(rows, markerIndex);
@@ -258,12 +258,12 @@ function parseCombat(filePath) {
     });
 
     groupNames.forEach((name) => {
-      if (!participantsGlobal.includes(name)) {
-        participantsGlobal.push(name);
+      if (!performersGlobal.includes(name)) {
+        performersGlobal.push(name);
       }
     });
 
-    const groupIndices = groupNames.map((name) => participantsGlobal.indexOf(name));
+    const groupIndices = groupNames.map((name) => performersGlobal.indexOf(name));
 
     const nextMarker = markers[markerPos + 1] ?? rows.length;
     const steps = buildSteps(
@@ -272,7 +272,7 @@ function parseCombat(filePath) {
       nextMarker,
       groupStarts,
       groupIndices,
-      participantsGlobal,
+      performersGlobal,
       lexicon
     );
 
@@ -284,12 +284,12 @@ function parseCombat(filePath) {
     });
   });
 
-  const participants = participantsGlobal.map((name) => ({ name, weapon: "" }));
+  const performers = performersGlobal.map((name) => ({ name, weapon: "" }));
 
   return {
     name: path.basename(filePath, path.extname(filePath)),
     description: "",
-    participants,
+    performers,
     phrases,
     type: "classic"
   };
@@ -299,50 +299,52 @@ function escapeSql(value) {
   return value.replace(/'/g, "''");
 }
 
-function buildSql(combats, userEmail) {
+function buildSql(performances, userEmail) {
   const now = new Date().toISOString();
   const lines = [];
   lines.push("-- Auto-generated import file");
   lines.push(`-- User email: ${userEmail}`);
   lines.push("");
 
-  combats.forEach((combat) => {
-    const name = escapeSql(combat.name);
-    const description = escapeSql(combat.description || "");
-    const participantsJson = escapeSql(JSON.stringify(combat.participants));
+  performances.forEach((performance) => {
+    const name = escapeSql(performance.name);
+    const description = escapeSql(performance.description || "");
+    const performersJson = escapeSql(
+      JSON.stringify(performance.performers ?? performance.participants ?? []),
+    );
 
-    lines.push(`-- Combat: ${combat.name}`);
+    lines.push(`-- Performance: ${performance.name}`);
     lines.push(
-      `DELETE FROM combat_phrases WHERE combat_id IN (SELECT id FROM combats WHERE user_id = (SELECT id FROM users WHERE email = '${escapeSql(
+      `DELETE FROM performance_sequences WHERE performance_id IN (SELECT id FROM performances WHERE user_id = (SELECT id FROM users WHERE email = '${escapeSql(
         userEmail
       )}') AND name = '${name}');`
     );
     lines.push(
-      `DELETE FROM combat_shares WHERE combat_id IN (SELECT id FROM combats WHERE user_id = (SELECT id FROM users WHERE email = '${escapeSql(
+      `DELETE FROM performance_shares WHERE performance_id IN (SELECT id FROM performances WHERE user_id = (SELECT id FROM users WHERE email = '${escapeSql(
         userEmail
       )}') AND name = '${name}');`
     );
     lines.push(
-      `DELETE FROM combats WHERE user_id = (SELECT id FROM users WHERE email = '${escapeSql(
+      `DELETE FROM performances WHERE user_id = (SELECT id FROM users WHERE email = '${escapeSql(
         userEmail
       )}') AND name = '${name}';`
     );
     lines.push(
-      `INSERT INTO combats (user_id, name, description, participants, draft, type, created_at, updated_at, archived)
+      `INSERT INTO performances (user_id, name, description, participants, form_draft, type, created_at, updated_at, archived)
        VALUES ((SELECT id FROM users WHERE email = '${escapeSql(
          userEmail
-       )}'), '${name}', '${description}', '${participantsJson}', NULL, '${combat.type}', '${now}', '${now}', 0);`
+       )}'), '${name}', '${description}', '${performersJson}', NULL, '${performance.type}', '${now}', '${now}', 0);`
     );
 
-    combat.phrases.forEach((phrase, index) => {
+    performance.phrases.forEach((phrase, index) => {
       const payload = escapeSql(JSON.stringify({
         id: phrase.id,
         name: phrase.name,
         steps: phrase.steps
       }));
       lines.push(
-        `INSERT INTO combat_phrases (combat_id, position, payload, created_at)
-         VALUES ((SELECT id FROM combats WHERE user_id = (SELECT id FROM users WHERE email = '${escapeSql(
+        `INSERT INTO performance_sequences (performance_id, position, payload, created_at)
+         VALUES ((SELECT id FROM performances WHERE user_id = (SELECT id FROM users WHERE email = '${escapeSql(
            userEmail
          )}') AND name = '${name}' ORDER BY id DESC LIMIT 1), ${index}, '${payload}', '${now}');`
       );
@@ -360,22 +362,27 @@ if (csvFiles.length === 0) {
   process.exit(1);
 }
 
-const combats = [];
+const performances = [];
 for (const file of csvFiles) {
-  const combat = parseCombat(path.join(docDir, file));
-  if (combat) combats.push(combat);
+  const performance = parsePerformance(path.join(docDir, file));
+  if (performance) performances.push(performance);
 }
 
-if (combats.length === 0) {
-  console.error("No combats parsed.");
+if (performances.length === 0) {
+  console.error("No performances parsed.");
   process.exit(1);
 }
 
-const sql = buildSql(combats, email);
+const sql = buildSql(performances, email);
 fs.writeFileSync(outputFile, sql, "utf-8");
 
 console.log(`Generated ${outputFile}`);
-combats.forEach((combat) => {
-  console.log(`- ${combat.name}: ${combat.participants.length} participants, ${combat.phrases.length} phrases`);
+performances.forEach((performance) => {
+  const performersCount = Array.isArray(performance.performers)
+    ? performance.performers.length
+    : Array.isArray(performance.participants)
+      ? performance.participants.length
+      : 0;
+  console.log(`- ${performance.name}: ${performersCount} performers, ${performance.phrases.length} phrases`);
 });
-console.log("Run: npx wrangler d1 execute <db> --file db/import-combats.sql --local/--remote");
+console.log("Run: npx wrangler d1 execute <db> --file db/import-performances.sql --local/--remote");

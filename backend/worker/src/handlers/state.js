@@ -10,11 +10,22 @@ export async function handleState(request, env) {
   }
   if (request.method === "GET") {
     const url = new URL(request.url);
-    const combatId = Number(url.searchParams.get("combatId"));
+    const performanceId = Number(url.searchParams.get("performanceId"));
     const typeParam = url.searchParams.get("type");
-    const combatType = typeParam === "sabre-laser" ? "sabre-laser" : typeParam === "classic" ? "classic" : null;
+    const performanceType =
+      typeParam === "sabre-laser"
+        ? "sabre-laser"
+        : typeParam === "classic"
+          ? "classic"
+          : null;
     const isSuperAdmin = requireRole(session, ["superadmin"]);
-    const state = await getState(env, session.user.id, Number.isFinite(combatId) ? combatId : null, combatType, isSuperAdmin);
+    const state = await getState(
+      env,
+      session.user.id,
+      Number.isFinite(performanceId) ? performanceId : null,
+      performanceType,
+      isSuperAdmin
+    );
     return jsonResponse({ state }, 200, corsHeaders);
   }
 
@@ -25,9 +36,9 @@ export async function handleState(request, env) {
       return jsonResponse({ error: "invalid_state" }, 400, corsHeaders);
     }
     const isSuperAdmin = requireRole(session, ["superadmin"]);
-    const combatId = await saveState(env, session.user.id, state, isSuperAdmin);
-    await logAudit(env, "state.save", session.user.id, combatId, {});
-    return jsonResponse({ ok: true, combatId }, 200, corsHeaders);
+    const performanceId = await saveState(env, session.user.id, state, isSuperAdmin);
+    await logAudit(env, "state.save", session.user.id, performanceId, {});
+    return jsonResponse({ ok: true, performanceId }, 200, corsHeaders);
   }
 
   return jsonResponse({ error: "method_not_allowed" }, 405, corsHeaders);

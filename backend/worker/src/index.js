@@ -5,7 +5,15 @@ import { handleLexicon, handleLexiconType, handleLexiconPersonal, handleLexiconF
 import { createRouter } from "./router.js";
 import { handleRegister, handleLogin, handleMe, handleProfile, handleChangePassword, handleLogout } from "./handlers/auth.js";
 import { handleUsersList, handleUserRole, handleUserPasswordReset, handleAudit } from "./handlers/users.js";
-import { handleCombats, handleCombat, handleCombatArchive, handleCombatDelete, handleCombatShares, handleShareUsers, handleShareUsersAll } from "./handlers/combats.js";
+import {
+  handlePerformances,
+  handlePerformance,
+  handlePerformanceArchive,
+  handlePerformanceDelete,
+  handlePerformanceShares,
+  handleShareUsers,
+  handleShareUsersAll,
+} from "./handlers/performances.js";
 import { handleVersion } from "./handlers/version.js";
 
 const router = createRouter();
@@ -34,17 +42,18 @@ router.add("GET", "/api/admin/users", handleUsersList);
 router.add("POST", "/api/admin/users/role", handleUserRole);
 router.add("POST", "/api/admin/users/password", handleUserPasswordReset);
 router.add("GET", "/api/admin/audit", handleAudit);
-router.add("GET", "/api/combats", handleCombats);
-router.add("POST", "/api/combats", handleCombats);
-router.add("GET", "/api/combats/:id", handleCombat);
-router.add("POST", "/api/combats/:id", handleCombat);
-router.add("POST", "/api/combats/:id/archive", handleCombatArchive);
-router.add("POST", "/api/combats/:id/delete", handleCombatDelete);
-router.add("GET", "/api/combats/:id/shares", handleCombatShares);
-router.add("POST", "/api/combats/:id/shares", handleCombatShares);
-router.add("DELETE", "/api/combats/:id/shares", handleCombatShares);
-router.add("GET", "/api/combats/share-users", handleShareUsers);
-router.add("GET", "/api/combats/share-users/all", handleShareUsersAll);
+// Primary domain routes.
+router.add("GET", "/api/performances", handlePerformances);
+router.add("POST", "/api/performances", handlePerformances);
+router.add("GET", "/api/performances/share-users", handleShareUsers);
+router.add("GET", "/api/performances/share-users/all", handleShareUsersAll);
+router.add("GET", "/api/performances/:id", handlePerformance);
+router.add("POST", "/api/performances/:id", handlePerformance);
+router.add("POST", "/api/performances/:id/archive", handlePerformanceArchive);
+router.add("POST", "/api/performances/:id/delete", handlePerformanceDelete);
+router.add("GET", "/api/performances/:id/shares", handlePerformanceShares);
+router.add("POST", "/api/performances/:id/shares", handlePerformanceShares);
+router.add("DELETE", "/api/performances/:id/shares", handlePerformanceShares);
 
 export default {
   async fetch(request, env) {

@@ -1,27 +1,29 @@
-export default function CombatParticipants({
-  participants,
-  buildParticipantLabel,
-  onParticipantCountChange,
-  onParticipantNameChange,
-  onParticipantWeaponChange,
-  participantWeaponOptions,
+export default function PerformancePerformers({
+  performers,
+  buildPerformerLabel,
+  onPerformerCountChange,
+  onPerformerNameChange,
+  onPerformerWeaponChange,
+  performerWeaponOptions,
   showWeapons,
   uiLabels,
   isReadOnly,
   mode = "edit",
 }) {
   const readOnly = mode === "read" || isReadOnly;
+  const performerList = Array.isArray(performers) ? performers : [];
+  const weaponOptions = performerWeaponOptions ?? [];
 
   return (
     <div className="form-grid">
       <label>
         Nombre de combattants
         {readOnly ? (
-          <input value={participants.length} readOnly />
+          <input value={performerList.length} readOnly />
         ) : (
           <select
-            value={participants.length}
-            onChange={(event) => onParticipantCountChange(event.target.value)}
+            value={performerList.length}
+            onChange={(event) => onPerformerCountChange?.(event.target.value)}
           >
             <option value={1}>1</option>
             <option value={2}>2</option>
@@ -31,19 +33,19 @@ export default function CombatParticipants({
         )}
       </label>
       <div className="stack-2 col-span-2">
-        {participants.map((participant, index) => (
+        {performerList.map((performer, index) => (
           <div key={index} className="stack-2">
             <label>
               {`Nom ${index + 1}`}
               <input
-                value={participant?.name ?? participant ?? ""}
+                value={performer?.name ?? performer ?? ""}
                 placeholder={
-                  readOnly ? undefined : buildParticipantLabel?.(index)
+                  readOnly ? undefined : buildPerformerLabel?.(index)
                 }
                 onChange={(event) =>
                   readOnly
                     ? undefined
-                    : onParticipantNameChange(index, event.target.value)
+                    : onPerformerNameChange?.(index, event.target.value)
                 }
                 readOnly={readOnly}
                 disabled={readOnly}
@@ -53,16 +55,16 @@ export default function CombatParticipants({
               <label>
                 {`${uiLabels.weapon} ${index + 1}`}
                 {readOnly ? (
-                  <input value={participant?.weapon ?? ""} readOnly />
+                  <input value={performer?.weapon ?? ""} readOnly />
                 ) : (
                   <select
-                    value={participant?.weapon ?? ""}
+                    value={performer?.weapon ?? ""}
                     onChange={(event) =>
-                      onParticipantWeaponChange?.(index, event.target.value)
+                      onPerformerWeaponChange?.(index, event.target.value)
                     }
                   >
                     <option value="">—</option>
-                    {participantWeaponOptions.map((weapon) => (
+                    {weaponOptions.map((weapon) => (
                       <option key={weapon} value={weapon}>
                         {weapon}
                       </option>

@@ -8,11 +8,11 @@ import {
 } from "@react-pdf/renderer";
 import {
   buildSummaryLine,
-  formatParticipantSummary,
-  getVisibleParticipantIndexes,
-  normalizeHiddenParticipantIndexes,
-} from "./participants.js";
-import { resolvePhraseName } from "../../../shared/phraseModel.js";
+  formatPerformerSummary,
+  getVisiblePerformerIndexes,
+  normalizeHiddenPerformerIndexes,
+} from "./performers.js";
+import { resolveSequenceName } from "../../../shared/sequenceModel.js";
 
 function sanitizeFileName(value) {
   return String(value ?? "")
@@ -24,7 +24,7 @@ function sanitizeFileName(value) {
 function getCardVariant(item) {
   if (!item) return "empty";
   if (item.mode === "note") return "neutral";
-  if (item.mode === "choregraphie") return "neutral";
+  if (item.mode === "choreography") return "neutral";
   if (item.role === "attack") return "action";
   if (item.role === "preparation") return "preparation";
   if (item.role === "defense") return "reaction";
@@ -99,10 +99,10 @@ function createStyles(theme) {
       lineHeight: 1.5,
       marginBottom: 4,
     },
-    participantsList: {
+    performersList: {
       marginTop: 8,
     },
-    participantItem: {
+    performerItem: {
       fontSize: 11,
       lineHeight: 1.5,
       marginBottom: 4,
@@ -144,11 +144,11 @@ function createStyles(theme) {
       color: palette.muted,
       alignSelf: "center",
     },
-    participantCell: {
+    performerCell: {
       flex: 1,
       paddingHorizontal: 3,
     },
-    participantLabel: {
+    performerLabel: {
       backgroundColor: palette.surfaceSoft,
       borderRadius: 8,
       paddingVertical: 4,
@@ -327,7 +327,7 @@ function createHelpers(styles) {
       return <Text style={styles.cardText}>{item.note || "à compléter"}</Text>;
     }
 
-    if (item.mode === "choregraphie") {
+    if (item.mode === "choreography") {
       return (
         <View style={styles.cardStack}>
           <Text style={styles.cardText}>chorégraphie</Text>
@@ -469,93 +469,95 @@ function createHelpers(styles) {
   return { renderCardContent };
 }
 
-function CombatDocument({ combat, theme }) {
+function PerformanceDocument({ performance, theme }) {
   const styles = createStyles(theme);
   const { renderCardContent } = createHelpers(styles);
-  const participants = Array.isArray(combat.participants)
-    ? combat.participants
+  const performers = Array.isArray(performance.performers)
+    ? performance.performers
     : [];
-  const phrases = Array.isArray(combat.phrases) ? combat.phrases : [];
-  const phraseCount = phrases.length;
-  const totalPasses = phrases.reduce(
-    (sum, phrase) => sum + (phrase.steps?.length ?? 0),
+  const sequences = Array.isArray(performance.sequences)
+    ? performance.sequences
+    : [];
+  const sequenceCount = sequences.length;
+  const totalPasses = sequences.reduce(
+    (sum, sequence) => sum + (sequence.steps?.length ?? 0),
     0,
   );
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <Text style={styles.title}>{combat.name || "Combat"}</Text>
-        {combat.description ? (
-          <Text style={styles.subtitle}>{combat.description}</Text>
+        <Text style={styles.title}>{performance.name || "Combat"}</Text>
+        {performance.description ? (
+          <Text style={styles.subtitle}>{performance.description}</Text>
         ) : null}
 
         <View style={styles.summaryBlock}>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryItem}>
-              {participants.length} participant
-              {participants.length > 1 ? "s" : ""}
+              {performers.length} performer
+              {performers.length > 1 ? "s" : ""}
             </Text>
             <Text style={styles.summaryItem}>
-              {phraseCount} phrase{phraseCount > 1 ? "s" : ""}
+              {sequenceCount} phrase{sequenceCount > 1 ? "s" : ""}
             </Text>
             <Text style={styles.summaryItem}>
               {totalPasses} passe{totalPasses > 1 ? "s" : ""}
             </Text>
           </View>
-          <View style={styles.participantsList}>
-            {participants.map((participant, index) => (
-              <Text key={index} style={styles.participantItem}>
-                • {formatParticipantSummary(participant, index)}
+          <View style={styles.performersList}>
+            {performers.map((performer, index) => (
+              <Text key={index} style={styles.performerItem}>
+                • {formatPerformerSummary(performer, index)}
               </Text>
             ))}
           </View>
         </View>
 
-        {phrases.map((phrase, phraseIndex) => {
-          const hiddenIndexes = normalizeHiddenParticipantIndexes(
-            phrase?.hiddenParticipantIndexes,
-            participants.length,
+        {sequences.map((sequence, sequenceIndex) => {
+          const hiddenIndexes = normalizeHiddenPerformerIndexes(
+            sequence?.hiddenPerformerIndexes,
+            performers.length,
           );
-          const visibleIndexes = getVisibleParticipantIndexes(
-            participants.length,
+          const visibleIndexes = getVisiblePerformerIndexes(
+            performers.length,
             hiddenIndexes,
           );
           const resolvedVisibleIndexes =
             visibleIndexes.length > 0
               ? visibleIndexes
-              : participants.length > 0
+              : performers.length > 0
                 ? [0]
                 : [];
 
           return (
             <View
-              key={phrase.id || phraseIndex}
+              key={sequence.id || sequenceIndex}
               style={styles.phraseBlock}
               minPresenceAhead={140}
             >
               <View style={styles.phraseHeaderBlock} wrap={false}>
                 <View style={styles.phraseHeader}>
                   <Text style={styles.phraseTitle}>
-                    {resolvePhraseName(phrase?.name, phraseIndex)}
+                    {resolveSequenceName(sequence?.name, sequenceIndex)}
                   </Text>
                   <Text style={styles.phraseMeta}>
-                    {phrase.steps?.length ?? 0} passe
-                    {(phrase.steps?.length ?? 0) > 1 ? "s" : ""}
+                    {sequence.steps?.length ?? 0} passe
+                    {(sequence.steps?.length ?? 0) > 1 ? "s" : ""}
                   </Text>
                 </View>
 
                 <View style={styles.gridHeader}>
                   <Text style={styles.indexCell}>#</Text>
-                  {resolvedVisibleIndexes.map((participantIndex) => (
+                  {resolvedVisibleIndexes.map((performerIndex) => (
                     <View
-                      key={participantIndex}
-                      style={styles.participantCell}
+                      key={performerIndex}
+                      style={styles.performerCell}
                     >
-                      <Text style={styles.participantLabel}>
-                        {formatParticipantSummary(
-                          participants[participantIndex],
-                          participantIndex,
+                      <Text style={styles.performerLabel}>
+                        {formatPerformerSummary(
+                          performers[performerIndex],
+                          performerIndex,
                         )}
                       </Text>
                     </View>
@@ -563,7 +565,7 @@ function CombatDocument({ combat, theme }) {
                 </View>
               </View>
 
-              {(phrase.steps || []).map((step, stepIndex) => (
+              {(sequence.steps || []).map((step, stepIndex) => (
                 <View
                   key={step.id || stepIndex}
                   style={styles.row}
@@ -571,9 +573,9 @@ function CombatDocument({ combat, theme }) {
                   minPresenceAhead={16}
                 >
                   <Text style={styles.indexCell}>{stepIndex + 1}</Text>
-                  {resolvedVisibleIndexes.map((participantIndex) => {
+                  {resolvedVisibleIndexes.map((performerIndex) => {
                     const item =
-                      step?.participants?.[participantIndex] ?? {};
+                      step?.performers?.[performerIndex] ?? {};
                     const variant = getCardVariant(item);
                     const cardStyle = {
                       ...styles.card,
@@ -589,8 +591,8 @@ function CombatDocument({ combat, theme }) {
                     };
                     return (
                       <View
-                        key={`${stepIndex}-${participantIndex}`}
-                        style={styles.participantCell}
+                        key={`${stepIndex}-${performerIndex}`}
+                        style={styles.performerCell}
                       >
                         <View style={cardStyle}>{renderCardContent(item)}</View>
                       </View>
@@ -606,12 +608,12 @@ function CombatDocument({ combat, theme }) {
   );
 }
 
-export async function exportCombatPdf(combat, options = {}) {
+export async function exportPerformancePdf(performance, options = {}) {
   const theme = options.theme === "bw" ? "bw" : "color";
-  const doc = <CombatDocument combat={combat} theme={theme} />;
+  const doc = <PerformanceDocument performance={performance} theme={theme} />;
   const blob = await pdf(doc).toBlob();
   const fileName = sanitizeFileName(
-    `${combat.name || "combat"} - ${new Date().toISOString().slice(0, 10)}.pdf`,
+    `${performance.name || "combat"} - ${new Date().toISOString().slice(0, 10)}.pdf`,
   );
   return { blob, fileName };
 }

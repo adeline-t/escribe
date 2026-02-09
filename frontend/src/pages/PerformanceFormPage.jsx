@@ -1,27 +1,27 @@
 import { useEffect, useState } from "react";
 import ConfirmDeleteModal from "../components/modals/ConfirmDeleteModal.jsx";
-import CombatPageLayout from "../components/combat/CombatPageLayout.jsx";
-import CombatColumns from "../components/combat/CombatColumns.jsx";
-import CombatDetails from "../components/combat/CombatDetails.jsx";
-import CombatStepForm from "../components/combat/CombatStepForm.jsx";
-import StepInlineEditorModal from "../components/combat/StepInlineEditorModal.jsx";
-import CombatLeftPanels from "../components/combat/CombatLeftPanels.jsx";
-import CombatRightPanels from "../components/combat/CombatRightPanels.jsx";
+import PerformancePageLayout from "../components/performance/PerformancePageLayout.jsx";
+import PerformanceColumns from "../components/performance/PerformanceColumns.jsx";
+import PerformanceDetails from "../components/performance/PerformanceDetails.jsx";
+import PerformanceStepForm from "../components/performance/PerformanceStepForm.jsx";
+import StepInlineEditorModal from "../components/performance/StepInlineEditorModal.jsx";
+import PerformanceLeftPanels from "../components/performance/PerformanceLeftPanels.jsx";
+import PerformanceRightPanels from "../components/performance/PerformanceRightPanels.jsx";
 import {
-  COMBAT_FAVORITE_TYPE_KEYS,
-  COMBAT_UI_LABELS,
-} from "../lib/combats.js";
+  PERFORMANCE_FAVORITE_TYPE_KEYS,
+  PERFORMANCE_UI_LABELS,
+} from "../lib/performances.js";
 
-export default function CombatFormPage({
-  participants,
+export default function PerformanceFormPage({
+  performers,
   form,
-  combatName,
-  combatDescription,
+  performanceName,
+  performanceDescription,
   stepsCount,
-  phrases,
-  activePhraseId,
-  activePhrase,
-  participantLabels,
+  sequences,
+  activeSequenceId,
+  activeSequence,
+  performerLabels,
   normalizedLexicon,
   lexiconByKey,
   favorites,
@@ -30,33 +30,33 @@ export default function CombatFormPage({
   labels,
   favoriteTypeKeys,
   showParadeNumber = true,
-  participantWeaponOptions,
+  performerWeaponOptions,
   phaseOptions,
   isReadOnly = false,
-  onParticipantCountChange,
-  onParticipantNameChange,
-  onParticipantWeaponChange,
+  onPerformerCountChange,
+  onPerformerNameChange,
+  onPerformerWeaponChange,
   onFormChange,
   onAddStep,
-  onCombatNameChange,
-  onCombatDescriptionChange,
-  onCreatePhrase,
-  onSelectPhrase,
-  onRenamePhrase,
-  onTogglePhraseParticipantVisibility,
-  onMovePhrase,
-  onMovePhraseToIndex,
-  onDeletePhrase,
+  onPerformanceNameChange,
+  onPerformanceDescriptionChange,
+  onCreateSequence,
+  onSelectSequence,
+  onRenameSequence,
+  onToggleSequencePerformerVisibility,
+  onMoveSequence,
+  onMoveSequenceToIndex,
+  onDeleteSequence,
   onEditStep,
   onRemoveStep,
   onCancelEditStep,
   editingStepId,
-  buildParticipantLabel,
+  buildPerformerLabel,
   buildSummaryLine,
   buildSummaryLines,
   toggleAttribute,
   onNavigate,
-  onUpdateStepParticipant,
+  onUpdateStepPerformer,
   onUpdateStepLexicon,
   onResetForm,
   insertStepIndex,
@@ -68,10 +68,10 @@ export default function CombatFormPage({
   onToggleDeletionMode,
   onDeleteStep,
 }) {
-  const [activeParticipantIndex, setActiveParticipantIndex] = useState(0);
+  const [activePerformerIndex, setActivePerformerIndex] = useState(0);
   const showWeapons =
-    Array.isArray(participantWeaponOptions) &&
-    participantWeaponOptions.length > 0;
+    Array.isArray(performerWeaponOptions) &&
+    performerWeaponOptions.length > 0;
   const showPhase = Array.isArray(phaseOptions) && phaseOptions.length > 0;
   const availableLexiconKeys = lexiconByKey ? Object.keys(lexiconByKey) : [];
   const activeLexiconKey = lexiconKey ?? availableLexiconKeys[0];
@@ -82,11 +82,11 @@ export default function CombatFormPage({
   const [inlineEdit, setInlineEdit] = useState(null);
   const [inlineItem, setInlineItem] = useState(null);
   const [inlineLexiconKey, setInlineLexiconKey] = useState(null);
-  const [pendingPhraseDelete, setPendingPhraseDelete] = useState(null);
-  const [pendingPhraseRename, setPendingPhraseRename] = useState(null);
+  const [pendingSequenceDelete, setPendingSequenceDelete] = useState(null);
+  const [pendingSequenceRename, setPendingSequenceRename] = useState(null);
   const [renameValue, setRenameValue] = useState("");
   const inlineStepIndex = inlineEdit
-    ? (activePhrase?.steps?.findIndex(
+    ? (activeSequence?.steps?.findIndex(
         (step) => step.id === inlineEdit.stepId,
       ) ?? -1)
     : -1;
@@ -104,16 +104,16 @@ export default function CombatFormPage({
       ? (lexiconByKey[inlineLexiconKey] ?? resolvedLexicon)
       : resolvedLexicon;
 
-  const uiLabels = { ...COMBAT_UI_LABELS, ...labels };
+  const uiLabels = { ...PERFORMANCE_UI_LABELS, ...labels };
 
-  const favoriteKeys = { ...COMBAT_FAVORITE_TYPE_KEYS, ...favoriteTypeKeys };
+  const favoriteKeys = { ...PERFORMANCE_FAVORITE_TYPE_KEYS, ...favoriteTypeKeys };
 
   useEffect(() => {
-    if (participants.length === 0) return;
-    if (activeParticipantIndex > participants.length - 1) {
-      setActiveParticipantIndex(participants.length - 1);
+    if (performers.length === 0) return;
+    if (activePerformerIndex > performers.length - 1) {
+      setActivePerformerIndex(performers.length - 1);
     }
-  }, [participants.length, activeParticipantIndex]);
+  }, [performers.length, activePerformerIndex]);
 
   function createOrderOptions(map) {
     return (list, typeKey) => {
@@ -131,22 +131,22 @@ export default function CombatFormPage({
   const orderOptions = createOrderOptions(favoriteMap);
   const inlineOrderOptions = createOrderOptions(inlineFavoriteMap);
 
-  const phraseIndex = activePhrase
-    ? phrases.findIndex((phrase) => phrase.id === activePhrase.id)
+  const sequenceIndex = activeSequence
+    ? sequences.findIndex((sequence) => sequence.id === activeSequence.id)
     : -1;
   const editingStepIndex = editingStepId
-    ? (activePhrase?.steps?.findIndex((step) => step.id === editingStepId) ??
+    ? (activeSequence?.steps?.findIndex((step) => step.id === editingStepId) ??
       -1)
     : -1;
-  const nextStepIndex = activePhrase?.steps?.length ?? -1;
+  const nextStepIndex = activeSequence?.steps?.length ?? -1;
 
-  function openInlineEditor(stepId, participantIndex, item) {
-    const step = activePhrase?.steps?.find((entry) => entry.id === stepId);
+  function openInlineEditor(stepId, performerIndex, item) {
+    const step = activeSequence?.steps?.find((entry) => entry.id === stepId);
     const stepKey =
       typeof step?.lexicon === "string"
         ? step.lexicon
         : (activeLexiconKey ?? "classic");
-    setInlineEdit({ stepId, participantIndex, lexiconKey: stepKey });
+    setInlineEdit({ stepId, performerIndex, lexiconKey: stepKey });
     setInlineLexiconKey(stepKey);
     setInlineItem({
       ...item,
@@ -167,10 +167,10 @@ export default function CombatFormPage({
   }
 
   function saveInlineEditor() {
-    if (!inlineEdit || !inlineItem || !onUpdateStepParticipant) return;
-    onUpdateStepParticipant(
+    if (!inlineEdit || !inlineItem || !onUpdateStepPerformer) return;
+    onUpdateStepPerformer(
       inlineEdit.stepId,
-      inlineEdit.participantIndex,
+      inlineEdit.performerIndex,
       inlineItem,
     );
     if (onUpdateStepLexicon && inlineLexiconKey) {
@@ -179,32 +179,32 @@ export default function CombatFormPage({
     closeInlineEditor();
   }
 
-  function openRenamePhraseModal(payload) {
+  function openRenameSequenceModal(payload) {
     if (!payload) return;
-    setPendingPhraseRename(payload);
+    setPendingSequenceRename(payload);
     setRenameValue(payload.name ?? "");
   }
 
-  function closeRenamePhraseModal() {
-    setPendingPhraseRename(null);
+  function closeRenameSequenceModal() {
+    setPendingSequenceRename(null);
   }
 
-  function submitRenamePhrase(event) {
+  function submitRenameSequence(event) {
     event?.preventDefault?.();
-    if (!pendingPhraseRename) return;
+    if (!pendingSequenceRename) return;
     const trimmed = renameValue.trim();
     if (!trimmed) return;
-    onRenamePhrase(pendingPhraseRename.id, trimmed);
-    closeRenamePhraseModal();
+    onRenameSequence(pendingSequenceRename.id, trimmed);
+    closeRenameSequenceModal();
   }
 
   const stepForm = (
-    <CombatStepForm
+    <PerformanceStepForm
       form={form}
-      participants={participants}
-      participantLabels={participantLabels}
-      activeParticipantIndex={activeParticipantIndex}
-      setActiveParticipantIndex={setActiveParticipantIndex}
+      performers={performers}
+      performerLabels={performerLabels}
+      activePerformerIndex={activePerformerIndex}
+      setActivePerformerIndex={setActivePerformerIndex}
       showPhase={showPhase}
       phaseOptions={phaseOptions}
       uiLabels={uiLabels}
@@ -228,53 +228,53 @@ export default function CombatFormPage({
 
   return (
     <>
-      <CombatPageLayout
+      <PerformancePageLayout
         title="Combat"
         subtitle="Édite les phrases et les passes."
-        onBack={() => onNavigate?.("combats")}
+        onBack={() => onNavigate?.("performances")}
       >
-        <CombatDetails
-          combatName={combatName}
-          combatDescription={combatDescription}
-          onCombatNameChange={onCombatNameChange}
-          onCombatDescriptionChange={onCombatDescriptionChange}
+        <PerformanceDetails
+          performanceName={performanceName}
+          performanceDescription={performanceDescription}
+          onPerformanceNameChange={onPerformanceNameChange}
+          onPerformanceDescriptionChange={onPerformanceDescriptionChange}
           isReadOnly={isReadOnly}
           mode={"edit"}
         />
-        <CombatColumns
+        <PerformanceColumns
           mode="edit"
           editLeft={
-            <CombatLeftPanels
+            <PerformanceLeftPanels
               mode="edit"
-              participants={participants}
-              buildParticipantLabel={buildParticipantLabel}
-              onParticipantCountChange={onParticipantCountChange}
-              onParticipantNameChange={onParticipantNameChange}
-              onParticipantWeaponChange={onParticipantWeaponChange}
-              participantWeaponOptions={participantWeaponOptions}
+              performers={performers}
+              buildPerformerLabel={buildPerformerLabel}
+              onPerformerCountChange={onPerformerCountChange}
+              onPerformerNameChange={onPerformerNameChange}
+              onPerformerWeaponChange={onPerformerWeaponChange}
+              performerWeaponOptions={performerWeaponOptions}
               showWeapons={showWeapons}
               uiLabels={uiLabels}
-              phrases={phrases}
-              activePhraseId={activePhraseId}
-              onCreatePhrase={onCreatePhrase}
-              onSelectPhrase={onSelectPhrase}
-              onMovePhrase={onMovePhrase}
-              onMovePhraseToIndex={onMovePhraseToIndex}
-              onRequestDeletePhrase={setPendingPhraseDelete}
-              onRequestRenamePhrase={openRenamePhraseModal}
+              sequences={sequences}
+              activeSequenceId={activeSequenceId}
+              onCreateSequence={onCreateSequence}
+              onSelectSequence={onSelectSequence}
+              onMoveSequence={onMoveSequence}
+              onMoveSequenceToIndex={onMoveSequenceToIndex}
+              onRequestDeleteSequence={setPendingSequenceDelete}
+              onRequestRenameSequence={openRenameSequenceModal}
               isReadOnly={isReadOnly}
             />
           }
           editRight={
-            <CombatRightPanels
+            <PerformanceRightPanels
               mode="edit"
               readingProps={{
-                activePhrase,
-                phrases,
-                participants,
-                participantLabels,
+                activeSequence,
+                sequences,
+                performers,
+                performerLabels,
                 onResetForm,
-                setActiveParticipantIndex,
+                setActivePerformerIndex,
                 isReadOnly,
                 onEditCard: openInlineEditor,
                 onInsertStep,
@@ -284,23 +284,23 @@ export default function CombatFormPage({
                 deletionMode,
                 onToggleDeletionMode,
                 onDeleteStep,
-                onSelectPhrase,
-                onRenamePhrase,
-                onTogglePhraseParticipantVisibility,
+                onSelectSequence,
+                onRenameSequence,
+                onToggleSequencePerformerVisibility,
               }}
               stepForm={stepForm}
               nextStepIndex={nextStepIndex}
-              phraseIndex={phraseIndex}
+              sequenceIndex={sequenceIndex}
               insertStepIndex={insertStepIndex}
             />
           }
         />
-      </CombatPageLayout>
+      </PerformancePageLayout>
       <StepInlineEditorModal
         isOpen={!!inlineEdit && !!inlineItem}
         inlineEdit={inlineEdit}
         inlineItem={inlineItem}
-        participantLabels={participantLabels}
+        performerLabels={performerLabels}
         inlineStepIndex={inlineStepIndex}
         showPhase={showPhase}
         phaseOptions={phaseOptions}
@@ -315,16 +315,16 @@ export default function CombatFormPage({
         onSave={saveInlineEditor}
         onUpdateInlineItem={updateInlineItem}
       />
-      {pendingPhraseRename ? (
+      {pendingSequenceRename ? (
         <div
           className="modal-backdrop"
           role="dialog"
           aria-modal="true"
-          onClick={closeRenamePhraseModal}
+          onClick={closeRenameSequenceModal}
         >
           <div className="modal" onClick={(event) => event.stopPropagation()}>
             <div className="kicker">Renommer la phrase</div>
-            <form className="stack-2" onSubmit={submitRenamePhrase}>
+            <form className="stack-2" onSubmit={submitRenameSequence}>
               <label>
                 Nom de la phrase
                 <input
@@ -337,7 +337,7 @@ export default function CombatFormPage({
                 <button
                   type="button"
                   className="button-secondary"
-                  onClick={closeRenamePhraseModal}
+                  onClick={closeRenameSequenceModal}
                 >
                   Annuler
                 </button>
@@ -350,18 +350,18 @@ export default function CombatFormPage({
         </div>
       ) : null}
       <ConfirmDeleteModal
-        isOpen={!!pendingPhraseDelete}
+        isOpen={!!pendingSequenceDelete}
         title="Supprimer la phrase"
         message={
-          pendingPhraseDelete
-            ? `Supprimer définitivement ${pendingPhraseDelete.name} ?`
+          pendingSequenceDelete
+            ? `Supprimer définitivement ${pendingSequenceDelete.name} ?`
             : ""
         }
-        onCancel={() => setPendingPhraseDelete(null)}
+        onCancel={() => setPendingSequenceDelete(null)}
         onConfirm={() => {
-          if (!pendingPhraseDelete) return;
-          onDeletePhrase(pendingPhraseDelete.id);
-          setPendingPhraseDelete(null);
+          if (!pendingSequenceDelete) return;
+          onDeleteSequence(pendingSequenceDelete.id);
+          setPendingSequenceDelete(null);
         }}
       />
     </>

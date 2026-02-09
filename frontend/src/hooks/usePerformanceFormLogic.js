@@ -57,8 +57,8 @@ const INLINE_INDEX = 0;
  * @property {string} label
  */
 
-// État UI local utilisé par les sélecteurs "constructeurs" (base + compléments).
-// Ce n'est pas stocké tel quel en base; il sert uniquement à piloter le formulaire.
+// Local UI state used by builder selectors (base + attributes).
+// It is not stored as-is in DB; it only drives form behavior.
 const EMPTY_BUILDER_SELECTION = {
   attackMove: "",
   defendMove: "",
@@ -192,7 +192,7 @@ function getV2Mode(item) {
   const actionDetails = getActionDetails(item);
   const hasPrepBits = actionDetails.some((detail) => detail.action);
   if (!hasAttackBits && (hasPrepBits || actionDetails.length > 0)) {
-    // Compat legacy: un ancien enregistrement peut ne pas avoir role=preparation.
+    // Legacy compatibility: old records may not define role=preparation.
     return "preparation";
   }
   return "attack";
@@ -251,8 +251,8 @@ function isGenericAttackMarker(value) {
 }
 
 /**
- * Normalise et mémorise toutes les options d'affichage du formulaire
- * (tri favoris + fallback de listes), communes à création et édition.
+ * Normalize and memoize all form option lists
+ * (favorite ordering + fallback values) shared by create and edit flows.
  *
  * @param {{
  *   normalizedLexicon: any,
@@ -274,8 +274,8 @@ function isGenericAttackMarker(value) {
  * }}
  */
 function useLexiconOptions({ normalizedLexicon, favoriteKeys, orderOptions }) {
-  // Toutes les listes d'options sont normalisées et ordonnées au même endroit,
-  // pour garantir le même comportement entre formulaire principal et édition inline.
+  // Normalize and order all option lists in one place
+  // to guarantee the same behavior in main form and inline editor.
   const offensiveOptions = useMemo(
     () =>
       orderOptions(normalizedLexicon.offensive ?? [], favoriteKeys.offensive),
@@ -290,7 +290,11 @@ function useLexiconOptions({ normalizedLexicon, favoriteKeys, orderOptions }) {
     [normalizedLexicon, favoriteKeys, orderOptions],
   );
   const targetOptions = useMemo(
-    () => orderOptions(normalizedLexicon.cible ?? [], favoriteKeys.target),
+    () =>
+      orderOptions(
+        normalizedLexicon.target ?? normalizedLexicon.cible ?? [],
+        favoriteKeys.target,
+      ),
     [normalizedLexicon, favoriteKeys, orderOptions],
   );
   const defensiveOptions = useMemo(
@@ -357,7 +361,7 @@ function useLexiconOptions({ normalizedLexicon, favoriteKeys, orderOptions }) {
  * Moteur métier commun, indépendant du contexte d'affichage.
  *
  * Le moteur ne sait pas s'il est utilisé en:
- * - création (multi participants), ou
+ * - création (multi performers), ou
  * - édition inline (single item).
  *
  * Ce comportement est injecté via les callbacks:
@@ -384,8 +388,8 @@ function useSharedCombatStepLogic({
   getBuilderSelection,
   patchBuilderSelection,
 }) {
-  // Core unique: toute la logique métier commune passe ici.
-  // Le contexte (multi participants ou inline) est injecté via les adaptateurs.
+  // Single core: all shared domain logic lives here.
+  // Context (multi-performer or inline) is injected through adapters.
   const options = useLexiconOptions({
     normalizedLexicon,
     favoriteKeys,
@@ -407,7 +411,7 @@ function useSharedCombatStepLogic({
    * Met à jour l'état local de sélection d'un bloc builder.
    */
   function updateBuilderSelection(index, patch) {
-    // Met à jour uniquement l'état UI temporaire des sélecteurs.
+    // Update only temporary UI state used by selector builders.
     patchBuilderSelection(index, patch);
   }
 
@@ -458,8 +462,8 @@ function useSharedCombatStepLogic({
    * Écrit defenseDetails et synchronise les champs racine legacy.
    */
   function updateDefenseDetails(index, nextDetails) {
-    // Défense legacy + v2: on garde les champs racine synchronisés avec defenseDetails[0]
-    // pour préserver la compatibilité de lecture/écriture existante.
+    // Legacy + v2 defense: keep root fields synchronized with defenseDetails[0]
+    // to preserve existing read/write compatibility.
     patchItem(index, {
       defenseDetails: nextDetails,
       defense: nextDetails[0]?.defense ?? "",
@@ -706,7 +710,7 @@ function useStepFormCore({
   favoriteKeys,
   orderOptions,
 }) {
-  // Un builderSelection par item affiché.
+  // One builderSelection per displayed item.
   const [builderSelections, setBuilderSelections] = useState(() =>
     Array.from({ length: itemCount }, createBuilderSelection),
   );
@@ -722,7 +726,7 @@ function useStepFormCore({
   }, [itemCount]);
 
   useEffect(() => {
-    // Reset explicite (ex: changement d'item inline à éditer).
+    // Explicit reset (for example when switching inline edited item).
     if (resetBuilderSelectionKey == null) return;
     setBuilderSelections(
       Array.from({ length: itemCount }, createBuilderSelection),
@@ -753,7 +757,7 @@ function useStepFormCore({
  * La logique est identique au sabre: seule la configuration d'options change.
  */
 export function useClassicCombatStepFormLogic(params) {
-  // Wrapper explicite: même core, API nommée selon le mode pour la lisibilité.
+  // Explicit wrapper: same core, mode-specific API naming for readability.
   return useCombatStepFormLogic(params);
 }
 
@@ -762,22 +766,22 @@ export function useClassicCombatStepFormLogic(params) {
  * La logique est identique au classique: seule la configuration d'options change.
  */
 export function useSabreCombatStepFormLogic(params) {
-  // Wrapper explicite: même core, API nommée selon le mode pour la lisibilité.
+  // Explicit wrapper: same core, mode-specific API naming for readability.
   return useCombatStepFormLogic(params);
 }
 
 /**
- * Hook "création/édition de passe" côté formulaire principal (multi participants).
+ * Hook "création/édition de passe" côté formulaire principal (multi performers).
  *
  * Particularités:
- * - expose `builderSelections[index]` pour chaque participant.
+ * - expose `builderSelections[index]` pour chaque performer.
  * - calcule `summaryLines` et `hasAnySummary` pour l'entête UI.
  *
  * @param {{
  *   form: StepItem[],
- *   participants: any[],
- *   participantLabels: string[],
- *   buildSummaryLine: (item: StepItem, participant: any, index: number) => string,
+ *   performers: any[],
+ *   performerLabels: string[],
+ *   buildSummaryLine: (item: StepItem, performer: any, index: number) => string,
  *   normalizedLexicon: any,
  *   favoriteKeys: any,
  *   orderOptions: (values: string[], key: string) => OptionItem[],
@@ -786,8 +790,8 @@ export function useSabreCombatStepFormLogic(params) {
  */
 function useCombatStepFormLogic({
   form,
-  participants,
-  participantLabels,
+  performers,
+  performerLabels,
   buildSummaryLine,
   normalizedLexicon,
   favoriteKeys,
@@ -795,7 +799,7 @@ function useCombatStepFormLogic({
   onFormChange,
 }) {
   const core = useStepFormCore({
-    itemCount: participants.length,
+    itemCount: performers.length,
     getItem: (index) => form[index],
     patchItem: (index, patch) => onFormChange(index, patch),
     resetBuilderSelectionKey: null,
@@ -807,10 +811,10 @@ function useCombatStepFormLogic({
   const summaryLines = useMemo(
     () =>
       form.map((item, index) => ({
-        name: participantLabels?.[index] ?? participants?.[index],
-        text: buildSummaryLine?.(item, participants?.[index], index),
+        name: performerLabels?.[index] ?? performers?.[index],
+        text: buildSummaryLine?.(item, performers?.[index], index),
       })),
-    [form, participantLabels, participants, buildSummaryLine],
+    [form, performerLabels, performers, buildSummaryLine],
   );
   const hasAnySummary = useMemo(
     () => summaryLines.some((line) => line.text && line.text !== "inactif"),
@@ -818,7 +822,7 @@ function useCombatStepFormLogic({
   );
 
   return {
-    // Alias explicite conservé pour les composants existants.
+    // Explicit alias kept for existing components.
     builderSelections: core.builderSelections,
     summaryLines,
     hasAnySummary,
@@ -830,7 +834,7 @@ function useCombatStepFormLogic({
  * Alias inline explicite côté UI "escrime classique".
  */
 export function useClassicInlineStepFormLogic(params) {
-  // Wrapper explicite: même core, API nommée selon le mode pour la lisibilité.
+  // Explicit wrapper: same core, mode-specific API naming for readability.
   return useInlineStepFormLogic(params);
 }
 
@@ -838,12 +842,12 @@ export function useClassicInlineStepFormLogic(params) {
  * Alias inline explicite côté UI "sabre laser".
  */
 export function useSabreInlineStepFormLogic(params) {
-  // Wrapper explicite: même core, API nommée selon le mode pour la lisibilité.
+  // Explicit wrapper: same core, mode-specific API naming for readability.
   return useInlineStepFormLogic(params);
 }
 
 /**
- * Hook "édition inline" (single participant / single item).
+ * Hook "édition inline" (single performer / single item).
  *
  * Particularités:
  * - adapte les API indexées du core vers des API directes.
@@ -852,7 +856,7 @@ export function useSabreInlineStepFormLogic(params) {
  *
  * @param {{
  *   inlineItem: StepItem,
- *   inlineEdit: {stepId?: string | number, participantIndex?: number} | null,
+ *   inlineEdit: {stepId?: string | number, performerIndex?: number} | null,
  *   normalizedLexicon: any,
  *   favoriteKeys: any,
  *   orderOptions: (values: string[], key: string) => OptionItem[],
@@ -871,7 +875,7 @@ function useInlineStepFormLogic({
     itemCount: 1,
     getItem: () => inlineItem,
     patchItem: (_, patch) => onUpdateInlineItem?.(patch),
-    resetBuilderSelectionKey: `${inlineEdit?.stepId ?? "step"}:${inlineEdit?.participantIndex ?? "participant"}`,
+    resetBuilderSelectionKey: `${inlineEdit?.stepId ?? "step"}:${inlineEdit?.performerIndex ?? "performer"}`,
     normalizedLexicon,
     favoriteKeys,
     orderOptions,
@@ -886,7 +890,7 @@ function useInlineStepFormLogic({
   const defenseType = core.resolveDefenseType(inlineItem, INLINE_INDEX);
   const builderSelection =
     core.builderSelections[INLINE_INDEX] ?? createBuilderSelection();
-  // Wrapper single-item pour aligner l'API avec StepInlineEditorModal.
+  // Single-item wrapper to align API with StepInlineEditorModal.
   const updateBuilderSelection = (patch) =>
     core.updateBuilderSelection(INLINE_INDEX, patch);
 
@@ -901,7 +905,7 @@ function useInlineStepFormLogic({
     getActionDetails,
     getDefenseDetails,
     getV2Mode,
-    // Adapte les APIs indexées du core vers des APIs "single item"
+    // Adapt indexed core APIs into "single item" APIs
     // attendues par StepInlineEditorModal.
     updateMoveBase: (key, base, baseOptions) =>
       core.updateMoveBase(INLINE_INDEX, key, base, baseOptions),

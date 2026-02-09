@@ -543,14 +543,14 @@ function buildParticipantItem(rawCols, maps) {
   return item;
 }
 
-function parseCsvToCombat(rows, maps, fileName) {
+function parseCsvToPerformance(rows, maps, fileName) {
   const markers = [];
   rows.forEach((row, idx) => {
     if (isPhraseMarker(row?.[0])) markers.push(idx);
   });
 
   const globalParticipants = [];
-  const phrases = [];
+  const sequences = [];
 
   markers.forEach((markerIndex, markerPos) => {
     const header = findHeaderRow(rows, markerIndex);
@@ -611,10 +611,10 @@ function parseCsvToCombat(rows, maps, fileName) {
 
     if (!steps.length) return;
 
-    phrases.push({
+    sequences.push({
       id: markerPos + 1,
-      combat_id: 0,
-      position: phrases.length,
+      performance_id: 0,
+      position: sequences.length,
       payload: {
         id: crypto.randomUUID(),
         name: formatPhraseName(rows[markerIndex]?.[0], markerPos),
@@ -644,14 +644,14 @@ function parseCsvToCombat(rows, maps, fileName) {
     noteOverrides: false,
   }));
 
-  const combatName = path.basename(fileName, path.extname(fileName));
+  const performanceName = path.basename(fileName, path.extname(fileName));
 
   return {
     exported_at: new Date().toISOString(),
     source: "csv-v2-mapped",
-    combat: {
+    performance: {
       id: 0,
-      name: combatName,
+      name: performanceName,
       description: "Import CSV vers lexique v2",
       participants,
       draft,
@@ -661,19 +661,19 @@ function parseCsvToCombat(rows, maps, fileName) {
       type: "classic",
       is_demo: 0,
     },
-    phrases,
+    sequences,
   };
 }
 
 const lexicon = JSON.parse(fs.readFileSync(lexiconFile, "utf-8"));
 const maps = buildLexiconHelpers(lexicon);
 const rows = readCsvRows(path.resolve(inputFile));
-const payload = parseCsvToCombat(rows, maps, inputFile);
+const payload = parseCsvToPerformance(rows, maps, inputFile);
 
 fs.mkdirSync(path.dirname(path.resolve(outputFile)), { recursive: true });
 fs.writeFileSync(path.resolve(outputFile), JSON.stringify(payload, null, 2), "utf-8");
 
 console.log(`Generated ${path.resolve(outputFile)}`);
 console.log(
-  `Participants: ${payload.combat.participants.length} | Phrases: ${payload.phrases.length} | Steps: ${payload.phrases.reduce((s, p) => s + (p.payload.steps?.length || 0), 0)}`,
+  `Participants: ${payload.performance.participants.length} | Sequences: ${payload.sequences.length} | Steps: ${payload.sequences.reduce((sum, sequence) => sum + (sequence.payload.steps?.length || 0), 0)}`,
 );

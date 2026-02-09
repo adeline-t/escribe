@@ -1,4 +1,4 @@
-export default function CombatColumns({
+export default function PerformanceColumns({
   mode,
   editLeft,
   editRight,

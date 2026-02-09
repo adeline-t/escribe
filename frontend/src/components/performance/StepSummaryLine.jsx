@@ -29,7 +29,7 @@ export default function StepSummaryLine({
       .join(" ");
   }
 
-  if (item.mode === "choregraphie") {
+  if (item.mode === "choreography") {
     return (
       <span>
         chorégraphie{" "}

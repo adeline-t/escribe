@@ -1,11 +1,11 @@
-function normalizeCombatType(type) {
+function normalizePerformanceType(type) {
   return type === "sabre-laser" ? "sabre-laser" : "classic";
 }
 
-export function createCombatService(client) {
+export function createPerformanceService(client) {
   return {
-    async listCombats({ archived = 0, type, signal } = {}) {
-      const path = client.withQuery("/api/combats", {
+    async listPerformances({ archived = 0, type, signal } = {}) {
+      const path = client.withQuery("/api/performances", {
         archived,
         type,
       });
@@ -13,14 +13,14 @@ export function createCombatService(client) {
       return {
         ok: response.ok,
         status: response.status,
-        combats: payload?.combats ?? [],
+        performances: payload?.performances ?? [],
         payload,
         response,
       };
     },
 
-    async getState({ combatId } = {}) {
-      const path = client.withQuery("/api/state", { combatId });
+    async getState({ performanceId } = {}) {
+      const path = client.withQuery("/api/state", { performanceId });
       const { response, payload } = await client.requestJson(path);
       return {
         ok: response.ok,
@@ -38,39 +38,41 @@ export function createCombatService(client) {
       });
       return {
         ok: response.ok,
-        combatId: payload?.combatId ?? null,
+        performanceId: payload?.performanceId ?? null,
         payload,
         response,
       };
     },
 
-    async createCombat(payload = {}) {
-      const participants = Array.isArray(payload.participants)
-        ? payload.participants
+    async createPerformance(payload = {}) {
+      const performers = Array.isArray(payload.performers)
+        ? payload.performers
         : [];
       const { response, payload: responsePayload } = await client.requestJson(
-        "/api/combats",
+        "/api/performances",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             name: payload?.name,
             description: payload?.description,
-            participants,
-            type: normalizeCombatType(payload?.type),
+            performers,
+            type: normalizePerformanceType(payload?.type),
           }),
         },
       );
       return {
         ok: response.ok,
-        combat: responsePayload?.combat ?? null,
+        performance: responsePayload?.performance ?? null,
         payload: responsePayload,
         response,
       };
     },
 
-    async getCombatById(id) {
-      const { response, payload } = await client.requestJson(`/api/combats/${id}`);
+    async getPerformanceById(id) {
+      const { response, payload } = await client.requestJson(
+        `/api/performances/${id}`
+      );
       return {
         ok: response.ok,
         state: payload?.state,
@@ -79,9 +81,9 @@ export function createCombatService(client) {
       };
     },
 
-    async deleteCombat(id) {
+    async deletePerformance(id) {
       const { response, payload } = await client.requestJson(
-        `/api/combats/${id}/delete`,
+        `/api/performances/${id}/delete`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -94,9 +96,9 @@ export function createCombatService(client) {
       };
     },
 
-    async getShares(combatId) {
+    async getShares(performanceId) {
       const { response, payload } = await client.requestJson(
-        `/api/combats/${combatId}/shares`,
+        `/api/performances/${performanceId}/shares`
       );
       return {
         ok: response.ok,
@@ -107,7 +109,7 @@ export function createCombatService(client) {
     },
 
     async searchShareUsers({ query, signal } = {}) {
-      const path = client.withQuery("/api/combats/share-users", {
+      const path = client.withQuery("/api/performances/share-users", {
         query,
       });
       const { response, payload } = await client.requestJson(path, { signal });
@@ -121,7 +123,7 @@ export function createCombatService(client) {
 
     async listShareUsers() {
       const { response, payload } = await client.requestJson(
-        "/api/combats/share-users/all",
+        "/api/performances/share-users/all",
       );
       return {
         ok: response.ok,
@@ -131,9 +133,9 @@ export function createCombatService(client) {
       };
     },
 
-    async addShare({ combatId, userId, role }) {
+    async addShare({ performanceId, userId, role }) {
       const { response, payload } = await client.requestJson(
-        `/api/combats/${combatId}/shares`,
+        `/api/performances/${performanceId}/shares`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -148,9 +150,9 @@ export function createCombatService(client) {
       };
     },
 
-    async removeShare({ combatId, userId }) {
+    async removeShare({ performanceId, userId }) {
       const { response, payload } = await client.requestJson(
-        `/api/combats/${combatId}/shares`,
+        `/api/performances/${performanceId}/shares`,
         {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },

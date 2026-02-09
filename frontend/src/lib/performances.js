@@ -1,4 +1,4 @@
-export const COMBAT_UI_LABELS = {
+export const PERFORMANCE_UI_LABELS = {
   offensive: "action",
   action: "action",
   attackAttribute: "attributs",
@@ -13,7 +13,7 @@ export const COMBAT_UI_LABELS = {
   weapon: "arme",
 };
 
-export const COMBAT_FAVORITE_TYPE_KEYS = {
+export const PERFORMANCE_FAVORITE_TYPE_KEYS = {
   offensive: "offensive",
   action: "action",
   attackAttribute: "attaque-attribut",
@@ -55,7 +55,7 @@ export const CLASSIC_LEXICON_OPTIONS = [
   { key: "classic-v2", label: "Lexique nouveau" },
 ];
 
-export const COMBAT_STEP_LABELS = {
+export const PERFORMANCE_STEP_LABELS = {
   summaryTitle: "Phrase résumée",
   chooseFighterAria: "Choisir un combattant",
   modeLabel: (name) => `mode de ${name}`,

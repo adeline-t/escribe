@@ -1,22 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
-import CombatRow from "../components/combat/CombatRow.jsx";
-import CombatShareModal from "../components/combat/CombatShareModal.jsx";
+import PerformanceRow from "../components/performance/PerformanceRow.jsx";
+import PerformanceShareModal from "../components/performance/PerformanceShareModal.jsx";
 import ConfirmDeleteModal from "../components/modals/ConfirmDeleteModal.jsx";
 import { useWorkerServices } from "../hooks/useWorkerServices.js";
 
-export default function CombatListPage({
+export default function PerformanceListPage({
   apiBase,
   authToken,
-  combatId,
-  combatType = null,
+  performanceId,
+  performanceType = null,
   title = "Mes combats",
   subtitle = "Crée et sélectionne des combats.",
   autoOpenCreate = false,
-  onSelectCombat,
-  onCreateCombat,
+  onSelectPerformance,
+  onCreatePerformance,
   onNavigate,
 }) {
-  const [combats, setCombats] = useState([]);
+  const [performances, setPerformances] = useState([]);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("recent");
   const [name, setName] = useState("");
@@ -25,7 +25,7 @@ export default function CombatListPage({
   const [status, setStatus] = useState("");
   const [accessDenied, setAccessDenied] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [shareCombat, setShareCombat] = useState(null);
+  const [sharePerformance, setSharePerformance] = useState(null);
   const [shareList, setShareList] = useState([]);
   const [shareQuery, setShareQuery] = useState("");
   const [shareUsers, setShareUsers] = useState([]);
@@ -34,9 +34,12 @@ export default function CombatListPage({
   const [shareError, setShareError] = useState("");
   const [shareLoading, setShareLoading] = useState(false);
   const [shareRole, setShareRole] = useState("read");
-  const [exportingCombatId, setExportingCombatId] = useState(null);
-  const [pendingCombatDelete, setPendingCombatDelete] = useState(null);
-  const { combats: combatService } = useWorkerServices(apiBase, authToken);
+  const [exportingPerformanceId, setExportingPerformanceId] = useState(null);
+  const [pendingPerformanceDelete, setPendingPerformanceDelete] = useState(null);
+  const { performances: performanceService } = useWorkerServices(
+    apiBase,
+    authToken,
+  );
 
   // ==================== UTILITY FUNCTIONS ====================
 
@@ -59,18 +62,18 @@ export default function CombatListPage({
 
   // ==================== DATA LOADING ====================
 
-  async function loadCombats(signal) {
-    const result = await combatService.listCombats({
+  async function loadPerformances(signal) {
+    const result = await performanceService.listPerformances({
       archived: 0,
-      type: combatType,
+      type: performanceType,
       signal,
     });
     if (result.ok) {
       setAccessDenied(false);
-      setCombats(result.combats ?? []);
+      setPerformances(result.performances ?? []);
     } else if (result.status === 401) {
       setAccessDenied(true);
-      setCombats([]);
+      setPerformances([]);
       setStatus("");
     }
   }
@@ -79,9 +82,9 @@ export default function CombatListPage({
 
   useEffect(() => {
     const controller = new AbortController();
-    loadCombats(controller.signal).catch(() => null);
+    loadPerformances(controller.signal).catch(() => null);
     return () => controller.abort();
-  }, [combatType, combatService]);
+  }, [performanceType, performanceService]);
 
   useEffect(() => {
     if (autoOpenCreate) {
@@ -90,13 +93,13 @@ export default function CombatListPage({
   }, [autoOpenCreate]);
 
   useEffect(() => {
-    if (!shareCombat || !shareQuery.trim()) {
+    if (!sharePerformance || !shareQuery.trim()) {
       setShareUsers([]);
       return;
     }
     const controller = new AbortController();
     const handle = setTimeout(() => {
-      combatService
+      performanceService
         .searchShareUsers({
           query: shareQuery.trim(),
           signal: controller.signal,
@@ -114,21 +117,23 @@ export default function CombatListPage({
       clearTimeout(handle);
       controller.abort();
     };
-  }, [shareCombat, shareQuery, combatService]);
+  }, [sharePerformance, shareQuery, performanceService]);
 
   useEffect(() => {
-    if (combatType) {
-      setDraftType(combatType);
+    if (performanceType) {
+      setDraftType(performanceType);
     }
-  }, [combatType]);
+  }, [performanceType]);
 
   // ==================== COMPUTED VALUES ====================
 
-  const filteredCombats = useMemo(() => {
+  const filteredPerformances = useMemo(() => {
     const query = search.trim().toLowerCase();
     const list = query
-      ? combats.filter((combat) => combat.name.toLowerCase().includes(query))
-      : combats;
+      ? performances.filter((performance) =>
+          performance.name.toLowerCase().includes(query),
+        )
+      : performances;
     const sorted = [...list];
     if (sort === "recent") {
       sorted.sort((a, b) =>
@@ -144,31 +149,33 @@ export default function CombatListPage({
       sorted.sort((a, b) => b.name.localeCompare(a.name, "fr"));
     }
     return sorted;
-  }, [combats, search, sort]);
+  }, [performances, search, sort]);
 
-  const groupedCombats = useMemo(() => {
-    if (combatType) {
+  const groupedPerformances = useMemo(() => {
+    if (performanceType) {
       return {
-        classic: filteredCombats,
+        classic: filteredPerformances,
         sabre: [],
         demo: [],
       };
     }
     return {
-      demo: filteredCombats.filter((combat) => combat.isDemo),
-      classic: filteredCombats.filter(
-        (combat) => !combat.isDemo && (combat.type ?? "classic") === "classic",
+      demo: filteredPerformances.filter((performance) => performance.isDemo),
+      classic: filteredPerformances.filter(
+        (performance) =>
+          !performance.isDemo && (performance.type ?? "classic") === "classic",
       ),
-      sabre: filteredCombats.filter(
-        (combat) =>
-          !combat.isDemo && (combat.type ?? "classic") === "sabre-laser",
+      sabre: filteredPerformances.filter(
+        (performance) =>
+          !performance.isDemo &&
+          (performance.type ?? "classic") === "sabre-laser",
       ),
     };
-  }, [filteredCombats, combatType]);
+  }, [filteredPerformances, performanceType]);
 
   // ==================== HANDLERS ====================
 
-  async function createCombat() {
+  async function createPerformance() {
     const trimmed = name.trim();
     if (!trimmed) {
       setStatus("Ajoute un nom pour créer le combat.");
@@ -176,62 +183,70 @@ export default function CombatListPage({
     }
     if (accessDenied) return;
     setStatus("");
-    const created = await onCreateCombat({
+    const created = await onCreatePerformance({
       name: trimmed,
       description,
       type: draftType,
     });
     if (created?.type && onNavigate) {
       setIsCreateOpen(false);
-      onNavigate(created.type === "sabre-laser" ? "create-sabre" : "create");
+      onNavigate(
+        created.type === "sabre-laser"
+          ? "performance-create-sabre"
+          : "performance-create",
+      );
       return;
     }
     setStatus("Création impossible.");
   }
 
-  async function openCombat(id, type) {
-    const resolvedType = (await onSelectCombat(id)) ?? type ?? combatType;
+  async function openPerformance(id, type) {
+    const resolvedType = (await onSelectPerformance(id)) ?? type ?? performanceType;
     if (resolvedType && onNavigate) {
-      onNavigate(resolvedType === "sabre-laser" ? "create-sabre" : "create");
+      onNavigate(
+        resolvedType === "sabre-laser"
+          ? "performance-create-sabre"
+          : "performance-create",
+      );
     }
   }
 
-  async function readCombat(id) {
-    const resolvedType = await onSelectCombat(id);
+  async function readPerformance(id) {
+    const resolvedType = await onSelectPerformance(id);
     if (resolvedType && onNavigate) {
-      onNavigate("overview");
+      onNavigate("performance-reader");
     }
   }
 
-  function openFromRow(combat) {
+  function openFromRow(performance) {
     const canWrite =
-      combat?.isOwner ||
-      combat?.shareRole === "write" ||
-      combat?.shareRole === "owner";
+      performance?.isOwner ||
+      performance?.shareRole === "write" ||
+      performance?.shareRole === "owner";
     if (canWrite) {
-      openCombat(combat.id, combat.type);
+      openPerformance(performance.id, performance.type);
     } else {
-      readCombat(combat.id);
+      readPerformance(performance.id);
     }
   }
 
-  async function exportCombatPdfFromRow(combat, options = {}) {
-    if (!combat || exportingCombatId) return;
-    setExportingCombatId(combat.id);
+  async function exportPerformancePdfFromRow(performance, options = {}) {
+    if (!performance || exportingPerformanceId) return;
+    setExportingPerformanceId(performance.id);
     try {
-      const result = await combatService.getCombatById(combat.id);
+      const result = await performanceService.getPerformanceById(performance.id);
       if (!result.ok || !result.state) {
         setStatus("Export PDF impossible.");
         return;
       }
       const state = result.state;
-      const { exportCombatPdf } = await import("../lib/combatPdf.jsx");
-      const { blob, fileName } = await exportCombatPdf(
+      const { exportPerformancePdf } = await import("../lib/performancePdf.jsx");
+      const { blob, fileName } = await exportPerformancePdf(
         {
-          name: state.combatName,
-          description: state.combatDescription,
-          participants: state.participants ?? [],
-          phrases: state.phrases ?? [],
+          name: state.performanceName,
+          description: state.performanceDescription,
+          performers: state.performers ?? [],
+          sequences: state.sequences ?? [],
         },
         options,
       );
@@ -244,49 +259,51 @@ export default function CombatListPage({
       link.remove();
       URL.revokeObjectURL(url);
     } finally {
-      setExportingCombatId(null);
+      setExportingPerformanceId(null);
     }
   }
 
-  function requestDeleteCombat(combatOrId) {
-    if (combatOrId && typeof combatOrId === "object") {
-      setPendingCombatDelete(combatOrId);
+  function requestDeletePerformance(performanceOrId) {
+    if (performanceOrId && typeof performanceOrId === "object") {
+      setPendingPerformanceDelete(performanceOrId);
       return;
     }
-    const numericId = Number(combatOrId);
+    const numericId = Number(performanceOrId);
     if (!Number.isFinite(numericId)) {
-      setPendingCombatDelete(null);
+      setPendingPerformanceDelete(null);
       setStatus("Suppression impossible: identifiant invalide.");
       return;
     }
-    const foundCombat = combats.find((combat) => Number(combat.id) === numericId);
-    setPendingCombatDelete(
-      foundCombat ?? {
+    const foundPerformance = performances.find(
+      (performance) => Number(performance.id) === numericId,
+    );
+    setPendingPerformanceDelete(
+      foundPerformance ?? {
         id: numericId,
         name: `#${numericId}`,
       },
     );
   }
 
-  function closeDeleteCombatModal() {
-    setPendingCombatDelete(null);
+  function closeDeletePerformanceModal() {
+    setPendingPerformanceDelete(null);
   }
 
-  async function confirmDeleteCombat() {
-    if (!pendingCombatDelete) return;
-    const id = Number(pendingCombatDelete.id);
+  async function confirmDeletePerformance() {
+    if (!pendingPerformanceDelete) return;
+    const id = Number(pendingPerformanceDelete.id);
     if (!Number.isFinite(id)) {
       setStatus("Suppression impossible: identifiant invalide.");
-      setPendingCombatDelete(null);
+      setPendingPerformanceDelete(null);
       return;
     }
-    await combatService.deleteCombat(id);
-    await loadCombats();
-    setPendingCombatDelete(null);
+    await performanceService.deletePerformance(id);
+    await loadPerformances();
+    setPendingPerformanceDelete(null);
   }
 
-  async function openShareModal(combat) {
-    setShareCombat(combat);
+  async function openShareModal(performance) {
+    setSharePerformance(performance);
     setShareError("");
     setShareQuery("");
     setShareUsers([]);
@@ -294,14 +311,14 @@ export default function CombatListPage({
     setShareSelectedUser("");
     setShareRole("read");
     setShareLoading(true);
-    const sharesResult = await combatService.getShares(combat.id);
+    const sharesResult = await performanceService.getShares(performance.id);
     if (!sharesResult.ok) {
       setShareError("Impossible de charger les partages.");
       setShareList([]);
     } else {
       setShareList(sharesResult.shares ?? []);
     }
-    const usersResult = await combatService.listShareUsers();
+    const usersResult = await performanceService.listShareUsers();
     if (usersResult.ok) {
       setShareAllUsers(usersResult.users ?? []);
     } else {
@@ -316,11 +333,11 @@ export default function CombatListPage({
   }
 
   async function addShare(userId) {
-    if (!shareCombat) return;
+    if (!sharePerformance) return;
     if (!userId) return;
     setShareError("");
-    const result = await combatService.addShare({
-      combatId: shareCombat.id,
+    const result = await performanceService.addShare({
+      performanceId: sharePerformance.id,
       userId,
       role: shareRole,
     });
@@ -335,9 +352,9 @@ export default function CombatListPage({
   }
 
   async function removeShare(userId) {
-    if (!shareCombat) return;
-    const result = await combatService.removeShare({
-      combatId: shareCombat.id,
+    if (!sharePerformance) return;
+    const result = await performanceService.removeShare({
+      performanceId: sharePerformance.id,
       userId,
     });
     if (!result.ok) {
@@ -349,28 +366,29 @@ export default function CombatListPage({
 
   // ==================== RENDER HELPERS ====================
 
-  function CombatSection({ title, combats }) {
+  function PerformanceSection({ title, performances: sectionPerformances }) {
     return (
       <>
         <div className="section-card">
           <div className="text-bold text-lg">{title}</div>
           <div className="meta">
-            {combats.length} combat{combats.length > 1 ? "s" : ""}
+            {sectionPerformances.length} combat
+            {sectionPerformances.length > 1 ? "s" : ""}
           </div>
         </div>
-        {combats.map((combat) => (
-          <CombatRow
-            key={combat.id}
-            combat={combat}
-            isActive={combat.id === combatId}
+        {sectionPerformances.map((performance) => (
+          <PerformanceRow
+            key={performance.id}
+            performance={performance}
+            isActive={performance.id === performanceId}
             formatDate={formatDate}
-            onOpenCombat={openCombat}
-            onReadCombat={readCombat}
+            onOpenPerformance={openPerformance}
+            onReadPerformance={readPerformance}
             onRowOpen={openFromRow}
-            onExportCombat={exportCombatPdfFromRow}
+            onExportPerformance={exportPerformancePdfFromRow}
             onShare={openShareModal}
-            onDelete={requestDeleteCombat}
-            isExporting={exportingCombatId === combat.id}
+            onDelete={requestDeletePerformance}
+            isExporting={exportingPerformanceId === performance.id}
           />
         ))}
       </>
@@ -380,7 +398,7 @@ export default function CombatListPage({
   // ==================== MAIN RENDER ====================
 
   const creationTypeLabel =
-    combatType === "sabre-laser" ? "sabre laser" : "escrime";
+    performanceType === "sabre-laser" ? "sabre laser" : "escrime";
 
   return (
     <section className="panel">
@@ -424,7 +442,7 @@ export default function CombatListPage({
         <div className="empty">
           <div className="text-strong">Accès indisponible.</div>
           <div className="text-sm text-muted">
-            Vous n'avez pas les droits pour voir les combats.
+            Vous n'avez pas les droits pour voir les performances.
           </div>
         </div>
       ) : (
@@ -445,9 +463,9 @@ export default function CombatListPage({
                 <h3 className="subtitle">Créer un combat</h3>
                 <p className="meta text-muted">
                   Saisis un nom pour démarrer le combat
-                  {combatType ? ` (${creationTypeLabel})` : ""}.
+                  {performanceType ? ` (${creationTypeLabel})` : ""}.
                 </p>
-                {!combatType && (
+                {!performanceType && (
                   <label>
                     Type de combat
                     <select
@@ -497,7 +515,7 @@ export default function CombatListPage({
                   >
                     Annuler
                   </button>
-                  <button type="button" onClick={createCombat}>
+                  <button type="button" onClick={createPerformance}>
                     Créer le combat
                   </button>
                 </div>
@@ -527,65 +545,65 @@ export default function CombatListPage({
             </div>
 
             <div className="stack-2">
-              {!combatType ? (
+              {!performanceType ? (
                 <>
-                  {groupedCombats.demo.length ? (
+                  {groupedPerformances.demo.length ? (
                     <details className="fold fold-combat" open>
                       <summary className="fold-kicker demo-fold-summary">
                         <span className="demo-fold-title">
                           <span className="text-bold text-lg">Démo</span>
                           <span className="meta text-muted">
-                            {groupedCombats.demo.length} combat
-                            {groupedCombats.demo.length > 1 ? "s" : ""}
+                            {groupedPerformances.demo.length} combat
+                            {groupedPerformances.demo.length > 1 ? "s" : ""}
                           </span>
                         </span>
                       </summary>
                       <div className="stack-2 stretch-rows">
-                        {groupedCombats.demo.map((combat) => (
-                          <CombatRow
-                            key={combat.id}
-                            combat={combat}
-                            isActive={combat.id === combatId}
+                        {groupedPerformances.demo.map((performance) => (
+                          <PerformanceRow
+                            key={performance.id}
+                            performance={performance}
+                            isActive={performance.id === performanceId}
                             formatDate={formatDate}
-                            onOpenCombat={openCombat}
-                            onReadCombat={readCombat}
+                            onOpenPerformance={openPerformance}
+                            onReadPerformance={readPerformance}
                             onRowOpen={openFromRow}
-                            onExportCombat={exportCombatPdfFromRow}
+                            onExportPerformance={exportPerformancePdfFromRow}
                             onShare={openShareModal}
-                            onDelete={requestDeleteCombat}
-                            isExporting={exportingCombatId === combat.id}
+                            onDelete={requestDeletePerformance}
+                            isExporting={exportingPerformanceId === performance.id}
                           />
                         ))}
                       </div>
                     </details>
                   ) : null}
-                  <CombatSection
+                  <PerformanceSection
                     title="Escrime"
-                    combats={groupedCombats.classic}
+                    performances={groupedPerformances.classic}
                   />
-                  <CombatSection
+                  <PerformanceSection
                     title="Sabre laser"
-                    combats={groupedCombats.sabre}
+                    performances={groupedPerformances.sabre}
                   />
                 </>
               ) : (
-                filteredCombats.map((combat) => (
-                  <CombatRow
-                    key={combat.id}
-                    combat={combat}
-                    isActive={combat.id === combatId}
+                filteredPerformances.map((performance) => (
+                  <PerformanceRow
+                    key={performance.id}
+                    performance={performance}
+                    isActive={performance.id === performanceId}
                     formatDate={formatDate}
-                    onOpenCombat={openCombat}
-                    onReadCombat={readCombat}
+                    onOpenPerformance={openPerformance}
+                    onReadPerformance={readPerformance}
                     onRowOpen={openFromRow}
-                    onExportCombat={exportCombatPdfFromRow}
+                    onExportPerformance={exportPerformancePdfFromRow}
                     onShare={openShareModal}
-                    onDelete={requestDeleteCombat}
-                    isExporting={exportingCombatId === combat.id}
+                    onDelete={requestDeletePerformance}
+                    isExporting={exportingPerformanceId === performance.id}
                   />
                 ))
               )}
-              {filteredCombats.length === 0 && (
+              {filteredPerformances.length === 0 && (
                 <div className="empty">
                   <div className="text-strong">Aucun combat.</div>
                   <div className="text-sm text-muted">
@@ -597,8 +615,8 @@ export default function CombatListPage({
           </div>
         </>
       )}
-      <CombatShareModal
-        combat={shareCombat}
+      <PerformanceShareModal
+        performance={sharePerformance}
         shareLoading={shareLoading}
         shareError={shareError}
         shareList={shareList}
@@ -607,7 +625,7 @@ export default function CombatListPage({
         shareAllUsers={shareAllUsers}
         shareQuery={shareQuery}
         shareUsers={shareUsers}
-        onClose={() => setShareCombat(null)}
+        onClose={() => setSharePerformance(null)}
         onRequestRemoveShare={removeShare}
         onRoleChange={setShareRole}
         onSelectedUserChange={setShareSelectedUser}
@@ -616,17 +634,17 @@ export default function CombatListPage({
         onQuickAddShare={addShare}
       />
       <ConfirmDeleteModal
-        isOpen={!!pendingCombatDelete}
+        isOpen={!!pendingPerformanceDelete}
         title="Supprimer le combat ?"
         message={
-          pendingCombatDelete
-            ? `Le combat "${pendingCombatDelete.name}" sera supprimé.`
+          pendingPerformanceDelete
+            ? `Le combat "${pendingPerformanceDelete.name}" sera supprimé.`
             : "Ce combat sera supprimé."
         }
         confirmLabel="Supprimer"
         cancelLabel="Annuler"
-        onConfirm={confirmDeleteCombat}
-        onCancel={closeDeleteCombatModal}
+        onConfirm={confirmDeletePerformance}
+        onCancel={closeDeletePerformanceModal}
       />
     </section>
   );

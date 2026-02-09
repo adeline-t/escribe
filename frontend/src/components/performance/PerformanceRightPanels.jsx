@@ -1,11 +1,11 @@
-import CombatReading from "./CombatReading.jsx";
+import PerformanceReading from "./PerformanceReading.jsx";
 
-export default function CombatRightPanels({
+export default function PerformanceRightPanels({
   mode = "edit",
   readingProps,
   stepForm,
   nextStepIndex,
-  phraseIndex,
+  sequenceIndex,
   insertStepIndex,
 }) {
   const isReadMode = mode === "read";
@@ -16,7 +16,7 @@ export default function CombatRightPanels({
         <div className="fold-kicker fold-kicker-row">
           {readingProps?.onToggleInsertionMode ? null : null}
         </div>
-        <CombatReading mode={mode} {...readingProps} />
+        <PerformanceReading mode={mode} {...readingProps} />
       </div>
       {!isReadMode ? (
         <div className="fold">
@@ -24,7 +24,7 @@ export default function CombatRightPanels({
             <div className="header-with-badge">
               <div
                 className={`kicker ${
-                  phraseIndex === 0 && nextStepIndex === 0 ? "kicker-alert" : ""
+                  sequenceIndex === 0 && nextStepIndex === 0 ? "kicker-alert" : ""
                 }`}
               >
                 Ajout nouvelle passe
@@ -41,13 +41,13 @@ export default function CombatRightPanels({
                 </span>{" "}
                 de la phrase
                 <span className="badge">
-                  #{phraseIndex >= 0 ? phraseIndex + 1 : "—"}
+                  #{sequenceIndex >= 0 ? sequenceIndex + 1 : "—"}
                 </span>
               </div>
             </div>
           </div>
           <div
-            className={`step-form-panel ${phraseIndex === 0 && nextStepIndex === 0 ? "step-form-panel--accent" : ""}`}
+            className={`step-form-panel ${sequenceIndex === 0 && nextStepIndex === 0 ? "step-form-panel--accent" : ""}`}
           >
             {stepForm}
           </div>

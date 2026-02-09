@@ -1,14 +1,14 @@
-import { DEFAULT_COMBAT_NAME } from "../../../shared/combatModel.js";
+import { DEFAULT_PERFORMANCE_NAME } from "../../../shared/performanceModel.js";
 
 export default function HomePage({
   authUser,
-  combatName,
-  combatDescription,
-  combatId,
+  performanceName,
+  performanceDescription,
+  performanceId,
   stepsCount,
-  participantsCount,
+  performersCount,
   onNavigate,
-  onOpenCombat,
+  onOpenPerformance,
 }) {
   const name =
     authUser.firstName || authUser.lastName
@@ -26,8 +26,8 @@ export default function HomePage({
           <p className="lead">
             Bonjour {name} ! Prêt·e à écrire la prochaine passe ?
           </p>
-          {combatDescription ? (
-            <div className="meta text-muted">{combatDescription}</div>
+          {performanceDescription ? (
+            <div className="meta text-muted">{performanceDescription}</div>
           ) : null}
         </div>
       </div>
@@ -103,15 +103,15 @@ export default function HomePage({
       <div className="grid-auto-sm">
         <div className="card card--highlight stack-2">
           <h3 className="subtitle text-accent">Dernier combat</h3>
-          <p className="meta text-muted">{combatName || DEFAULT_COMBAT_NAME}</p>
-          {combatDescription ? (
-            <p className="meta text-muted">{combatDescription}</p>
+          <p className="meta text-muted">{performanceName || DEFAULT_PERFORMANCE_NAME}</p>
+          {performanceDescription ? (
+            <p className="meta text-muted">{performanceDescription}</p>
           ) : null}
           <button
             type="button"
             className="button-light"
-            onClick={() => onOpenCombat?.(combatId)}
-            disabled={!combatId}
+            onClick={() => onOpenPerformance?.(performanceId)}
+            disabled={!performanceId}
           >
             Ouvrir le dernier combat
           </button>
@@ -121,7 +121,7 @@ export default function HomePage({
           <p className="meta text-muted">
             Commencez un nouveau combat pour y ajouter vos phrases d'armes.
           </p>
-          <button type="button" onClick={() => onNavigate("combats-new")}>
+          <button type="button" onClick={() => onNavigate("performances-new")}>
             Créer un combat
           </button>
         </div>
@@ -130,7 +130,7 @@ export default function HomePage({
           <p className="meta text-muted">
             Créez, sélectionnez et archivez vos combats.
           </p>
-          <button type="button" onClick={() => onNavigate("combats")}>
+          <button type="button" onClick={() => onNavigate("performances")}>
             Gérer les combats
           </button>
         </div>

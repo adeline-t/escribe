@@ -1,8 +1,8 @@
 import lexiconJson from "../data/lexicon.json";
 import sabreLexiconJson from "../data/lexicon-sabre-laser.json";
-import { createDefaultParticipants } from "../../../shared/combatModel.js";
+import { createDefaultPerformancePerformers } from "../../../shared/performanceModel.js";
 
-export const DEFAULT_PARTICIPANTS = createDefaultParticipants();
+export const DEFAULT_PERFORMERS = createDefaultPerformancePerformers();
 
 export const LEXICON_TYPES = [
   { key: "offensive", label: "actions d'attaque" },
@@ -39,8 +39,8 @@ export const SABRE_LEXICON_TYPES = [
   { key: "deplacements", label: "Déplacements" },
 ];
 
-// Ordre d'affichage des catégories dans l'atelier de lexique.
-// Tu peux modifier cet ordre "en dur" ici.
+// Display order for lexicon categories in the lexicon page.
+// Update this hard-coded order here when needed.
 export const LEXICON_CATEGORY_ORDER = {
   classic: [
     "offensive",
@@ -97,11 +97,14 @@ export function getLexiconTypesForMode(lexiconKey) {
 }
 
 export function normalizeLexicon(data) {
+  const target = data.target ?? data.cible ?? [];
   return {
     offensive: data.offensive ?? [],
     action: data.action ?? [],
     defensive: data.defensive ?? [],
-    cible: data.cible ?? [],
+    target,
+    // Backward compatibility for existing form logic.
+    cible: target,
     attackMove:
       data.deplacement ??
       data.deplacements ??
@@ -125,11 +128,14 @@ export const DEFAULT_LEXICON = lexiconJson;
 export const DEFAULT_SABRE_LEXICON = sabreLexiconJson;
 
 export function normalizeSabreLexicon(data) {
+  const target = data.targets ?? data.cibles ?? [];
   return {
     offensive: data.techniques_offensives ?? [],
     action: data.preparations ?? [],
     defensive: data.techniques_defensives ?? [],
-    cible: data.cibles ?? [],
+    target,
+    // Backward compatibility for existing form logic.
+    cible: target,
     attackMove: data.deplacements ?? [],
     defendMove: data.deplacements ?? [],
     paradeNumber: [],
@@ -157,7 +163,7 @@ function mergeUnique(...lists) {
   return out;
 }
 
-function normalizeTokenForMatch(value) {
+function normalizeTokenForLookup(value) {
   return String(value ?? "")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -180,16 +186,16 @@ function splitFlatV2Movement(data) {
   const hasExplicitSplit =
     providedBase.length > 0 || providedComplement.length > 0;
 
-  const baseLookup = new Set(providedBase.map(normalizeTokenForMatch));
+  const baseLookup = new Set(providedBase.map(normalizeTokenForLookup));
   const complementLookup = new Set(
-    providedComplement.map(normalizeTokenForMatch),
+    providedComplement.map(normalizeTokenForLookup),
   );
 
   const base = [];
   const complement = [];
 
   for (const value of movementFromApi) {
-    const key = normalizeTokenForMatch(value);
+    const key = normalizeTokenForLookup(value);
     if (complementLookup.has(key) && !baseLookup.has(key)) {
       complement.push(value);
       continue;
@@ -198,7 +204,7 @@ function splitFlatV2Movement(data) {
       base.push(value);
       continue;
     }
-    // Sans split explicite venant de l'API, on garde la valeur en base.
+    // Without an explicit split from the API, keep the value as a base movement.
     base.push(value);
   }
 
@@ -220,9 +226,9 @@ export function normalizeNewLexicon(data) {
   const actions = data?.actions_escrime ?? null;
   const mouvement = data?.mouvement ?? null;
 
-  // Compat API DB: les données classic-v2 exposées par le backend sont plates
-  // (offensive/action/defensive/...) et non imbriquées (actions_escrime/mouvement).
-  // On supporte les 2 formats pour éviter des formulaires vides.
+  // API/DB compatibility: backend classic-v2 can be flat
+  // (offensive/action/defensive/...) instead of nested (actions_escrime/mouvement).
+  // Support both to prevent empty form fields.
   if (!actions || !mouvement) {
     const { attackMoveBase, attackMoveComplement, attackMove } =
       splitFlatV2Movement(data);
@@ -231,7 +237,9 @@ export function normalizeNewLexicon(data) {
       offensive: mergeUnique(data?.offensive),
       action,
       defensive: mergeUnique(data?.defensive),
-      cible: mergeUnique(data?.cible),
+      target: mergeUnique(data?.target, data?.cible),
+      // Backward compatibility for existing form logic.
+      cible: mergeUnique(data?.target, data?.cible),
       attackMove,
       defendMove: attackMove,
       attackMoveBase,
@@ -269,7 +277,9 @@ export function normalizeNewLexicon(data) {
     offensive: mergeUnique(offensives.attaques),
     action,
     defensive: mergeUnique(defensives.esquive),
-    cible: mergeUnique(mouvement.cible),
+    target: mergeUnique(mouvement.target, mouvement.cible),
+    // Backward compatibility for existing form logic.
+    cible: mergeUnique(mouvement.target, mouvement.cible),
     attackMove,
     defendMove: attackMove,
     attackMoveBase,

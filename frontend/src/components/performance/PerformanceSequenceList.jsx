@@ -1,34 +1,34 @@
 import { useEffect, useRef, useState } from "react";
-import { FaEllipsis, FaPen, FaPlus } from "react-icons/fa6";
-import { resolvePhraseName } from "../../../../shared/phraseModel.js";
+import { FaEllipsis, FaPlus } from "react-icons/fa6";
+import { resolveSequenceName } from "../../../../shared/sequenceModel.js";
 
-export default function CombatPhraseList({
-  phrases,
-  activePhraseId,
-  onCreatePhrase,
-  onSelectPhrase,
-  onMovePhrase,
-  onMovePhraseToIndex,
-  onRequestDeletePhrase,
-  onRequestRenamePhrase,
+export default function PerformanceSequenceList({
+  sequences,
+  activeSequenceId,
+  onCreateSequence,
+  onSelectSequence,
+  onMoveSequence,
+  onMoveSequenceToIndex,
+  onRequestDeleteSequence,
+  onRequestRenameSequence,
   mode = "edit",
 }) {
   const readOnly = mode === "read";
   const [openMenuId, setOpenMenuId] = useState(null);
   const menuRef = useRef(null);
 
-  function handleDragStart(event, phraseId) {
+  function handleDragStart(event, sequenceId) {
     if (readOnly) return;
-    event.dataTransfer.setData("text/plain", phraseId);
+    event.dataTransfer.setData("text/plain", sequenceId);
     event.dataTransfer.effectAllowed = "move";
   }
 
   function handleDrop(event, targetIndex) {
     if (readOnly) return;
     event.preventDefault();
-    const phraseId = event.dataTransfer.getData("text/plain");
-    if (!phraseId) return;
-    onMovePhraseToIndex(phraseId, targetIndex);
+    const sequenceId = event.dataTransfer.getData("text/plain");
+    if (!sequenceId) return;
+    onMoveSequenceToIndex(sequenceId, targetIndex);
   }
 
   function handleDragOver(event) {
@@ -37,8 +37,8 @@ export default function CombatPhraseList({
     event.dataTransfer.dropEffect = "move";
   }
 
-  function toggleMenu(phraseId) {
-    setOpenMenuId((prev) => (prev === phraseId ? null : phraseId));
+  function toggleMenu(sequenceId) {
+    setOpenMenuId((prev) => (prev === sequenceId ? null : sequenceId));
   }
 
   function closeMenu() {
@@ -75,7 +75,7 @@ export default function CombatPhraseList({
           <button
             type="button"
             className="button-icon button-secondary"
-            onClick={onCreatePhrase}
+            onClick={onCreateSequence}
             aria-label="Ajouter une phrase"
             title="Ajouter une phrase"
           >
@@ -84,7 +84,7 @@ export default function CombatPhraseList({
         </div>
       ) : null}
       <div className="stack-2">
-        {phrases.length === 0 ? (
+        {sequences.length === 0 ? (
           <div className="empty">
             <div className="text-strong">Aucune phrase.</div>
             <div className="text-sm text-muted">
@@ -94,35 +94,35 @@ export default function CombatPhraseList({
             </div>
           </div>
         ) : (
-          phrases.map((phrase, index) => {
-            const phraseName = resolvePhraseName(phrase?.name, index);
+          sequences.map((sequence, index) => {
+            const sequenceName = resolveSequenceName(sequence?.name, index);
             return (
               <div
-              key={phrase.id}
-              className={`row-card row-card--soft row-grid-2 ${phrase.id === activePhraseId ? "is-active" : ""}`}
-              draggable={!readOnly}
-              onDragStart={(event) => handleDragStart(event, phrase.id)}
-              onDragOver={handleDragOver}
-              onClick={() => onSelectPhrase(phrase.id)}
-              onDrop={(event) => handleDrop(event, index)}
-            >
+                key={sequence.id}
+                className={`row-card row-card--soft row-grid-2 ${sequence.id === activeSequenceId ? "is-active" : ""}`}
+                draggable={!readOnly}
+                onDragStart={(event) => handleDragStart(event, sequence.id)}
+                onDragOver={handleDragOver}
+                onClick={() => onSelectSequence(sequence.id)}
+                onDrop={(event) => handleDrop(event, index)}
+              >
               {readOnly ? (
                 <div className="row">
-                  <div className="text-strong">{phraseName}</div>
+                  <div className="text-strong">{sequenceName}</div>
                   <div className="meta">
-                    {phrase.steps?.length ?? 0} passe
-                    {(phrase.steps?.length ?? 0) > 1 ? "s" : ""}
+                    {sequence.steps?.length ?? 0} passe
+                    {(sequence.steps?.length ?? 0) > 1 ? "s" : ""}
                   </div>
                 </div>
               ) : (
                 <>
                   <div className="row">
                     <div className="text-md">
-                      {phraseName}
+                      {sequenceName}
                       {" • "}
                       <span className="meta">
-                        {phrase.steps.length} passe
-                        {phrase.steps.length > 1 ? "s" : ""}
+                        {sequence.steps.length} passe
+                        {sequence.steps.length > 1 ? "s" : ""}
                       </span>
                     </div>
                   </div>
@@ -130,34 +130,34 @@ export default function CombatPhraseList({
                     <button
                       type="button"
                       className="button-icon button-secondary"
-                      onClick={() => toggleMenu(phrase.id)}
+                      onClick={() => toggleMenu(sequence.id)}
                       aria-label="Actions"
                       title="Actions"
                     >
                       <FaEllipsis />
                     </button>
-                    {openMenuId === phrase.id ? (
+                    {openMenuId === sequence.id ? (
                       <div className="row-menu" role="menu" ref={menuRef}>
                         <button
                           type="button"
                           className="button-ghost"
                           onClick={() => {
-                            onRequestRenamePhrase?.({
-                              id: phrase.id,
-                              name: phraseName,
+                            onRequestRenameSequence?.({
+                              id: sequence.id,
+                              name: sequenceName,
                             });
                             setTimeout(closeMenu, 0);
                           }}
                         >
                           Renommer
                         </button>
-                        {phrases.length > 1 ? (
+                        {sequences.length > 1 ? (
                           <>
                             <button
                               type="button"
                               className="button-ghost"
                               onClick={() => {
-                                onMovePhrase(phrase.id, "up");
+                                onMoveSequence(sequence.id, "up");
                                 closeMenu();
                               }}
                             >
@@ -167,7 +167,7 @@ export default function CombatPhraseList({
                               type="button"
                               className="button-ghost"
                               onClick={() => {
-                                onMovePhrase(phrase.id, "down");
+                                onMoveSequence(sequence.id, "down");
                                 closeMenu();
                               }}
                             >
@@ -177,9 +177,9 @@ export default function CombatPhraseList({
                               type="button"
                               className="button-ghost button-danger"
                               onClick={() => {
-                                onRequestDeletePhrase({
-                                  id: phrase.id,
-                                  name: phraseName,
+                                onRequestDeleteSequence?.({
+                                  id: sequence.id,
+                                  name: sequenceName,
                                 });
                                 closeMenu();
                               }}

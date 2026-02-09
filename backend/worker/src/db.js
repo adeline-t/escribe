@@ -47,14 +47,13 @@ import seedLexicon from "./lexicon.seed.json";
 import seedNewLexicon from "./lexicon-new.seed.json";
 import seedSabreLexicon from "./lexicon-sabre-laser.seed.json";
 import {
-  createDefaultParticipants,
-  DEFAULT_COMBAT_NAME,
-  DEFAULT_COMBAT_SHARE_ROLE,
-  normalizeCombatType,
-  normalizeHiddenParticipantIndexes,
-  OWNER_COMBAT_SHARE_ROLE,
-} from "../../../shared/combatModel.js";
-import { createPhraseModel } from "../../../shared/phraseModel.js";
+  createDefaultPerformancePerformers,
+  DEFAULT_PERFORMANCE_NAME,
+  DEFAULT_PERFORMANCE_SHARE_ROLE,
+  normalizePerformanceType,
+  OWNER_PERFORMANCE_SHARE_ROLE,
+} from "../../../shared/performanceModel.js";
+import { createSequenceModel } from "../../../shared/sequenceModel.js";
 import {
   createStepModel,
   LEGACY_STEP_LEXICON_KEY,
@@ -65,23 +64,24 @@ let schemaReady = false;
 let lexiconReady = false;
 let lexiconSeeded = false;
 
-function buildPhrasePayload(phrase, participantCount) {
-  const stepsRaw = Array.isArray(phrase?.steps) ? phrase.steps : [];
+function buildSequencePayload(sequence, performerCount) {
+  const stepsRaw = Array.isArray(sequence?.steps) ? sequence.steps : [];
   const steps = stepsRaw.map((step) =>
     createStepModel(step, { fallbackLexicon: LEGACY_STEP_LEXICON_KEY }),
   );
-  return createPhraseModel({
-    id: phrase?.id,
-    name: phrase?.name,
-    hiddenParticipantIndexes: phrase?.hiddenParticipantIndexes,
-    participantCount,
+  return createSequenceModel({
+    id: sequence?.id,
+    name: sequence?.name,
+    hiddenPerformerIndexes:
+      sequence?.hiddenPerformerIndexes ?? sequence?.hiddenParticipantIndexes,
+    performerCount,
     steps,
   });
 }
 
 export async function ensureSchema(env) {
   if (schemaReady) return;
-  const required = ["combats", "combat_phrases", "combat_shares"];
+  const required = ["performances", "performance_sequences", "performance_shares"];
   const missing = [];
   for (const table of required) {
     const row = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name = ?1")
@@ -101,55 +101,55 @@ export async function ensureLexiconSchema(env) {
     "offensive",
     "action",
     "defensive",
-    "cible",
-    "deplacement",
-    "parade_numero",
-    "parade_attribut",
-    "attaque_attribut",
+    "target",
+    "movement",
+    "guard_number",
+    "guard_attribute",
+    "attack_attribute",
     "nl_offensive",
     "nl_action",
     "nl_defensive",
-    "nl_cible",
-    "nl_deplacement",
-    "nl_deplacement_complement",
-    "nl_parade_numero",
-    "nl_parade_attribut",
-    "nl_attaque_attribut",
-    "sl_armes",
-    "sl_phases_choregraphie",
-    "sl_cibles",
-    "sl_techniques_offensives",
-    "sl_attributs_offensifs",
-    "sl_techniques_defensives",
-    "sl_attributs_defensifs",
+    "nl_target",
+    "nl_movement",
+    "nl_movement_complement",
+    "nl_guard_number",
+    "nl_guard_attribute",
+    "nl_attack_attribute",
+    "sl_weapons",
+    "sl_choreography_phases",
+    "sl_targets",
+    "sl_offensive_techniques",
+    "sl_offensive_attributes",
+    "sl_defensive_techniques",
+    "sl_defensive_attributes",
     "sl_preparations",
-    "sl_deplacements",
+    "sl_movements",
     "user_offensive",
     "user_action",
     "user_defensive",
-    "user_cible",
-    "user_deplacement",
-    "user_parade_numero",
-    "user_parade_attribut",
-    "user_attaque_attribut",
+    "user_target",
+    "user_movement",
+    "user_guard_number",
+    "user_guard_attribute",
+    "user_attack_attribute",
     "user_nl_offensive",
     "user_nl_action",
     "user_nl_defensive",
-    "user_nl_cible",
-    "user_nl_deplacement",
-    "user_nl_deplacement_complement",
-    "user_nl_parade_numero",
-    "user_nl_parade_attribut",
-    "user_nl_attaque_attribut",
-    "user_sl_armes",
-    "user_sl_phases_choregraphie",
-    "user_sl_cibles",
-    "user_sl_techniques_offensives",
-    "user_sl_attributs_offensifs",
-    "user_sl_techniques_defensives",
-    "user_sl_attributs_defensifs",
+    "user_nl_target",
+    "user_nl_movement",
+    "user_nl_movement_complement",
+    "user_nl_guard_number",
+    "user_nl_guard_attribute",
+    "user_nl_attack_attribute",
+    "user_sl_weapons",
+    "user_sl_choreography_phases",
+    "user_sl_targets",
+    "user_sl_offensive_techniques",
+    "user_sl_offensive_attributes",
+    "user_sl_defensive_techniques",
+    "user_sl_defensive_attributes",
     "user_sl_preparations",
-    "user_sl_deplacements",
+    "user_sl_movements",
     "user_lexicon_favorites"
   ];
   const missing = [];
@@ -173,7 +173,9 @@ async function ensureLexiconSeeded(env) {
   if (count === 0) {
     await replaceLexicon(env, seedLexicon);
   }
-  const sabreRow = await env.DB.prepare("SELECT COUNT(*) AS count FROM sl_armes").first();
+  const sabreRow = await env.DB
+    .prepare("SELECT COUNT(*) AS count FROM sl_weapons")
+    .first();
   const sabreCount = Number(sabreRow?.count ?? 0);
   if (sabreCount === 0) {
     await replaceLexiconByKey(env, "sabre-laser", seedSabreLexicon);
@@ -181,7 +183,7 @@ async function ensureLexiconSeeded(env) {
   const newRow = await env.DB.prepare("SELECT COUNT(*) AS count FROM nl_offensive").first();
   const newCount = Number(newRow?.count ?? 0);
   const newMovementComplementRow = await env.DB
-    .prepare("SELECT COUNT(*) AS count FROM nl_deplacement_complement")
+    .prepare("SELECT COUNT(*) AS count FROM nl_movement_complement")
     .first();
   const newMovementComplementCount = Number(
     newMovementComplementRow?.count ?? 0
@@ -192,66 +194,72 @@ async function ensureLexiconSeeded(env) {
   lexiconSeeded = true;
 }
 
-export async function getCombatState(env, userId, combatId, isSuperAdmin = false) {
+export async function getPerformanceState(
+  env,
+  userId,
+  performanceId,
+  isSuperAdmin = false
+) {
   await ensureSchema(env);
-  const combat = await env.DB
+  const performance = await env.DB
     .prepare(
-      `SELECT c.id, c.name, c.description, c.participants, c.draft, c.type,
+      `SELECT c.id, c.name, c.description, c.participants as performers, c.form_draft as draft, c.type,
         c.user_id, c.is_demo,
         CASE WHEN c.user_id = ?2 THEN 'owner' ELSE cs.role END as share_role
-       FROM combats c
-       LEFT JOIN combat_shares cs ON cs.combat_id = c.id AND cs.shared_user_id = ?2
+       FROM performances c
+       LEFT JOIN performance_shares cs ON cs.performance_id = c.id AND cs.shared_user_id = ?2
        WHERE c.id = ?1 AND (c.user_id = ?2 OR cs.shared_user_id = ?2 OR c.is_demo = 1)`
     )
-    .bind(combatId, userId)
+    .bind(performanceId, userId)
     .first();
-  if (!combat?.id) return null;
+  if (!performance?.id) return null;
 
-  let participants = [];
+  let performers = [];
   let form = null;
   try {
-    participants = JSON.parse(combat.participants);
+    performers = JSON.parse(performance.performers);
   } catch {
-    participants = [];
+    performers = [];
   }
   try {
-    form = combat.draft ? JSON.parse(combat.draft) : null;
+    form = performance.draft ? JSON.parse(performance.draft) : null;
   } catch {
     form = null;
   }
 
-  const phraseRows = await env.DB
+  const sequenceRows = await env.DB
     .prepare(
-      `SELECT payload FROM combat_phrases
-       WHERE combat_id = ?1
+      `SELECT payload FROM performance_sequences
+       WHERE performance_id = ?1
        ORDER BY position`
     )
-    .bind(combat.id)
+    .bind(performance.id)
     .all();
 
-  const phrases = phraseRows?.results?.map((row, index) => {
+  const sequences = sequenceRows?.results?.map((row, index) => {
     try {
       const payload = JSON.parse(row.payload);
       if (payload?.steps) {
         const stepsRaw = Array.isArray(payload.steps) ? payload.steps : [];
-        return createPhraseModel({
+        return createSequenceModel({
           id: payload.id,
           name: payload.name,
           index,
-          hiddenParticipantIndexes: payload.hiddenParticipantIndexes,
-          participantCount: participants.length,
+          hiddenPerformerIndexes:
+            payload.hiddenPerformerIndexes ?? payload.hiddenParticipantIndexes,
+          performerCount: performers.length,
           steps: stepsRaw.map((step) =>
             createStepModel(step, {
               fallbackLexicon: LEGACY_STEP_LEXICON_KEY,
-            }),
+            })
           ),
         });
       }
-      if (payload?.participants) {
-        return createPhraseModel({
+      if (payload?.performers || payload?.participants) {
+        return createSequenceModel({
           index,
-          hiddenParticipantIndexes: [],
-          participantCount: participants.length,
+          hiddenPerformerIndexes: [],
+          performerCount: performers.length,
           steps: [
             createStepModel(payload, {
               fallbackLexicon: LEGACY_STEP_LEXICON_KEY,
@@ -265,73 +273,97 @@ export async function getCombatState(env, userId, combatId, isSuperAdmin = false
     }
   }).filter(Boolean) ?? [];
 
-  const isDemo = Boolean(combat.is_demo);
-  const isOwner = combat.user_id === userId;
+  const isDemo = Boolean(performance.is_demo);
+  const isOwner = performance.user_id === userId;
   const shareRole = isOwner
-    ? OWNER_COMBAT_SHARE_ROLE
+    ? OWNER_PERFORMANCE_SHARE_ROLE
     : isSuperAdmin && isDemo
-      ? OWNER_COMBAT_SHARE_ROLE
-      : combat.share_role ?? DEFAULT_COMBAT_SHARE_ROLE;
+      ? OWNER_PERFORMANCE_SHARE_ROLE
+      : performance.share_role ?? DEFAULT_PERFORMANCE_SHARE_ROLE;
+  const normalizedType = normalizePerformanceType(performance.type);
+  const description = performance.description ?? "";
 
   return {
-    combatId: combat.id,
-    combatName: combat.name,
-    combatDescription: combat.description ?? "",
-    combatType: normalizeCombatType(combat.type),
-    combatShareRole: shareRole,
-    combatIsDemo: isDemo,
-    combatOwnerId: combat.user_id,
-    participants,
-    phrases,
-    form
+    performanceId: performance.id,
+    performanceName: performance.name,
+    performanceDescription: description,
+    performanceType: normalizedType,
+    performanceShareRole: shareRole,
+    performanceIsDemo: isDemo,
+    performanceOwnerId: performance.user_id,
+    performers,
+    sequences,
+    // Backward compatibility for older frontend payload consumers.
+    phrases: sequences,
+    form,
   };
 }
 
-export async function getState(env, userId, combatId = null, combatType = null, isSuperAdmin = false) {
+export async function getState(
+  env,
+  userId,
+  performanceId = null,
+  performanceType = null,
+  isSuperAdmin = false
+) {
   await ensureSchema(env);
-  if (combatId) {
-    const state = await getCombatState(env, userId, combatId, isSuperAdmin);
+  if (performanceId) {
+    const state = await getPerformanceState(
+      env,
+      userId,
+      performanceId,
+      isSuperAdmin
+    );
     if (state) return state;
   }
-  const typeFilter = combatType ? "AND type = ?2" : "";
+  const typeFilter = performanceType ? "AND type = ?2" : "";
   const query = `
       SELECT id
-      FROM combats
+      FROM performances
       WHERE user_id = ?1 AND archived = 0 ${typeFilter}
       ORDER BY updated_at DESC
       LIMIT 1`;
-  const stmt = combatType
-    ? env.DB.prepare(query).bind(userId, combatType)
+  const stmt = performanceType
+    ? env.DB.prepare(query).bind(userId, performanceType)
     : env.DB.prepare(query).bind(userId);
-  const combat = await stmt.first();
-  if (!combat?.id) return null;
-  return getCombatState(env, userId, combat.id, isSuperAdmin);
+  const performance = await stmt.first();
+  if (!performance?.id) return null;
+  return getPerformanceState(env, userId, performance.id, isSuperAdmin);
 }
 
-export async function listCombats(env, userId, includeArchived = false, combatType = null, isSuperAdmin = false) {
+export async function listPerformances(
+  env,
+  userId,
+  includeArchived = false,
+  performanceType = null,
+  isSuperAdmin = false
+) {
   await ensureSchema(env);
-  const typeFilter = combatType ? "AND c.type = ?2" : "";
+  const typeFilter = performanceType ? "AND c.type = ?2" : "";
   const archiveFilter = includeArchived ? "" : "AND c.archived = 0";
-  const query = `SELECT DISTINCT c.id, c.name, c.description, c.participants, c.archived, c.updated_at, c.created_at, c.type, c.is_demo, c.user_id,
-      (SELECT COUNT(*) FROM combat_phrases cp WHERE cp.combat_id = c.id) as phrase_count,
+  const query = `SELECT DISTINCT c.id, c.name, c.description, c.participants as performers, c.archived, c.updated_at, c.created_at, c.type, c.is_demo, c.user_id,
+      (SELECT COUNT(*) FROM performance_sequences cp WHERE cp.performance_id = c.id) as sequence_count,
       CASE WHEN c.user_id = ?1 THEN 1 ELSE 0 END as is_owner,
       CASE WHEN c.user_id = ?1 THEN 'owner' ELSE cs.role END as share_role
-     FROM combats c
-     LEFT JOIN combat_shares cs ON cs.combat_id = c.id AND cs.shared_user_id = ?1
+     FROM performances c
+     LEFT JOIN performance_shares cs ON cs.performance_id = c.id AND cs.shared_user_id = ?1
      WHERE (c.user_id = ?1 OR cs.shared_user_id = ?1 OR c.is_demo = 1) ${archiveFilter} ${typeFilter}
      ORDER BY c.updated_at DESC`;
-  const stmt = combatType
-    ? env.DB.prepare(query).bind(userId, combatType)
+  const stmt = performanceType
+    ? env.DB.prepare(query).bind(userId, performanceType)
     : env.DB.prepare(query).bind(userId);
   const rows = await stmt.all();
   const results = rows?.results ?? [];
-  const legacyMap = await detectLegacyLexiconByCombat(env, results.map((row) => row.id));
+  const legacyMap = await detectLegacyLexiconByPerformance(
+    env,
+    results.map((row) => row.id)
+  );
   return results.map((row) => {
-    let participants = [];
+    let performers = [];
     try {
-      participants = JSON.parse(row.participants);
+      performers = JSON.parse(row.performers);
     } catch {
-      participants = [];
+      performers = [];
     }
     const isDemo = Boolean(row.is_demo);
     const isOwner = Boolean(row.is_owner) || (isSuperAdmin && isDemo);
@@ -339,30 +371,32 @@ export async function listCombats(env, userId, includeArchived = false, combatTy
       id: row.id,
       name: row.name,
       description: row.description ?? "",
-      type: normalizeCombatType(row.type),
+      type: normalizePerformanceType(row.type),
       archived: Boolean(row.archived),
       isOwner,
       isDemo,
-      shareRole: isOwner ? OWNER_COMBAT_SHARE_ROLE : row.share_role ?? DEFAULT_COMBAT_SHARE_ROLE,
+      shareRole: isOwner
+        ? OWNER_PERFORMANCE_SHARE_ROLE
+        : row.share_role ?? DEFAULT_PERFORMANCE_SHARE_ROLE,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
-      phraseCount: Number(row.phrase_count ?? 0),
+      sequenceCount: Number(row.sequence_count ?? 0),
       hasLegacyLexicon: Boolean(legacyMap.get(row.id)),
-      participantsCount: participants.length
+      performersCount: performers.length,
     };
   }) ?? [];
 }
 
-async function detectLegacyLexiconByCombat(env, combatIds) {
+async function detectLegacyLexiconByPerformance(env, performanceIds) {
   const map = new Map();
-  if (!combatIds?.length) return map;
-  for (const combatId of combatIds) {
+  if (!performanceIds?.length) return map;
+  for (const performanceId of performanceIds) {
     const rows = await env.DB
       .prepare(
-        `SELECT payload FROM combat_phrases
-         WHERE combat_id = ?1`
+        `SELECT payload FROM performance_sequences
+         WHERE performance_id = ?1`
       )
-      .bind(combatId)
+      .bind(performanceId)
       .all();
     const payloads = rows?.results ?? [];
     let hasLegacy = false;
@@ -372,7 +406,7 @@ async function detectLegacyLexiconByCombat(env, combatIds) {
         const payload = JSON.parse(row.payload);
         const steps = Array.isArray(payload?.steps)
           ? payload.steps
-          : payload?.participants
+          : payload?.performers || payload?.participants
             ? [payload]
             : [];
         for (const step of steps) {
@@ -388,109 +422,139 @@ async function detectLegacyLexiconByCombat(env, combatIds) {
         // ignore parse errors
       }
     }
-    if (hasLegacy) map.set(combatId, true);
+    if (hasLegacy) map.set(performanceId, true);
   }
   return map;
 }
 
-export async function createCombat(env, userId, data) {
+export async function createPerformance(env, userId, data) {
   await ensureSchema(env);
   const now = new Date().toISOString();
-  const name = typeof data?.name === "string" && data.name.trim() ? data.name.trim() : DEFAULT_COMBAT_NAME;
-  const description = typeof data?.description === "string" ? data.description.trim() : "";
-  const type = normalizeCombatType(data?.type);
-  const participants = Array.isArray(data?.participants) && data.participants.length
-    ? data.participants
-    : createDefaultParticipants();
+  const name =
+    typeof data?.name === "string" && data.name.trim()
+      ? data.name.trim()
+      : DEFAULT_PERFORMANCE_NAME;
+  const description =
+    typeof data?.description === "string" ? data.description.trim() : "";
+  const type = normalizePerformanceType(data?.type);
+  const performers =
+    Array.isArray(data?.performers) && data.performers.length
+      ? data.performers
+      : Array.isArray(data?.participants) && data.participants.length
+        ? data.participants
+        : createDefaultPerformancePerformers();
   const result = await env.DB
     .prepare(
-      `INSERT INTO combats (user_id, name, description, participants, draft, type, created_at, updated_at, archived, is_demo)
+      `INSERT INTO performances (user_id, name, description, participants, form_draft, type, created_at, updated_at, archived, is_demo)
        VALUES (?1, ?2, ?3, ?4, NULL, ?5, ?6, ?6, 0, 0)
        RETURNING id, name, description, type`
     )
-    .bind(userId, name, description, JSON.stringify(participants), type, now)
+    .bind(userId, name, description, JSON.stringify(performers), type, now)
     .first();
   return result ?? null;
 }
 
-export async function updateCombat(env, userId, combatId, data) {
+export async function updatePerformance(env, userId, performanceId, data) {
   await ensureSchema(env);
   const now = new Date().toISOString();
-  const name = typeof data?.name === "string" && data.name.trim() ? data.name.trim() : DEFAULT_COMBAT_NAME;
-  const description = typeof data?.description === "string" ? data.description.trim() : "";
-  const participants = Array.isArray(data?.participants) ? data.participants : [];
+  const name =
+    typeof data?.name === "string" && data.name.trim()
+      ? data.name.trim()
+      : DEFAULT_PERFORMANCE_NAME;
+  const description =
+    typeof data?.description === "string" ? data.description.trim() : "";
+  const performers = Array.isArray(data?.performers)
+    ? data.performers
+    : Array.isArray(data?.participants)
+      ? data.participants
+      : [];
   await env.DB
     .prepare(
-      `UPDATE combats
+      `UPDATE performances
        SET name = ?1, description = ?2, participants = ?3, updated_at = ?4
        WHERE id = ?5 AND user_id = ?6`
     )
-    .bind(name, description, JSON.stringify(participants), now, combatId, userId)
+    .bind(name, description, JSON.stringify(performers), now, performanceId, userId)
     .run();
 }
 
-export async function archiveCombat(env, userId, combatId, archived) {
+export async function archivePerformance(env, userId, performanceId, archived) {
   await ensureSchema(env);
   const now = new Date().toISOString();
   await env.DB
-    .prepare(`UPDATE combats SET archived = ?1, updated_at = ?2 WHERE id = ?3 AND user_id = ?4`)
-    .bind(archived ? 1 : 0, now, combatId, userId)
+    .prepare(
+      `UPDATE performances SET archived = ?1, updated_at = ?2 WHERE id = ?3 AND user_id = ?4`
+    )
+    .bind(archived ? 1 : 0, now, performanceId, userId)
     .run();
 }
 
-export async function deleteCombat(env, userId, combatId) {
+export async function deletePerformance(env, userId, performanceId) {
   await ensureSchema(env);
-  const row = await env.DB.prepare(
-    "SELECT COUNT(*) as count FROM combat_phrases WHERE combat_id = ?1"
-  )
-    .bind(combatId)
+  const row = await env.DB
+    .prepare("SELECT COUNT(*) as count FROM performance_sequences WHERE performance_id = ?1")
+    .bind(performanceId)
     .first();
   const count = Number(row?.count ?? 0);
   if (count > 1) {
-    await archiveCombat(env, userId, combatId, true);
+    await archivePerformance(env, userId, performanceId, true);
     return { mode: "soft" };
   }
-  await env.DB.prepare("DELETE FROM combat_phrases WHERE combat_id = ?1").bind(combatId).run();
-  await env.DB.prepare("DELETE FROM combat_shares WHERE combat_id = ?1").bind(combatId).run();
-  await env.DB.prepare("DELETE FROM combats WHERE id = ?1 AND user_id = ?2")
-    .bind(combatId, userId)
+  await env.DB.prepare("DELETE FROM performance_sequences WHERE performance_id = ?1").bind(performanceId).run();
+  await env.DB.prepare("DELETE FROM performance_shares WHERE performance_id = ?1").bind(performanceId).run();
+  await env.DB.prepare("DELETE FROM performances WHERE id = ?1 AND user_id = ?2")
+    .bind(performanceId, userId)
     .run();
   return { mode: "hard" };
 }
 
-export async function listCombatShares(env, ownerId, combatId) {
+export async function listPerformanceShares(env, ownerId, performanceId) {
   await ensureSchema(env);
-  const rows = await env.DB.prepare(
-    `SELECT cs.shared_user_id as user_id, u.email, u.first_name, u.last_name, cs.created_at, cs.role
-     FROM combat_shares cs
+  const rows = await env.DB
+    .prepare(
+      `SELECT cs.shared_user_id as user_id, u.email, u.first_name, u.last_name, cs.created_at, cs.role
+     FROM performance_shares cs
      JOIN users u ON u.id = cs.shared_user_id
-     WHERE cs.combat_id = ?1 AND cs.owner_id = ?2
+     WHERE cs.performance_id = ?1 AND cs.owner_id = ?2
      ORDER BY cs.created_at DESC`
-  )
-    .bind(combatId, ownerId)
+    )
+    .bind(performanceId, ownerId)
     .all();
   return rows?.results ?? [];
 }
 
-export async function addCombatShare(env, ownerId, combatId, sharedUserId, role = DEFAULT_COMBAT_SHARE_ROLE) {
+export async function addPerformanceShare(
+  env,
+  ownerId,
+  performanceId,
+  sharedUserId,
+  role = DEFAULT_PERFORMANCE_SHARE_ROLE
+) {
   await ensureSchema(env);
   const now = new Date().toISOString();
-  await env.DB.prepare(
-    `INSERT INTO combat_shares (combat_id, owner_id, shared_user_id, role, created_at)
+  await env.DB
+    .prepare(
+      `INSERT INTO performance_shares (performance_id, owner_id, shared_user_id, role, created_at)
      VALUES (?1, ?2, ?3, ?4, ?5)
-     ON CONFLICT(combat_id, shared_user_id) DO UPDATE SET role = excluded.role`
-  )
-    .bind(combatId, ownerId, sharedUserId, role, now)
+     ON CONFLICT(performance_id, shared_user_id) DO UPDATE SET role = excluded.role`
+    )
+    .bind(performanceId, ownerId, sharedUserId, role, now)
     .run();
   return { ok: true };
 }
 
-export async function removeCombatShare(env, ownerId, combatId, sharedUserId) {
+export async function removePerformanceShare(
+  env,
+  ownerId,
+  performanceId,
+  sharedUserId
+) {
   await ensureSchema(env);
-  await env.DB.prepare(
-    "DELETE FROM combat_shares WHERE combat_id = ?1 AND owner_id = ?2 AND shared_user_id = ?3"
-  )
-    .bind(combatId, ownerId, sharedUserId)
+  await env.DB
+    .prepare(
+      "DELETE FROM performance_shares WHERE performance_id = ?1 AND owner_id = ?2 AND shared_user_id = ?3"
+    )
+    .bind(performanceId, ownerId, sharedUserId)
     .run();
   return { ok: true };
 }
@@ -498,14 +562,15 @@ export async function removeCombatShare(env, ownerId, combatId, sharedUserId) {
 export async function listShareUsers(env, userId, query) {
   await ensureSchema(env);
   const q = `%${query.toLowerCase()}%`;
-  const rows = await env.DB.prepare(
-    `SELECT id, email, first_name, last_name
+  const rows = await env.DB
+    .prepare(
+      `SELECT id, email, first_name, last_name
      FROM users
      WHERE id != ?1
        AND (lower(email) LIKE ?2 OR lower(first_name) LIKE ?2 OR lower(last_name) LIKE ?2)
      ORDER BY email
      LIMIT 25`
-  )
+    )
     .bind(userId, q)
     .all();
   return rows?.results ?? [];
@@ -513,12 +578,13 @@ export async function listShareUsers(env, userId, query) {
 
 export async function listShareUsersAll(env, userId) {
   await ensureSchema(env);
-  const rows = await env.DB.prepare(
-    `SELECT id, email, first_name, last_name
+  const rows = await env.DB
+    .prepare(
+      `SELECT id, email, first_name, last_name
      FROM users
      WHERE id != ?1
      ORDER BY email`
-  )
+    )
     .bind(userId)
     .all();
   return rows?.results ?? [];
@@ -527,103 +593,120 @@ export async function listShareUsersAll(env, userId) {
 export async function saveState(env, userId, state, isSuperAdmin = false) {
   await ensureSchema(env);
   const now = new Date().toISOString();
-  const combatName = typeof state.combatName === "string" && state.combatName.trim()
-    ? state.combatName.trim()
-    : DEFAULT_COMBAT_NAME;
-  const combatDescription = typeof state.combatDescription === "string" ? state.combatDescription.trim() : "";
-  const combatType = normalizeCombatType(state.combatType);
-  const participants = Array.isArray(state.participants) ? state.participants : [];
+  const performanceName =
+    typeof state.performanceName === "string" && state.performanceName.trim()
+      ? state.performanceName.trim()
+      : DEFAULT_PERFORMANCE_NAME;
+  const performanceDescription =
+    typeof state.performanceDescription === "string"
+      ? state.performanceDescription.trim()
+      : "";
+  const performanceType = normalizePerformanceType(state.performanceType);
+  const performers = Array.isArray(state.performers)
+    ? state.performers
+    : Array.isArray(state.participants)
+      ? state.participants
+      : [];
   const draft = Array.isArray(state.form) ? state.form : null;
-  const phrases = Array.isArray(state.phrases) ? state.phrases : [];
-  const requestedId = Number(state.combatId);
+  const sequences = Array.isArray(state.sequences)
+    ? state.sequences
+    : Array.isArray(state.phrases)
+      ? state.phrases
+      : [];
+  const requestedId = Number(state.performanceId);
 
-  let combatId = Number.isFinite(requestedId) ? requestedId : null;
+  let performanceId = Number.isFinite(requestedId) ? requestedId : null;
   let shareRole = null;
-  let existingCombat = null;
-  if (combatId) {
+  let existingPerformance = null;
+  if (performanceId) {
     const exists = await env.DB
       .prepare(
         `SELECT c.id, c.user_id, c.is_demo,
           CASE WHEN c.user_id = ?2 THEN 'owner' ELSE cs.role END as share_role
-         FROM combats c
-         LEFT JOIN combat_shares cs ON cs.combat_id = c.id AND cs.shared_user_id = ?2
+         FROM performances c
+         LEFT JOIN performance_shares cs ON cs.performance_id = c.id AND cs.shared_user_id = ?2
          WHERE c.id = ?1 AND (c.user_id = ?2 OR cs.shared_user_id = ?2 OR c.is_demo = 1) AND c.archived = 0`
       )
-      .bind(combatId, userId)
+      .bind(performanceId, userId)
       .first();
-    existingCombat = exists;
+    existingPerformance = exists;
     if (!exists?.id) {
-      combatId = null;
+      performanceId = null;
     } else {
       shareRole = exists.share_role;
     }
   }
 
-  if (!combatId) {
+  if (!performanceId) {
     const inserted = await env.DB
       .prepare(
-        `INSERT INTO combats (user_id, name, description, participants, draft, type, created_at, updated_at, archived)
+        `INSERT INTO performances (user_id, name, description, participants, form_draft, type, created_at, updated_at, archived)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?7, 0)
          RETURNING id`
       )
       .bind(
         userId,
-        combatName,
-        combatDescription,
-        JSON.stringify(participants),
+        performanceName,
+        performanceDescription,
+        JSON.stringify(performers),
         draft ? JSON.stringify(draft) : null,
-        combatType,
+        performanceType,
         now
       )
       .first();
-    combatId = inserted?.id;
+    performanceId = inserted?.id;
   } else {
-    const isDemo = Boolean(existingCombat?.is_demo);
+    const isDemo = Boolean(existingPerformance?.is_demo);
     if (isDemo && !isSuperAdmin) {
-      return combatId;
+      return performanceId;
     }
-    if (shareRole === DEFAULT_COMBAT_SHARE_ROLE) {
-      return combatId;
+    if (shareRole === DEFAULT_PERFORMANCE_SHARE_ROLE) {
+      return performanceId;
     }
     const ownerId =
-      isDemo && isSuperAdmin ? existingCombat.user_id : userId;
+      isDemo && isSuperAdmin ? existingPerformance.user_id : userId;
     await env.DB
       .prepare(
-        `UPDATE combats
-         SET name = ?1, description = ?2, participants = ?3, draft = ?4, updated_at = ?5
+        `UPDATE performances
+         SET name = ?1, description = ?2, participants = ?3, form_draft = ?4, updated_at = ?5
          WHERE id = ?6 AND user_id = ?7`
       )
       .bind(
-        combatName,
-        combatDescription,
-        JSON.stringify(participants),
+        performanceName,
+        performanceDescription,
+        JSON.stringify(performers),
         draft ? JSON.stringify(draft) : null,
         now,
-        combatId,
+        performanceId,
         ownerId
       )
       .run();
   }
 
-  if (combatId) {
-    await env.DB.prepare(`DELETE FROM combat_phrases WHERE combat_id = ?1`).bind(combatId).run();
-    if (phrases.length > 0) {
-      const inserts = phrases.map((phrase, index) =>
-        env.DB.prepare(
-          `INSERT INTO combat_phrases (combat_id, position, payload, created_at)
+  if (performanceId) {
+    await env.DB
+      .prepare(`DELETE FROM performance_sequences WHERE performance_id = ?1`)
+      .bind(performanceId)
+      .run();
+    if (sequences.length > 0) {
+      const inserts = sequences.map((sequence, index) =>
+        env.DB
+          .prepare(
+            `INSERT INTO performance_sequences (performance_id, position, payload, created_at)
            VALUES (?1, ?2, ?3, ?4)`
-        ).bind(
-          combatId,
-          index,
-          JSON.stringify(buildPhrasePayload(phrase, participants.length)),
-          now
-        )
+          )
+          .bind(
+            performanceId,
+            index,
+            JSON.stringify(buildSequencePayload(sequence, performers.length)),
+            now
+          )
       );
       await env.DB.batch(inserts);
     }
   }
 
-  return combatId;
+  return performanceId;
 }
 
 async function getLabels(env, table) {
@@ -744,33 +827,33 @@ const LEXICON_TABLES = {
     offensive: "offensive",
     action: "action",
     defensive: "defensive",
-    cible: "cible",
-    deplacement: "deplacement",
-    "parade-numero": "parade_numero",
-    "parade-attribut": "parade_attribut",
-    "attaque-attribut": "attaque_attribut"
+    cible: "target",
+    deplacement: "movement",
+    "parade-numero": "guard_number",
+    "parade-attribut": "guard_attribute",
+    "attaque-attribut": "attack_attribute"
   },
   "classic-v2": {
     offensive: "nl_offensive",
     action: "nl_action",
     defensive: "nl_defensive",
-    cible: "nl_cible",
-    deplacement: "nl_deplacement",
-    deplacement_complement: "nl_deplacement_complement",
-    "parade-numero": "nl_parade_numero",
-    "parade-attribut": "nl_parade_attribut",
-    "attaque-attribut": "nl_attaque_attribut"
+    cible: "nl_target",
+    deplacement: "nl_movement",
+    deplacement_complement: "nl_movement_complement",
+    "parade-numero": "nl_guard_number",
+    "parade-attribut": "nl_guard_attribute",
+    "attaque-attribut": "nl_attack_attribute"
   },
   "sabre-laser": {
-    armes: "sl_armes",
-    phases_choregraphie: "sl_phases_choregraphie",
-    cibles: "sl_cibles",
-    techniques_offensives: "sl_techniques_offensives",
-    attributs_offensifs: "sl_attributs_offensifs",
-    techniques_defensives: "sl_techniques_defensives",
-    attributs_defensifs: "sl_attributs_defensifs",
+    armes: "sl_weapons",
+    phases_choregraphie: "sl_choreography_phases",
+    cibles: "sl_targets",
+    techniques_offensives: "sl_offensive_techniques",
+    attributs_offensifs: "sl_offensive_attributes",
+    techniques_defensives: "sl_defensive_techniques",
+    attributs_defensifs: "sl_defensive_attributes",
     preparations: "sl_preparations",
-    deplacements: "sl_deplacements"
+    deplacements: "sl_movements"
   }
 };
 

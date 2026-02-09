@@ -16,35 +16,35 @@ const mapTable = {
   offensive: "offensive",
   action: "action",
   defensive: "defensive",
-  cible: "cible",
-  deplacement: "deplacement",
-  "parade-numero": "parade_numero",
-  "parade-attribut": "parade_attribut",
-  "attaque-attribut": "attaque_attribut"
+  cible: "target",
+  deplacement: "movement",
+  "parade-numero": "guard_number",
+  "parade-attribut": "guard_attribute",
+  "attaque-attribut": "attack_attribute"
 };
 
 const sabreTable = {
-  armes: "sl_armes",
-  phases_choregraphie: "sl_phases_choregraphie",
-  cibles: "sl_cibles",
-  techniques_offensives: "sl_techniques_offensives",
-  attributs_offensifs: "sl_attributs_offensifs",
-  techniques_defensives: "sl_techniques_defensives",
-  attributs_defensifs: "sl_attributs_defensifs",
+  armes: "sl_weapons",
+  phases_choregraphie: "sl_choreography_phases",
+  cibles: "sl_targets",
+  techniques_offensives: "sl_offensive_techniques",
+  attributs_offensifs: "sl_offensive_attributes",
+  techniques_defensives: "sl_defensive_techniques",
+  attributs_defensifs: "sl_defensive_attributes",
   preparations: "sl_preparations",
-  deplacements: "sl_deplacements"
+  deplacements: "sl_movements"
 };
 
 const newTable = {
   offensive: "nl_offensive",
   action: "nl_action",
   defensive: "nl_defensive",
-  cible: "nl_cible",
-  deplacement: "nl_deplacement",
-  deplacement_complement: "nl_deplacement_complement",
-  "parade-numero": "nl_parade_numero",
-  "parade-attribut": "nl_parade_attribut",
-  "attaque-attribut": "nl_attaque_attribut"
+  cible: "nl_target",
+  deplacement: "nl_movement",
+  deplacement_complement: "nl_movement_complement",
+  "parade-numero": "nl_guard_number",
+  "parade-attribut": "nl_guard_attribute",
+  "attaque-attribut": "nl_attack_attribute"
 };
 
 function sqlQuote(value) {
@@ -81,17 +81,17 @@ function normalizeNewLexicon(data) {
     preparations.composees
   );
 
-  const deplacementBase = mergeUnique(mouvement.deplacement);
-  const deplacementComplement = mergeUnique(mouvement.deplacement_complement);
-  const deplacement = mergeUnique(deplacementBase, deplacementComplement);
+  const movementBase = mergeUnique(mouvement.deplacement);
+  const movementComplement = mergeUnique(mouvement.deplacement_complement);
+  const movement = mergeUnique(movementBase, movementComplement);
 
   return {
     offensive: mergeUnique(offensives.attaques),
     action,
     defensive: mergeUnique(defensives.esquive),
     cible: mergeUnique(mouvement.cible),
-    deplacement,
-    deplacement_complement: deplacementComplement,
+    deplacement: movement,
+    deplacement_complement: movementComplement,
     "parade-numero": mergeUnique(mouvement.position),
     "parade-attribut": mergeUnique(mouvement.position_complements),
     "attaque-attribut": mergeUnique(offensives.complements)
