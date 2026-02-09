@@ -1,3 +1,16 @@
+import {
+  createEmptyParticipantState,
+  createPhraseModel,
+  DEFAULT_COMBAT_NAME,
+  DEFAULT_COMBAT_SHARE_ROLE,
+  DEFAULT_COMBAT_TYPE,
+  normalizeCombatShareRole,
+  normalizeCombatType,
+  normalizeHiddenParticipantIndexes as normalizeHiddenParticipantIndexesFromModel,
+  PARTICIPANT_MODES,
+  PARTICIPANT_ROLES,
+} from "../../../shared/combatModel.js";
+
 export function buildParticipantLabel(index) {
   return `Combattant ${index + 1}`;
 }
@@ -46,40 +59,11 @@ export function labelForParticipant(participant, index) {
 }
 
 export function emptyParticipantState() {
-  return {
-    mode: "combat",
-    role: "attack",
-    offensive: "",
-    action: "",
-    actionDetails: [],
-    target: "",
-    attackMove: "",
-    attackAttribute: [],
-    defense: "",
-    defenseDetails: [],
-    paradeNumber: "",
-    paradeAttribute: "",
-    defendMove: "",
-    chorePhase: "",
-    note: "",
-    noteOverrides: false,
-  };
+  return createEmptyParticipantState();
 }
 
 export function normalizeHiddenParticipantIndexes(raw, participantCount) {
-  const max = Math.max(0, Number(participantCount) || 0);
-  if (!Array.isArray(raw) || max <= 0) return [];
-  const out = [];
-  const seen = new Set();
-  for (const value of raw) {
-    const index = Number(value);
-    if (!Number.isInteger(index)) continue;
-    if (index < 0 || index >= max) continue;
-    if (seen.has(index)) continue;
-    seen.add(index);
-    out.push(index);
-  }
-  return out.sort((a, b) => a - b);
+  return normalizeHiddenParticipantIndexesFromModel(raw, participantCount);
 }
 
 export function getVisibleParticipantIndexes(participantCount, hiddenIndexes) {
@@ -94,10 +78,10 @@ export function getVisibleParticipantIndexes(participantCount, hiddenIndexes) {
 
 export function normalizeParticipant(item) {
   const base = emptyParticipantState();
-  const role = ["none", "attack", "defense", "preparation"].includes(item?.role)
+  const role = PARTICIPANT_ROLES.includes(item?.role)
     ? item.role
     : base.role;
-  const mode = ["combat", "note", "choregraphie"].includes(item?.mode)
+  const mode = PARTICIPANT_MODES.includes(item?.mode)
     ? item.mode
     : base.mode;
   return {
@@ -131,7 +115,7 @@ export function normalizeState(raw, defaultParticipants) {
     ? Number(raw.combatId)
     : null;
   const combatName =
-    typeof raw.combatName === "string" ? raw.combatName : "Combat sans nom";
+    typeof raw.combatName === "string" ? raw.combatName : DEFAULT_COMBAT_NAME;
   const combatDescription =
     typeof raw.combatDescription === "string" ? raw.combatDescription : "";
   const participantsRaw =
@@ -160,23 +144,19 @@ export function normalizeState(raw, defaultParticipants) {
         ),
       };
     });
-    return {
-      id: phrase?.id ?? crypto.randomUUID(),
-      name:
-        typeof phrase?.name === "string" && phrase.name.trim()
-          ? phrase.name
-          : `Phrase ${phraseIndex + 1}`,
-      hiddenParticipantIndexes: normalizeHiddenParticipantIndexes(
-        phrase?.hiddenParticipantIndexes,
-        participants.length,
-      ),
+    return createPhraseModel({
+      id: phrase?.id,
+      name: phrase?.name,
+      index: phraseIndex,
+      hiddenParticipantIndexes: phrase?.hiddenParticipantIndexes,
+      participantCount: participants.length,
       steps,
-    };
+    });
   });
-  const combatType =
-    typeof raw.combatType === "string" ? raw.combatType : "classic";
-  const combatShareRole =
-    typeof raw.combatShareRole === "string" ? raw.combatShareRole : "read";
+  const combatType = normalizeCombatType(raw.combatType ?? DEFAULT_COMBAT_TYPE);
+  const combatShareRole = normalizeCombatShareRole(
+    raw.combatShareRole ?? DEFAULT_COMBAT_SHARE_ROLE,
+  );
   return {
     combatId,
     combatName,

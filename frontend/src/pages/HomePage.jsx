@@ -1,3 +1,5 @@
+import { DEFAULT_COMBAT_NAME } from "../../../shared/combatModel.js";
+
 export default function HomePage({
   authUser,
   combatName,
@@ -101,7 +103,7 @@ export default function HomePage({
       <div className="grid-auto-sm">
         <div className="card card--highlight stack-2">
           <h3 className="subtitle text-accent">Dernier combat</h3>
-          <p className="meta text-muted">{combatName || "Combat sans nom"}</p>
+          <p className="meta text-muted">{combatName || DEFAULT_COMBAT_NAME}</p>
           {combatDescription ? (
             <p className="meta text-muted">{combatDescription}</p>
           ) : null}

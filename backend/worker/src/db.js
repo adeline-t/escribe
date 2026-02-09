@@ -46,37 +46,28 @@ export function buildCorsHeaders(request, env) {
 import seedLexicon from "./lexicon.seed.json";
 import seedNewLexicon from "./lexicon-new.seed.json";
 import seedSabreLexicon from "./lexicon-sabre-laser.seed.json";
+import {
+  createDefaultParticipants,
+  createPhraseModel,
+  DEFAULT_COMBAT_NAME,
+  DEFAULT_COMBAT_SHARE_ROLE,
+  normalizeCombatType,
+  normalizeHiddenParticipantIndexes,
+  OWNER_COMBAT_SHARE_ROLE,
+} from "../../../shared/combatModel.js";
 
 let schemaReady = false;
 let lexiconReady = false;
 let lexiconSeeded = false;
 
-function normalizeHiddenParticipantIndexes(raw, participantCount) {
-  const max = Math.max(0, Number(participantCount) || 0);
-  if (!Array.isArray(raw) || max <= 0) return [];
-  const seen = new Set();
-  const out = [];
-  for (const value of raw) {
-    const index = Number(value);
-    if (!Number.isInteger(index)) continue;
-    if (index < 0 || index >= max) continue;
-    if (seen.has(index)) continue;
-    seen.add(index);
-    out.push(index);
-  }
-  return out.sort((a, b) => a - b);
-}
-
 function buildPhrasePayload(phrase, participantCount) {
-  return {
-    id: phrase?.id ?? crypto.randomUUID(),
-    name: phrase?.name ?? "",
-    hiddenParticipantIndexes: normalizeHiddenParticipantIndexes(
-      phrase?.hiddenParticipantIndexes,
-      participantCount,
-    ),
+  return createPhraseModel({
+    id: phrase?.id,
+    name: phrase?.name,
+    hiddenParticipantIndexes: phrase?.hiddenParticipantIndexes,
+    participantCount,
     steps: Array.isArray(phrase?.steps) ? phrase.steps : [],
-  };
+  });
 }
 
 export async function ensureSchema(env) {
@@ -233,23 +224,22 @@ export async function getCombatState(env, userId, combatId, isSuperAdmin = false
     try {
       const payload = JSON.parse(row.payload);
       if (payload?.steps) {
-        return {
-          id: payload.id ?? crypto.randomUUID(),
-          name: payload.name ?? `Phrase ${index + 1}`,
-          hiddenParticipantIndexes: normalizeHiddenParticipantIndexes(
-            payload.hiddenParticipantIndexes,
-            participants.length,
-          ),
-          steps: Array.isArray(payload.steps) ? payload.steps : []
-        };
+        return createPhraseModel({
+          id: payload.id,
+          name: payload.name,
+          index,
+          hiddenParticipantIndexes: payload.hiddenParticipantIndexes,
+          participantCount: participants.length,
+          steps: Array.isArray(payload.steps) ? payload.steps : [],
+        });
       }
       if (payload?.participants) {
-        return {
-          id: crypto.randomUUID(),
-          name: `Phrase ${index + 1}`,
+        return createPhraseModel({
+          index,
           hiddenParticipantIndexes: [],
-          steps: [payload]
-        };
+          participantCount: participants.length,
+          steps: [payload],
+        });
       }
       return null;
     } catch {
@@ -260,16 +250,16 @@ export async function getCombatState(env, userId, combatId, isSuperAdmin = false
   const isDemo = Boolean(combat.is_demo);
   const isOwner = combat.user_id === userId;
   const shareRole = isOwner
-    ? "owner"
+    ? OWNER_COMBAT_SHARE_ROLE
     : isSuperAdmin && isDemo
-      ? "owner"
-      : combat.share_role ?? "read";
+      ? OWNER_COMBAT_SHARE_ROLE
+      : combat.share_role ?? DEFAULT_COMBAT_SHARE_ROLE;
 
   return {
     combatId: combat.id,
     combatName: combat.name,
     combatDescription: combat.description ?? "",
-    combatType: combat.type ?? "classic",
+    combatType: normalizeCombatType(combat.type),
     combatShareRole: shareRole,
     combatIsDemo: isDemo,
     combatOwnerId: combat.user_id,
@@ -331,11 +321,11 @@ export async function listCombats(env, userId, includeArchived = false, combatTy
       id: row.id,
       name: row.name,
       description: row.description ?? "",
-      type: row.type ?? "classic",
+      type: normalizeCombatType(row.type),
       archived: Boolean(row.archived),
       isOwner,
       isDemo,
-      shareRole: isOwner ? "owner" : row.share_role ?? "read",
+      shareRole: isOwner ? OWNER_COMBAT_SHARE_ROLE : row.share_role ?? DEFAULT_COMBAT_SHARE_ROLE,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       phraseCount: Number(row.phrase_count ?? 0),
@@ -386,12 +376,12 @@ async function detectLegacyLexiconByCombat(env, combatIds) {
 export async function createCombat(env, userId, data) {
   await ensureSchema(env);
   const now = new Date().toISOString();
-  const name = typeof data?.name === "string" && data.name.trim() ? data.name.trim() : "Combat sans nom";
+  const name = typeof data?.name === "string" && data.name.trim() ? data.name.trim() : DEFAULT_COMBAT_NAME;
   const description = typeof data?.description === "string" ? data.description.trim() : "";
-  const type = data?.type === "sabre-laser" ? "sabre-laser" : "classic";
+  const type = normalizeCombatType(data?.type);
   const participants = Array.isArray(data?.participants) && data.participants.length
     ? data.participants
-    : [{ name: "A", weapon: "" }, { name: "B", weapon: "" }];
+    : createDefaultParticipants();
   const result = await env.DB
     .prepare(
       `INSERT INTO combats (user_id, name, description, participants, draft, type, created_at, updated_at, archived, is_demo)
@@ -406,7 +396,7 @@ export async function createCombat(env, userId, data) {
 export async function updateCombat(env, userId, combatId, data) {
   await ensureSchema(env);
   const now = new Date().toISOString();
-  const name = typeof data?.name === "string" && data.name.trim() ? data.name.trim() : "Combat sans nom";
+  const name = typeof data?.name === "string" && data.name.trim() ? data.name.trim() : DEFAULT_COMBAT_NAME;
   const description = typeof data?.description === "string" ? data.description.trim() : "";
   const participants = Array.isArray(data?.participants) ? data.participants : [];
   await env.DB
@@ -462,7 +452,7 @@ export async function listCombatShares(env, ownerId, combatId) {
   return rows?.results ?? [];
 }
 
-export async function addCombatShare(env, ownerId, combatId, sharedUserId, role = "read") {
+export async function addCombatShare(env, ownerId, combatId, sharedUserId, role = DEFAULT_COMBAT_SHARE_ROLE) {
   await ensureSchema(env);
   const now = new Date().toISOString();
   await env.DB.prepare(
@@ -519,9 +509,9 @@ export async function saveState(env, userId, state, isSuperAdmin = false) {
   const now = new Date().toISOString();
   const combatName = typeof state.combatName === "string" && state.combatName.trim()
     ? state.combatName.trim()
-    : "Combat sans nom";
+    : DEFAULT_COMBAT_NAME;
   const combatDescription = typeof state.combatDescription === "string" ? state.combatDescription.trim() : "";
-  const combatType = state.combatType === "sabre-laser" ? "sabre-laser" : "classic";
+  const combatType = normalizeCombatType(state.combatType);
   const participants = Array.isArray(state.participants) ? state.participants : [];
   const draft = Array.isArray(state.form) ? state.form : null;
   const phrases = Array.isArray(state.phrases) ? state.phrases : [];
@@ -572,7 +562,7 @@ export async function saveState(env, userId, state, isSuperAdmin = false) {
     if (isDemo && !isSuperAdmin) {
       return combatId;
     }
-    if (shareRole === "read") {
+    if (shareRole === DEFAULT_COMBAT_SHARE_ROLE) {
       return combatId;
     }
     const ownerId =

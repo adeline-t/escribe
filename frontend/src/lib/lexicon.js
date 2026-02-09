@@ -1,10 +1,8 @@
 import lexiconJson from "../data/lexicon.json";
 import sabreLexiconJson from "../data/lexicon-sabre-laser.json";
+import { createDefaultParticipants } from "../../../shared/combatModel.js";
 
-export const DEFAULT_PARTICIPANTS = [
-  { name: "A", weapon: "" },
-  { name: "B", weapon: "" },
-];
+export const DEFAULT_PARTICIPANTS = createDefaultParticipants();
 
 export const LEXICON_TYPES = [
   { key: "offensive", label: "actions d'attaque" },

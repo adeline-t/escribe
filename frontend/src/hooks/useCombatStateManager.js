@@ -1,35 +1,26 @@
 import { useEffect, useMemo, useState } from "react";
 import { DEFAULT_PARTICIPANTS } from "../lib/lexicon.js";
 import {
-  emptyParticipantState,
   labelForParticipant,
-  normalizeHiddenParticipantIndexes,
 } from "../lib/participants.js";
 import { useDebouncedStateSave } from "./useDebouncedStateSave.js";
-
-const DEFAULT_STEP_LEXICON_KEY = "classic-v2";
+import {
+  createEmptyInsertedStepParticipant,
+  createEmptyParticipantState,
+  createParticipantIdentity,
+  createPhraseModel,
+  createStepModel,
+  DEFAULT_COMBAT_NAME,
+  DEFAULT_COMBAT_SHARE_ROLE,
+  DEFAULT_COMBAT_TYPE,
+  DEFAULT_STEP_LEXICON_KEY,
+  normalizeCombatType,
+  normalizeHiddenParticipantIndexes,
+  OWNER_COMBAT_SHARE_ROLE,
+} from "../../../shared/combatModel.js";
 
 function buildEmptyForm(participants) {
-  return participants.map(() => emptyParticipantState());
-}
-
-function createEmptyStepParticipant() {
-  return {
-    mode: "note",
-    role: "none",
-    offensive: "",
-    action: "",
-    target: "",
-    attackMove: "",
-    attackAttribute: [],
-    defense: "",
-    paradeNumber: "",
-    paradeAttribute: "",
-    defendMove: "",
-    chorePhase: "",
-    note: "",
-    noteOverrides: true,
-  };
+  return participants.map(() => createEmptyParticipantState());
 }
 
 export function useCombatStateManager({ isSaveEnabled, saveState } = {}) {
@@ -40,17 +31,19 @@ export function useCombatStateManager({ isSaveEnabled, saveState } = {}) {
   const [phrases, setPhrases] = useState([]);
   const [activePhraseId, setActivePhraseId] = useState(null);
   const [form, setForm] = useState(
-    DEFAULT_PARTICIPANTS.map(() => emptyParticipantState()),
+    DEFAULT_PARTICIPANTS.map(() => createEmptyParticipantState()),
   );
   const [editingStepId, setEditingStepId] = useState(null);
   const [insertStepIndex, setInsertStepIndex] = useState(null);
   const [insertionMode, setInsertionMode] = useState(false);
   const [deletionMode, setDeletionMode] = useState(false);
   const [combatId, setCombatId] = useState(null);
-  const [combatName, setCombatName] = useState("Combat sans nom");
+  const [combatName, setCombatName] = useState(DEFAULT_COMBAT_NAME);
   const [combatDescription, setCombatDescription] = useState("");
-  const [combatType, setCombatType] = useState("classic");
-  const [combatShareRole, setCombatShareRole] = useState("read");
+  const [combatType, setCombatType] = useState(DEFAULT_COMBAT_TYPE);
+  const [combatShareRole, setCombatShareRole] = useState(
+    DEFAULT_COMBAT_SHARE_ROLE,
+  );
   const [stepLexiconKey, setStepLexiconKey] = useState(DEFAULT_STEP_LEXICON_KEY);
   const [isHydrated, setIsHydrated] = useState(false);
 
@@ -82,10 +75,10 @@ export function useCombatStateManager({ isSaveEnabled, saveState } = {}) {
     setPhrases(normalized.phrases ?? []);
     setForm(normalized.form);
     setCombatId(normalized.combatId ?? fallbackCombatId ?? null);
-    setCombatName(normalized.combatName ?? "Combat sans nom");
+    setCombatName(normalized.combatName ?? DEFAULT_COMBAT_NAME);
     setCombatDescription(normalized.combatDescription ?? "");
-    setCombatType(normalized.combatType ?? "classic");
-    setCombatShareRole(normalized.combatShareRole ?? "read");
+    setCombatType(normalizeCombatType(normalized.combatType));
+    setCombatShareRole(normalized.combatShareRole ?? DEFAULT_COMBAT_SHARE_ROLE);
     setActivePhraseId(normalized.phrases?.[0]?.id ?? null);
     resetInteractionState({ resetLexicon: true });
   }
@@ -101,18 +94,19 @@ export function useCombatStateManager({ isSaveEnabled, saveState } = {}) {
     const resolvedParticipants = Array.isArray(nextParticipants)
       ? nextParticipants
       : DEFAULT_PARTICIPANTS.map((participant) => ({ ...participant }));
-    const initialPhrase = {
-      id: crypto.randomUUID(),
+    const initialPhrase = createPhraseModel({
+      index: 0,
       name: "Phrase 1",
       steps: [],
       hiddenParticipantIndexes: [],
-    };
+      participantCount: resolvedParticipants.length,
+    });
 
     setCombatId(id ?? null);
-    setCombatName(name ?? "Combat sans nom");
+    setCombatName(name ?? DEFAULT_COMBAT_NAME);
     setCombatDescription(description ?? "");
-    setCombatType(type === "sabre-laser" ? "sabre-laser" : "classic");
-    setCombatShareRole("owner");
+    setCombatType(normalizeCombatType(type));
+    setCombatShareRole(OWNER_COMBAT_SHARE_ROLE);
     setParticipants(resolvedParticipants);
     setPhrases([initialPhrase]);
     setActivePhraseId(initialPhrase.id);
@@ -154,7 +148,7 @@ export function useCombatStateManager({ isSaveEnabled, saveState } = {}) {
       const current =
         next[index] && typeof next[index] === "object"
           ? next[index]
-          : { name: "", weapon: "" };
+          : createParticipantIdentity();
       next[index] = { ...current, name: value };
       return next;
     });
@@ -166,7 +160,7 @@ export function useCombatStateManager({ isSaveEnabled, saveState } = {}) {
       const current =
         next[index] && typeof next[index] === "object"
           ? next[index]
-          : { name: "", weapon: "" };
+          : createParticipantIdentity();
       next[index] = { ...current, weapon: value };
       return next;
     });
@@ -178,7 +172,7 @@ export function useCombatStateManager({ isSaveEnabled, saveState } = {}) {
       const next = [...prev];
       if (count > next.length) {
         for (let i = next.length; i < count; i += 1) {
-          next.push({ name: "", weapon: "" });
+          next.push(createParticipantIdentity());
         }
       }
       if (count < next.length) {
@@ -191,7 +185,7 @@ export function useCombatStateManager({ isSaveEnabled, saveState } = {}) {
       const next = [...prev];
       if (count > next.length) {
         for (let i = next.length; i < count; i += 1) {
-          next.push(emptyParticipantState());
+          next.push(createEmptyParticipantState());
         }
       }
       if (count < next.length) {
@@ -297,11 +291,10 @@ export function useCombatStateManager({ isSaveEnabled, saveState } = {}) {
       return;
     }
 
-    const step = {
-      id: crypto.randomUUID(),
+    const step = createStepModel({
       lexicon: stepLexiconKey,
       participants: form.map((item) => ({ ...item })),
-    };
+    });
 
     setPhrases((prev) =>
       prev.map((phrase) => {
@@ -322,11 +315,10 @@ export function useCombatStateManager({ isSaveEnabled, saveState } = {}) {
 
   function insertEmptyStep(index) {
     if (!activePhraseId) return;
-    const step = {
-      id: crypto.randomUUID(),
+    const step = createStepModel({
       lexicon: stepLexiconKey,
-      participants: participants.map(() => createEmptyStepParticipant()),
-    };
+      participants: participants.map(() => createEmptyInsertedStepParticipant()),
+    });
     setPhrases((prev) =>
       prev.map((phrase) => {
         if (phrase.id !== activePhraseId) return phrase;
@@ -368,11 +360,13 @@ export function useCombatStateManager({ isSaveEnabled, saveState } = {}) {
     if (!step) return;
 
     setStepLexiconKey(
-      typeof step.lexicon === "string" ? step.lexicon : "classic",
+      typeof step.lexicon === "string"
+        ? step.lexicon
+        : DEFAULT_STEP_LEXICON_KEY,
     );
     setForm(
       step.participants.map((item) => ({
-        ...emptyParticipantState(),
+        ...createEmptyParticipantState(),
         ...item,
         attackAttribute: Array.isArray(item.attackAttribute)
           ? item.attackAttribute
@@ -420,12 +414,13 @@ export function useCombatStateManager({ isSaveEnabled, saveState } = {}) {
 
   function createPhrase() {
     const nextNumber = phrases.length + 1;
-    const newPhrase = {
-      id: crypto.randomUUID(),
+    const newPhrase = createPhraseModel({
+      index: nextNumber - 1,
       name: `Phrase ${nextNumber}`,
       hiddenParticipantIndexes: [],
+      participantCount: participants.length,
       steps: [],
-    };
+    });
     setPhrases((prev) => [...prev, newPhrase]);
     setActivePhraseId(newPhrase.id);
     setForm(buildEmptyForm(participants));
