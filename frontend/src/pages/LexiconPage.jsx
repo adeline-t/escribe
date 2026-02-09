@@ -7,7 +7,9 @@ import {
   FaStar,
   FaTrash,
 } from "react-icons/fa6";
-import { LEXICON_TYPES, SABRE_LEXICON_TYPES } from "../lib/lexicon.js";
+import {
+  getLexiconTypesForMode,
+} from "../lib/lexicon.js";
 import ConfirmDeleteModal from "../components/modals/ConfirmDeleteModal.jsx";
 
 export default function LexiconPage({
@@ -23,13 +25,17 @@ export default function LexiconPage({
 }) {
   const [lexiconKey, setLexiconKey] = useState(() => {
     try {
-      return localStorage.getItem("escribe_lexicon_mode") || "classic";
+      const stored = localStorage.getItem("escribe_lexicon_mode");
+      if (!stored || stored === "classic") return "classic-v2";
+      return stored;
     } catch {
-      return "classic";
+      return "classic-v2";
     }
   });
-  const lexiconTypes =
-    lexiconKey === "sabre-laser" ? SABRE_LEXICON_TYPES : LEXICON_TYPES;
+  const lexiconTypes = useMemo(
+    () => getLexiconTypesForMode(lexiconKey),
+    [lexiconKey],
+  );
   const [activeType, setActiveType] = useState(lexiconTypes[0]?.key ?? "");
   const [scope, setScope] = useState("global");
   const [items, setItems] = useState([]);
@@ -65,11 +71,9 @@ export default function LexiconPage({
   const isGlobalScope = scope === "global";
   const canEdit = isGlobalScope ? canEditGlobal : scope === "personal";
   const favoritesSource =
-    lexiconKey === "classic"
-      ? favorites
-      : lexiconKey === "classic-v2"
-        ? newFavorites ?? localFavorites
-        : sabreFavorites ?? localFavorites;
+    lexiconKey === "sabre-laser"
+      ? sabreFavorites ?? localFavorites
+      : newFavorites ?? localFavorites;
   const favoriteSet = useMemo(
     () => new Set(favoritesSource?.[activeType] ?? []),
     [favoritesSource, activeType],
@@ -135,9 +139,7 @@ export default function LexiconPage({
       .then((response) => (response.ok ? response.json() : null))
       .then((payload) => {
         if (!payload?.favorites) return;
-        if (lexiconKey === "classic") {
-          setFavorites?.(payload.favorites);
-        } else if (lexiconKey === "classic-v2") {
+        if (lexiconKey === "classic-v2") {
           setNewFavorites?.(payload.favorites);
         } else if (setSabreFavorites) {
           setSabreFavorites(payload.favorites);
@@ -296,10 +298,10 @@ export default function LexiconPage({
       copy[activeType] = Array.from(list);
       return copy;
     };
-    if (lexiconKey === "classic") {
-      setFavorites?.(updateFavorites);
-    } else if (setSabreFavorites) {
+    if (lexiconKey === "sabre-laser" && setSabreFavorites) {
       setSabreFavorites(updateFavorites);
+    } else if (lexiconKey === "classic-v2") {
+      setNewFavorites?.(updateFavorites);
     } else {
       setLocalFavorites(updateFavorites);
     }

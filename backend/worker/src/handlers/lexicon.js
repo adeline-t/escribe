@@ -48,6 +48,7 @@ const NEW_TYPE_MAP = {
   defensive: "nl_defensive",
   cible: "nl_cible",
   deplacement: "nl_deplacement",
+  deplacement_complement: "nl_deplacement_complement",
   "parade-numero": "nl_parade_numero",
   "parade-attribut": "nl_parade_attribut",
   "attaque-attribut": "nl_attaque_attribut"
@@ -59,6 +60,7 @@ const NEW_USER_TYPE_MAP = {
   defensive: "user_nl_defensive",
   cible: "user_nl_cible",
   deplacement: "user_nl_deplacement",
+  deplacement_complement: "user_nl_deplacement_complement",
   "parade-numero": "user_nl_parade_numero",
   "parade-attribut": "user_nl_parade_attribut",
   "attaque-attribut": "user_nl_attaque_attribut"

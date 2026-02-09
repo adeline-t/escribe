@@ -8,13 +8,25 @@ export const DEFAULT_PARTICIPANTS = [
 
 export const LEXICON_TYPES = [
   { key: "offensive", label: "actions d'attaque" },
-  { key: "action", label: "actions d'arme" },
+  { key: "action", label: "préparations" },
   { key: "attaque-attribut", label: "attributs d'attaque" },
   { key: "cible", label: "cibles" },
   { key: "deplacement", label: "déplacements" },
   { key: "defensive", label: "actions de défense" },
   { key: "parade-numero", label: "positions de parade" },
   { key: "parade-attribut", label: "attributs de parade" },
+];
+
+export const NEW_LEXICON_TYPES = [
+  { key: "offensive", label: "actions d'attaque" },
+  { key: "attaque-attribut", label: "attributs d'attaque" },
+  { key: "cible", label: "cibles" },
+  { key: "defensive", label: "actions de défense" },
+  { key: "parade-numero", label: "positions de parade" },
+  { key: "parade-attribut", label: "attributs de parade" },
+  { key: "action", label: "préparations" },
+  { key: "deplacement", label: "déplacements" },
+  { key: "deplacement_complement", label: "attributs de déplacement" },
 ];
 
 export const SABRE_LEXICON_TYPES = [
@@ -28,6 +40,63 @@ export const SABRE_LEXICON_TYPES = [
   { key: "preparations", label: "Préparations" },
   { key: "deplacements", label: "Déplacements" },
 ];
+
+// Ordre d'affichage des catégories dans l'atelier de lexique.
+// Tu peux modifier cet ordre "en dur" ici.
+export const LEXICON_CATEGORY_ORDER = {
+  classic: [
+    "offensive",
+    "attaque-attribut",
+    "cible",
+    "deplacement",
+    "defensive",
+    "parade-numero",
+    "parade-attribut",
+    "action",
+  ],
+  "classic-v2": [
+    "offensive",
+    "attaque-attribut",
+    "cible",
+    "defensive",
+    "parade-numero",
+    "parade-attribut",
+    "action",
+    "deplacement",
+    "deplacement_complement",
+  ],
+  "sabre-laser": [
+    "armes",
+    "phases_choregraphie",
+    "techniques_offensives",
+    "attributs_offensifs",
+    "cibles",
+    "techniques_defensives",
+    "attributs_defensifs",
+    "preparations",
+    "deplacements",
+  ],
+};
+
+function orderLexiconTypes(types, order) {
+  if (!Array.isArray(order) || !order.length) return types;
+  const rank = new Map(order.map((key, index) => [key, index]));
+  return [...types].sort((a, b) => {
+    const aRank = rank.has(a.key) ? rank.get(a.key) : Number.MAX_SAFE_INTEGER;
+    const bRank = rank.has(b.key) ? rank.get(b.key) : Number.MAX_SAFE_INTEGER;
+    return aRank - bRank;
+  });
+}
+
+export function getLexiconTypesForMode(lexiconKey) {
+  const base =
+    lexiconKey === "sabre-laser"
+      ? SABRE_LEXICON_TYPES
+      : lexiconKey === "classic-v2"
+        ? NEW_LEXICON_TYPES
+        : LEXICON_TYPES;
+  return orderLexiconTypes(base, LEXICON_CATEGORY_ORDER[lexiconKey]);
+}
 
 export function normalizeLexicon(data) {
   return {
