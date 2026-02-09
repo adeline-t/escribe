@@ -51,7 +51,7 @@ export const SABRE_FAVORITE_TYPE_KEYS = {
 };
 
 export const CLASSIC_LEXICON_OPTIONS = [
-  { key: "classic", label: "Lexique historique" },
+  { key: "classic", label: "Lexique obsolète" },
   { key: "classic-v2", label: "Lexique nouveau" },
 ];
 

@@ -7,14 +7,14 @@ export const DEFAULT_PARTICIPANTS = [
 ];
 
 export const LEXICON_TYPES = [
-  { key: "offensive", label: "action" },
-  { key: "action", label: "action d'arme" },
-  { key: "attaque-attribut", label: "attributs" },
-  { key: "cible", label: "cible" },
-  { key: "deplacement", label: "déplacement" },
-  { key: "defensive", label: "action" },
-  { key: "parade-numero", label: "position" },
-  { key: "parade-attribut", label: "attributs" },
+  { key: "offensive", label: "actions d'attaque" },
+  { key: "action", label: "actions d'arme" },
+  { key: "attaque-attribut", label: "attributs d'attaque" },
+  { key: "cible", label: "cibles" },
+  { key: "deplacement", label: "déplacements" },
+  { key: "defensive", label: "actions de défense" },
+  { key: "parade-numero", label: "positions de parade" },
+  { key: "parade-attribut", label: "attributs de parade" },
 ];
 
 export const SABRE_LEXICON_TYPES = [
@@ -102,15 +102,21 @@ function normalizeTokenForMatch(value) {
 
 function splitFlatV2Movement(data) {
   const movementFromApi = mergeUnique(data?.deplacement, data?.attackMove);
-  const providedBase = mergeUnique(data?.deplacement_base, data?.attackMoveBase);
+  const providedBase = mergeUnique(
+    data?.deplacement_base,
+    data?.attackMoveBase,
+  );
   const providedComplement = mergeUnique(
     data?.deplacement_complement,
     data?.attackMoveComplement,
   );
-  const hasExplicitSplit = providedBase.length > 0 || providedComplement.length > 0;
+  const hasExplicitSplit =
+    providedBase.length > 0 || providedComplement.length > 0;
 
   const baseLookup = new Set(providedBase.map(normalizeTokenForMatch));
-  const complementLookup = new Set(providedComplement.map(normalizeTokenForMatch));
+  const complementLookup = new Set(
+    providedComplement.map(normalizeTokenForMatch),
+  );
 
   const base = [];
   const complement = [];
@@ -134,7 +140,11 @@ function splitFlatV2Movement(data) {
     hasExplicitSplit ? base : movementFromApi,
   );
   const attackMoveComplement = mergeUnique(providedComplement, complement);
-  const attackMove = mergeUnique(attackMoveBase, attackMoveComplement, movementFromApi);
+  const attackMove = mergeUnique(
+    attackMoveBase,
+    attackMoveComplement,
+    movementFromApi,
+  );
 
   return { attackMoveBase, attackMoveComplement, attackMove };
 }

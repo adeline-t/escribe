@@ -26,7 +26,9 @@ export default function CombatRow({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const canWrite =
-    combat?.isOwner || combat?.shareRole === "write" || combat?.shareRole === "owner";
+    combat?.isOwner ||
+    combat?.shareRole === "write" ||
+    combat?.shareRole === "owner";
 
   function handleRowClick() {
     if (!onRowOpen) return;
@@ -75,7 +77,7 @@ export default function CombatRow({
         <div className="inline-center">
           <div className="text-strong">{combat.name}</div>
           {combat.hasLegacyLexicon ? (
-            <span className="chip chip--danger">Lexique historique</span>
+            <span className="chip chip--danger">Lexique obsolète</span>
           ) : null}
         </div>
       </div>
@@ -183,11 +185,7 @@ export default function CombatRow({
             <FaEllipsis />
           </button>
           {isMenuOpen ? (
-            <div
-              ref={menuRef}
-              className="combat-row-menu"
-              role="menu"
-            >
+            <div ref={menuRef} className="combat-row-menu" role="menu">
               {canWrite ? (
                 <button
                   type="button"
