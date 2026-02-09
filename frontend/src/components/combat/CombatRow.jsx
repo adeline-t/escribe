@@ -164,7 +164,7 @@ export default function CombatRow({
                 className="icon-button button-danger"
                 onClick={(event) => {
                   stopRowClick(event);
-                  onDelete(combat.id);
+                  onDelete(combat);
                 }}
                 aria-label="Supprimer le combat"
                 title="Supprimer"
@@ -262,7 +262,7 @@ export default function CombatRow({
                     className="icon-button button-danger"
                     onClick={(event) => {
                       stopRowClick(event);
-                      onDelete(combat.id);
+                      onDelete(combat);
                       setIsMenuOpen(false);
                     }}
                     aria-label="Supprimer"

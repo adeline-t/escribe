@@ -9,6 +9,8 @@ export default function CombatReaderPage({
   combatDescription,
   participants,
   phrases,
+  isReadOnly = true,
+  onTogglePhraseParticipantVisibility,
   onNavigate,
 }) {
   return (
@@ -39,7 +41,12 @@ export default function CombatReaderPage({
         readRight={
           <CombatRightPanels
             mode="read"
-            readingProps={{ phrases, participants }}
+            readingProps={{
+              phrases,
+              participants,
+              isReadOnly,
+              onTogglePhraseParticipantVisibility,
+            }}
           />
         }
       />

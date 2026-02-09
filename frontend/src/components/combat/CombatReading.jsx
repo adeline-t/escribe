@@ -8,9 +8,12 @@ import {
   FaTrash,
 } from "react-icons/fa6";
 import StepCard, { StepSummaryCard } from "./StepCard.jsx";
+import { COMBAT_STEP_LABELS } from "../../lib/combats.js";
 import {
   emptyParticipantState,
+  getVisibleParticipantIndexes,
   labelForParticipant,
+  normalizeHiddenParticipantIndexes,
 } from "../../lib/participants.js";
 
 export default function CombatReading({
@@ -29,10 +32,11 @@ export default function CombatReading({
   onToggleDeletionMode,
   onSelectPhrase,
   onRenamePhrase,
+  onTogglePhraseParticipantVisibility,
 }) {
   const readOnly = mode === "read" || isReadOnly;
-  const hasActivePhrase = Boolean(activePhrase);
-  const activePhraseName = activePhrase?.name?.trim() || "Phrase active";
+  const canEditPhraseVisibility =
+    typeof onTogglePhraseParticipantVisibility === "function" && !isReadOnly;
   const activePhraseIndex = activePhrase
     ? phrases.findIndex((phrase) => phrase.id === activePhrase.id)
     : -1;
@@ -42,11 +46,89 @@ export default function CombatReading({
     activePhraseIndex >= 0 && activePhraseIndex < phrases.length - 1;
   const hasSteps = Boolean(activePhrase?.steps?.length);
   const phraseName = activePhrase?.name?.trim() || "";
+  const activeVisibleParticipantIndexes = activePhrase
+    ? getPhraseVisibleIndexes(activePhrase)
+    : [];
+  const showActiveIndexColumn = activeVisibleParticipantIndexes.length > 1;
   const [phraseDraft, setPhraseDraft] = useState(activePhrase?.name ?? "");
 
   useEffect(() => {
     setPhraseDraft(activePhrase?.name ?? "");
   }, [activePhrase?.id, activePhrase?.name]);
+
+  function getPhraseHiddenIndexes(phrase) {
+    return normalizeHiddenParticipantIndexes(
+      phrase?.hiddenParticipantIndexes,
+      participants.length,
+    );
+  }
+
+  function getPhraseVisibleIndexes(phrase) {
+    const hidden = getPhraseHiddenIndexes(phrase);
+    const visible = getVisibleParticipantIndexes(participants.length, hidden);
+    if (!visible.length && participants.length > 0) return [0];
+    return visible;
+  }
+
+  function togglePhraseParticipantVisibility(phraseId, participantIndex) {
+    if (!canEditPhraseVisibility) return;
+    onTogglePhraseParticipantVisibility?.(phraseId, participantIndex);
+  }
+
+  function renderPhraseVisibilityControls(phrase) {
+    if (participants.length <= 1) return null;
+    const hiddenIndexes = new Set(getPhraseHiddenIndexes(phrase));
+    const visibleIndexes = getPhraseVisibleIndexes(phrase);
+    return (
+      <div className="participant-visibility-toolbar phrase-visibility-toolbar">
+        <span className="participant-visibility-label">
+          {COMBAT_STEP_LABELS.columnVisibility}
+        </span>
+        <div className="participant-visibility-chips">
+          {participants.map((participant, index) => {
+            const label =
+              participantLabels[index] ?? labelForParticipant(participant, index);
+            const isHidden = hiddenIndexes.has(index);
+            const canHide = !isHidden && visibleIndexes.length > 1;
+            return (
+              <button
+                key={`phrase-${phrase?.id ?? "unknown"}-visibility-${index}`}
+                type="button"
+                className={`participant-visibility-chip ${
+                  isHidden ? "is-hidden" : ""
+                }`}
+                onClick={() =>
+                  togglePhraseParticipantVisibility(phrase?.id, index)
+                }
+                disabled={!canEditPhraseVisibility || !phrase?.id || !canHide && !isHidden}
+                aria-pressed={!isHidden}
+                title={isHidden ? `Afficher ${label}` : `Masquer ${label}`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+        <button
+          type="button"
+          className="button-ghost participant-visibility-reset"
+          onClick={() => {
+            const hidden = getPhraseHiddenIndexes(phrase);
+            hidden.forEach((index) =>
+              togglePhraseParticipantVisibility(phrase?.id, index),
+            );
+          }}
+          disabled={
+            !canEditPhraseVisibility ||
+            !phrase?.id ||
+            getPhraseHiddenIndexes(phrase).length === 0
+          }
+        >
+          {COMBAT_STEP_LABELS.showAllColumns}
+        </button>
+      </div>
+    );
+  }
 
   function hasItemDisplayContent(item) {
     if (!item || typeof item !== "object") return false;
@@ -134,6 +216,43 @@ export default function CombatReading({
       (leftRole === "attack" && rightRole === "response") ||
       (leftRole === "response" && rightRole === "attack")
     );
+  }
+
+  function buildConnectorLinks(connectorRoles = []) {
+    const links = [];
+    for (let fromIndex = 0; fromIndex < connectorRoles.length; fromIndex += 1) {
+      for (
+        let toIndex = fromIndex + 1;
+        toIndex < connectorRoles.length;
+        toIndex += 1
+      ) {
+        const fromRole = connectorRoles[fromIndex];
+        const toRole = connectorRoles[toIndex];
+        if (!isAttackResponsePair(fromRole, toRole)) continue;
+        links.push({
+          fromIndex,
+          toIndex,
+          span: toIndex - fromIndex,
+        });
+      }
+    }
+    return links;
+  }
+
+  function getEditCardType(item) {
+    if (!item || typeof item !== "object") return null;
+    if (item.role === "attack") return "action";
+    if (item.role === "preparation") return "preparation";
+    if (item.role === "defense") return "reaction";
+    if (item.role === "none" && item.note) return "neutral";
+    return null;
+  }
+
+  function getEditConnectorRole(item) {
+    if (!item || typeof item !== "object") return null;
+    if (item.role === "attack") return "attack";
+    if (item.role === "defense") return "response";
+    return null;
   }
 
   function renderReadingHeader({
@@ -315,159 +434,162 @@ export default function CombatReading({
 
     return (
       <div className="stack-4 combat-reading-readonly">
-        {phrases.map((phrase, phraseIndex) => (
-          <div key={phrase.id} className="phrase-block">
-            <div className="panel-header">
-              <div>
-                <h3 className="subtitle">
-                  {phrase.name || `Phrase ${phraseIndex + 1}`}
-                </h3>
-                <p className="meta text-muted">
-                  {phrase.steps?.length ?? 0} étape
-                  {(phrase.steps?.length ?? 0) > 1 ? "s" : ""}
-                </p>
+        {phrases.map((phrase, phraseIndex) => {
+          const visibleParticipantIndexes = getPhraseVisibleIndexes(phrase);
+          const showIndexColumn = visibleParticipantIndexes.length > 1;
+          return (
+            <div key={phrase.id} className="phrase-block">
+              <div className="panel-header">
+                <div>
+                  <h3 className="subtitle">
+                    {phrase.name || `Phrase ${phraseIndex + 1}`}
+                  </h3>
+                  <p className="meta text-muted">
+                    {phrase.steps?.length ?? 0} étape
+                    {(phrase.steps?.length ?? 0) > 1 ? "s" : ""}
+                  </p>
+                </div>
               </div>
-            </div>
-            <div className="phrase--reading stack-3">
-              <div
-                className={`phrase-header cols-index-${participants.length} index-wide ${
-                  participants.length === 1 ? "index-hidden" : ""
-                }`}
-              >
-                {participants.length > 1 ? (
-                  <div className="phrase-index phrase-index--header">#</div>
-                ) : null}
-                {participants.map((name, index) => (
-                  <div key={index} className="phrase-name">
-                    {labelForParticipant(name, index)}
-                  </div>
-                ))}
-              </div>
-              <div className="stack-2">
-                {phrase.steps?.length ? (
-                  phrase.steps.map((step, index) => {
-                    const stepCardTypes = step.participants.map(getReadCardType);
-                    const stepConnectorRoles = step.participants.map(
-                      (item, participantIndex) =>
-                        stepCardTypes[participantIndex]
-                          ? getReadConnectorRole(item)
-                          : null,
-                    );
-                    const connectorIndices = stepConnectorRoles.reduce(
-                      (accumulator, role, participantIndex) => {
-                        if (role) accumulator.push(participantIndex);
-                        return accumulator;
-                      },
-                      [],
-                    );
-                    const connectorLinks = [];
-                    for (
-                      let pairIndex = 0;
-                      pairIndex < connectorIndices.length - 1;
-                      pairIndex += 1
-                    ) {
-                      const fromIndex = connectorIndices[pairIndex];
-                      const toIndex = connectorIndices[pairIndex + 1];
-                      const fromRole = stepConnectorRoles[fromIndex];
-                      const toRole = stepConnectorRoles[toIndex];
-                      if (!isAttackResponsePair(fromRole, toRole)) {
-                        continue;
-                      }
-                      connectorLinks.push({
-                        fromIndex,
-                        toIndex,
-                        span: toIndex - fromIndex,
-                      });
-                    }
+              {renderPhraseVisibilityControls(phrase)}
+              <div className="phrase--reading stack-3">
+                <div
+                  className={`phrase-header cols-index-${visibleParticipantIndexes.length} index-wide ${
+                    !showIndexColumn ? "index-hidden" : ""
+                  }`}
+                >
+                  {showIndexColumn ? (
+                    <div className="phrase-index phrase-index--header">#</div>
+                  ) : null}
+                  {visibleParticipantIndexes.map((participantIndex) => (
+                    <div key={participantIndex} className="phrase-name">
+                      {labelForParticipant(
+                        participants[participantIndex],
+                        participantIndex,
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <div className="stack-2">
+                  {phrase.steps?.length ? (
+                    phrase.steps.map((step, index) => {
+                      const visibleStepParticipants = visibleParticipantIndexes.map(
+                        (participantIndex) =>
+                          step?.participants?.[participantIndex] ??
+                          emptyParticipantState(),
+                      );
+                      const stepCardTypes = visibleStepParticipants.map(
+                        getReadCardType,
+                      );
+                      const stepConnectorRoles = visibleStepParticipants.map(
+                        (item, participantIndex) =>
+                          stepCardTypes[participantIndex]
+                            ? getReadConnectorRole(item)
+                            : null,
+                      );
+                      const connectorLinks = buildConnectorLinks(
+                        stepConnectorRoles,
+                      );
 
-                    return (
-                      <div
-                        key={step.id}
-                        className={`phrase-grid-row cols-index-${participants.length} index-wide ${
-                          participants.length === 1 ? "index-hidden" : ""
-                        }`}
-                      >
-                        {participants.length > 1 ? (
-                          <div className="phrase-index">
-                            <div className="phrase-index-number">
-                              {index + 1}
+                      return (
+                        <div
+                          key={step.id}
+                          className={`phrase-grid-row cols-index-${visibleParticipantIndexes.length} index-wide ${
+                            !showIndexColumn ? "index-hidden" : ""
+                          }`}
+                        >
+                          {showIndexColumn ? (
+                            <div className="phrase-index">
+                              <div className="phrase-index-number">
+                                {index + 1}
+                              </div>
                             </div>
-                          </div>
-                        ) : null}
-                        {step.participants.map((item, colIndex) => {
-                          const cardType = stepCardTypes[colIndex];
-                          const incomingLink = connectorLinks.find(
-                            (link) => link.toIndex === colIndex,
-                          );
-                          const outgoingLink = connectorLinks.find(
-                            (link) => link.fromIndex === colIndex,
-                          );
-                          const hasPrevLink = Boolean(incomingLink);
-                          const hasNextLink = Boolean(outgoingLink);
-                          const showLeftColumnDot = Boolean(cardType) && hasNextLink;
-                          const showRightColumnDot = Boolean(cardType) && hasPrevLink;
-                          const isDefenseMarker = cardType === "reaction";
-                          const nextLinkSpan = outgoingLink?.span ?? 1;
-                          return (
-                            <div
-                              key={`${step.id}-${colIndex}`}
-                              className="phrase-cell"
-                            >
-                              {participants.length === 1 ? (
-                                <div className="phrase-step-number-inline">
-                                  {index + 1}
-                                </div>
-                              ) : null}
-                              {cardType ? (
-                                <div className="phrase-cell-card-wrap">
-                                  <StepSummaryCard type={cardType} item={item} />
-                                  {showRightColumnDot ? (
-                                    <span
-                                      className={`phrase-cell-left-dot ${
-                                        isDefenseMarker
-                                          ? "is-defense-marker"
-                                          : ""
-                                      }`}
-                                      aria-hidden="true"
-                                    >
-                                      {isDefenseMarker ? ">" : ""}
-                                    </span>
-                                  ) : null}
-                                  {showLeftColumnDot ? (
-                                    <>
-                                      {hasNextLink ? (
-                                        <span
-                                          className={`phrase-cell-link-line span-${nextLinkSpan}`}
-                                          aria-hidden="true"
-                                        />
-                                      ) : null}
+                          ) : null}
+                          {visibleStepParticipants.map((item, colIndex) => {
+                            const cardType = stepCardTypes[colIndex];
+                            const incomingLinks = connectorLinks.filter(
+                              (link) => link.toIndex === colIndex,
+                            );
+                            const outgoingLinks = connectorLinks.filter(
+                              (link) => link.fromIndex === colIndex,
+                            );
+                            const hasPrevLink = incomingLinks.length > 0;
+                            const hasNextLink = outgoingLinks.length > 0;
+                            const showLeftColumnDot =
+                              Boolean(cardType) && hasNextLink;
+                            const showRightColumnDot =
+                              Boolean(cardType) && hasPrevLink;
+                            const isDefenseMarker = cardType === "reaction";
+                            return (
+                              <div
+                                key={`${step.id}-${colIndex}`}
+                                className="phrase-cell"
+                              >
+                                {!showIndexColumn ? (
+                                  <div className="phrase-step-number-inline">
+                                    {index + 1}
+                                  </div>
+                                ) : null}
+                                {cardType ? (
+                                  <div className="phrase-cell-card-wrap">
+                                    <StepSummaryCard type={cardType} item={item} />
+                                    {showRightColumnDot ? (
                                       <span
-                                        className={`phrase-cell-right-dot ${
+                                        className={`phrase-cell-left-dot ${
                                           isDefenseMarker
                                             ? "is-defense-marker"
                                             : ""
                                         }`}
                                         aria-hidden="true"
                                       >
-                                        {isDefenseMarker ? "<" : ""}
+                                        {isDefenseMarker ? ">" : ""}
                                       </span>
-                                    </>
-                                  ) : null}
-                                </div>
-                              ) : null}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="empty">Aucune étape.</div>
-                )}
+                                    ) : null}
+                                    {showLeftColumnDot ? (
+                                      <>
+                                        {outgoingLinks.map((link, linkIndex) => {
+                                          const offset =
+                                            (linkIndex -
+                                              (outgoingLinks.length - 1) / 2) *
+                                            3;
+                                          return (
+                                            <span
+                                              key={`${step.id}-${colIndex}-link-${link.toIndex}`}
+                                              className={`phrase-cell-link-line span-${link.span}`}
+                                              style={{
+                                                "--link-offset": `${offset}px`,
+                                              }}
+                                              aria-hidden="true"
+                                            />
+                                          );
+                                        })}
+                                        <span
+                                          className={`phrase-cell-right-dot ${
+                                            isDefenseMarker
+                                              ? "is-defense-marker"
+                                              : ""
+                                          }`}
+                                          aria-hidden="true"
+                                        >
+                                          {isDefenseMarker ? "<" : ""}
+                                        </span>
+                                      </>
+                                    ) : null}
+                                  </div>
+                                ) : null}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="empty">Aucune étape.</div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   }
@@ -560,18 +682,20 @@ export default function CombatReading({
             </div>
           ) : null,
       })}
+      {renderPhraseVisibilityControls(activePhrase)}
       {hasSteps ? (
         <div
-          className={`phrase-header cols-index-${participants.length} index-compact ${
-            participants.length === 1 ? "index-hidden" : ""
+          className={`phrase-header cols-index-${activeVisibleParticipantIndexes.length} index-compact ${
+            !showActiveIndexColumn ? "index-hidden" : ""
           }`}
         >
-          {participants.length > 1 ? (
+          {showActiveIndexColumn ? (
             <div className="phrase-index phrase-index--header" />
           ) : null}
-          {participantLabels.map((name, index) => (
-            <div key={index} className="phrase-name">
-              {name}
+          {activeVisibleParticipantIndexes.map((participantIndex) => (
+            <div key={participantIndex} className="phrase-name">
+              {participantLabels[participantIndex] ??
+                labelForParticipant(participants[participantIndex], participantIndex)}
             </div>
           ))}
         </div>
@@ -585,7 +709,7 @@ export default function CombatReading({
           <>
             {insertionMode ? (
               <div
-                className={`phrase-insert-row cols-index-${participants.length} index-compact`}
+                className={`phrase-insert-row cols-index-${activeVisibleParticipantIndexes.length} index-compact`}
               >
                 <div className="phrase-insert-cell">
                   <button
@@ -609,35 +733,103 @@ export default function CombatReading({
                 }`}
               >
                 <div
-                  className={`phrase-grid-row cols-index-${participants.length} index-compact ${
-                    participants.length === 1 ? "index-hidden" : ""
+                  className={`phrase-grid-row cols-index-${activeVisibleParticipantIndexes.length} index-compact ${
+                    !showActiveIndexColumn ? "index-hidden" : ""
                   }`}
                 >
-                  {participants.length > 1 ? (
+                  {showActiveIndexColumn ? (
                     <div className="phrase-index">
                       <div className="phrase-index-number">{index + 1}</div>
                     </div>
                   ) : null}
-                  {step.participants.map((item, colIndex) => {
-                    return (
-                      <div
-                        key={`${step.id}-${colIndex}`}
-                        className="phrase-cell"
-                      >
-                        {participants.length === 1 ? (
-                          <div className="phrase-step-number-inline">
-                            {index + 1}
-                          </div>
-                        ) : null}
-                        {renderParticipantCell({
-                          item,
-                          stepId: step.id,
-                          stepIndex: index,
-                          participantIndex: colIndex,
-                        })}
-                      </div>
+                  {(() => {
+                    const visibleStepParticipants = activeVisibleParticipantIndexes.map(
+                      (participantIndex) =>
+                        step?.participants?.[participantIndex] ??
+                        emptyParticipantState(),
                     );
-                  })}
+                    const editCardTypes = visibleStepParticipants.map(
+                      getEditCardType,
+                    );
+                    const editConnectorRoles = visibleStepParticipants.map(
+                      (item, participantIndex) =>
+                        editCardTypes[participantIndex]
+                          ? getEditConnectorRole(item)
+                          : null,
+                    );
+                    const connectorLinks = buildConnectorLinks(editConnectorRoles);
+
+                    return visibleStepParticipants.map((item, colIndex) => {
+                      const participantIndex =
+                        activeVisibleParticipantIndexes[colIndex];
+                      const incomingLinks = connectorLinks.filter(
+                        (link) => link.toIndex === colIndex,
+                      );
+                      const outgoingLinks = connectorLinks.filter(
+                        (link) => link.fromIndex === colIndex,
+                      );
+                      const hasPrevLink = incomingLinks.length > 0;
+                      const hasNextLink = outgoingLinks.length > 0;
+                      const showLeftColumnDot = hasNextLink;
+                      const showRightColumnDot = hasPrevLink;
+                      const isDefenseMarker = item.role === "defense";
+
+                      return (
+                        <div
+                          key={`${step.id}-${participantIndex}`}
+                          className="phrase-cell"
+                        >
+                          {!showActiveIndexColumn ? (
+                            <div className="phrase-step-number-inline">
+                              {index + 1}
+                            </div>
+                          ) : null}
+                          <div className="phrase-cell-card-wrap">
+                            {renderParticipantCell({
+                              item,
+                              stepId: step.id,
+                              stepIndex: index,
+                              participantIndex,
+                            })}
+                            {showRightColumnDot ? (
+                              <span
+                                className={`phrase-cell-left-dot ${
+                                  isDefenseMarker ? "is-defense-marker" : ""
+                                }`}
+                                aria-hidden="true"
+                              >
+                                {isDefenseMarker ? ">" : ""}
+                              </span>
+                            ) : null}
+                            {showLeftColumnDot ? (
+                              <>
+                                {outgoingLinks.map((link, linkIndex) => {
+                                  const offset =
+                                    (linkIndex - (outgoingLinks.length - 1) / 2) * 3;
+                                  return (
+                                    <span
+                                      key={`${step.id}-${colIndex}-edit-link-${link.toIndex}`}
+                                      className={`phrase-cell-link-line span-${link.span}`}
+                                      style={{ "--link-offset": `${offset}px` }}
+                                      aria-hidden="true"
+                                    />
+                                  );
+                                })}
+                                <span
+                                  className={`phrase-cell-right-dot ${
+                                    isDefenseMarker ? "is-defense-marker" : ""
+                                  }`}
+                                  aria-hidden="true"
+                                >
+                                  {isDefenseMarker ? "<" : ""}
+                                </span>
+                              </>
+                            ) : null}
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
                 {deletionMode && !insertionMode ? (
                   <button
@@ -653,7 +845,7 @@ export default function CombatReading({
                 ) : null}
                 {insertionMode ? (
                   <div
-                    className={`phrase-insert-row cols-index-${participants.length} index-compact`}
+                    className={`phrase-insert-row cols-index-${activeVisibleParticipantIndexes.length} index-compact`}
                   >
                     <div className="phrase-insert-cell">
                       <button

@@ -82,6 +82,8 @@ export const COMBAT_STEP_LABELS = {
   preparationType: "préparation",
   position: "position",
   target: "cible",
+  columnVisibility: "colonnes",
+  showAllColumns: "tout afficher",
   noComplement: "aucun complément sélectionné.",
   noSelection: "aucun mot sélectionné.",
   noteClear: "effacer la note",

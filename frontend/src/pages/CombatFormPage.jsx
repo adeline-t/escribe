@@ -43,6 +43,7 @@ export default function CombatFormPage({
   onCreatePhrase,
   onSelectPhrase,
   onRenamePhrase,
+  onTogglePhraseParticipantVisibility,
   onMovePhrase,
   onMovePhraseToIndex,
   onDeletePhrase,
@@ -285,6 +286,7 @@ export default function CombatFormPage({
                 onDeleteStep,
                 onSelectPhrase,
                 onRenamePhrase,
+                onTogglePhraseParticipantVisibility,
               }}
               stepForm={stepForm}
               nextStepIndex={nextStepIndex}

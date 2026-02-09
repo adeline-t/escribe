@@ -66,6 +66,32 @@ export function emptyParticipantState() {
   };
 }
 
+export function normalizeHiddenParticipantIndexes(raw, participantCount) {
+  const max = Math.max(0, Number(participantCount) || 0);
+  if (!Array.isArray(raw) || max <= 0) return [];
+  const out = [];
+  const seen = new Set();
+  for (const value of raw) {
+    const index = Number(value);
+    if (!Number.isInteger(index)) continue;
+    if (index < 0 || index >= max) continue;
+    if (seen.has(index)) continue;
+    seen.add(index);
+    out.push(index);
+  }
+  return out.sort((a, b) => a - b);
+}
+
+export function getVisibleParticipantIndexes(participantCount, hiddenIndexes) {
+  const total = Math.max(0, Number(participantCount) || 0);
+  const hidden = new Set(normalizeHiddenParticipantIndexes(hiddenIndexes, total));
+  const visible = [];
+  for (let index = 0; index < total; index += 1) {
+    if (!hidden.has(index)) visible.push(index);
+  }
+  return visible;
+}
+
 export function normalizeParticipant(item) {
   const base = emptyParticipantState();
   const role = ["none", "attack", "defense", "preparation"].includes(item?.role)
@@ -140,6 +166,10 @@ export function normalizeState(raw, defaultParticipants) {
         typeof phrase?.name === "string" && phrase.name.trim()
           ? phrase.name
           : `Phrase ${phraseIndex + 1}`,
+      hiddenParticipantIndexes: normalizeHiddenParticipantIndexes(
+        phrase?.hiddenParticipantIndexes,
+        participants.length,
+      ),
       steps,
     };
   });

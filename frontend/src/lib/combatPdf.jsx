@@ -6,7 +6,12 @@ import {
   StyleSheet,
   pdf,
 } from "@react-pdf/renderer";
-import { buildSummaryLine, formatParticipantSummary } from "./participants.js";
+import {
+  buildSummaryLine,
+  formatParticipantSummary,
+  getVisibleParticipantIndexes,
+  normalizeHiddenParticipantIndexes,
+} from "./participants.js";
 
 function sanitizeFileName(value) {
   return String(value ?? "")
@@ -506,70 +511,95 @@ function CombatDocument({ combat, theme }) {
           </View>
         </View>
 
-        {phrases.map((phrase, phraseIndex) => (
-          <View
-            key={phrase.id || phraseIndex}
-            style={styles.phraseBlock}
-            minPresenceAhead={140}
-          >
-            <View style={styles.phraseHeaderBlock} wrap={false}>
-              <View style={styles.phraseHeader}>
-                <Text style={styles.phraseTitle}>
-                  {phrase.name || `Phrase ${phraseIndex + 1}`}
-                </Text>
-                <Text style={styles.phraseMeta}>
-                  {phrase.steps?.length ?? 0} passe
-                  {(phrase.steps?.length ?? 0) > 1 ? "s" : ""}
-                </Text>
-              </View>
+        {phrases.map((phrase, phraseIndex) => {
+          const hiddenIndexes = normalizeHiddenParticipantIndexes(
+            phrase?.hiddenParticipantIndexes,
+            participants.length,
+          );
+          const visibleIndexes = getVisibleParticipantIndexes(
+            participants.length,
+            hiddenIndexes,
+          );
+          const resolvedVisibleIndexes =
+            visibleIndexes.length > 0
+              ? visibleIndexes
+              : participants.length > 0
+                ? [0]
+                : [];
 
-              <View style={styles.gridHeader}>
-                <Text style={styles.indexCell}>#</Text>
-                {participants.map((participant, index) => (
-                  <View key={index} style={styles.participantCell}>
-                    <Text style={styles.participantLabel}>
-                      {formatParticipantSummary(participant, index)}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </View>
+          return (
+            <View
+              key={phrase.id || phraseIndex}
+              style={styles.phraseBlock}
+              minPresenceAhead={140}
+            >
+              <View style={styles.phraseHeaderBlock} wrap={false}>
+                <View style={styles.phraseHeader}>
+                  <Text style={styles.phraseTitle}>
+                    {phrase.name || `Phrase ${phraseIndex + 1}`}
+                  </Text>
+                  <Text style={styles.phraseMeta}>
+                    {phrase.steps?.length ?? 0} passe
+                    {(phrase.steps?.length ?? 0) > 1 ? "s" : ""}
+                  </Text>
+                </View>
 
-            {(phrase.steps || []).map((step, stepIndex) => (
-              <View
-                key={step.id || stepIndex}
-                style={styles.row}
-                wrap={false}
-                minPresenceAhead={16}
-              >
-                <Text style={styles.indexCell}>{stepIndex + 1}</Text>
-                {step.participants.map((item, index) => {
-                  const variant = getCardVariant(item);
-                  const cardStyle = {
-                    ...styles.card,
-                    ...(variant === "action"
-                      ? styles.cardAction
-                      : variant === "preparation"
-                        ? styles.cardPreparation
-                      : variant === "reaction"
-                        ? styles.cardReaction
-                        : variant === "neutral"
-                          ? styles.cardNeutral
-                          : styles.cardEmpty),
-                  };
-                  return (
+                <View style={styles.gridHeader}>
+                  <Text style={styles.indexCell}>#</Text>
+                  {resolvedVisibleIndexes.map((participantIndex) => (
                     <View
-                      key={`${stepIndex}-${index}`}
+                      key={participantIndex}
                       style={styles.participantCell}
                     >
-                      <View style={cardStyle}>{renderCardContent(item)}</View>
+                      <Text style={styles.participantLabel}>
+                        {formatParticipantSummary(
+                          participants[participantIndex],
+                          participantIndex,
+                        )}
+                      </Text>
                     </View>
-                  );
-                })}
+                  ))}
+                </View>
               </View>
-            ))}
-          </View>
-        ))}
+
+              {(phrase.steps || []).map((step, stepIndex) => (
+                <View
+                  key={step.id || stepIndex}
+                  style={styles.row}
+                  wrap={false}
+                  minPresenceAhead={16}
+                >
+                  <Text style={styles.indexCell}>{stepIndex + 1}</Text>
+                  {resolvedVisibleIndexes.map((participantIndex) => {
+                    const item =
+                      step?.participants?.[participantIndex] ?? {};
+                    const variant = getCardVariant(item);
+                    const cardStyle = {
+                      ...styles.card,
+                      ...(variant === "action"
+                        ? styles.cardAction
+                        : variant === "preparation"
+                          ? styles.cardPreparation
+                          : variant === "reaction"
+                            ? styles.cardReaction
+                            : variant === "neutral"
+                              ? styles.cardNeutral
+                              : styles.cardEmpty),
+                    };
+                    return (
+                      <View
+                        key={`${stepIndex}-${participantIndex}`}
+                        style={styles.participantCell}
+                      >
+                        <View style={cardStyle}>{renderCardContent(item)}</View>
+                      </View>
+                    );
+                  })}
+                </View>
+              ))}
+            </View>
+          );
+        })}
       </Page>
     </Document>
   );

@@ -38,6 +38,7 @@ import {
   buildParticipantLabel,
   labelForParticipant,
   emptyParticipantState,
+  normalizeHiddenParticipantIndexes,
   normalizeState,
   toggleAttribute,
   buildSummaryLine,
@@ -483,6 +484,16 @@ export default function App() {
       }
       return next;
     });
+
+    setPhrases((prev) =>
+      prev.map((phrase) => ({
+        ...phrase,
+        hiddenParticipantIndexes: normalizeHiddenParticipantIndexes(
+          phrase?.hiddenParticipantIndexes,
+          count,
+        ),
+      })),
+    );
   }
 
   function updateForm(index, patch) {
@@ -703,11 +714,38 @@ export default function App() {
     setDeletionMode(false);
   }
 
+  function togglePhraseParticipantVisibility(phraseId, participantIndex) {
+    const index = Number(participantIndex);
+    if (!Number.isInteger(index)) return;
+    setPhrases((prev) =>
+      prev.map((phrase) => {
+        if (phrase.id !== phraseId) return phrase;
+        const current = normalizeHiddenParticipantIndexes(
+          phrase?.hiddenParticipantIndexes,
+          participants.length,
+        );
+        const nextSet = new Set(current);
+        if (nextSet.has(index)) {
+          nextSet.delete(index);
+        } else {
+          const visibleCount = Math.max(0, participants.length - nextSet.size);
+          if (visibleCount <= 1) return phrase;
+          nextSet.add(index);
+        }
+        return {
+          ...phrase,
+          hiddenParticipantIndexes: [...nextSet].sort((a, b) => a - b),
+        };
+      }),
+    );
+  }
+
   function createPhrase() {
     const nextNumber = phrases.length + 1;
     const newPhrase = {
       id: crypto.randomUUID(),
       name: `Phrase ${nextNumber}`,
+      hiddenParticipantIndexes: [],
       steps: [],
     };
     setPhrases((prev) => [...prev, newPhrase]);
@@ -1020,6 +1058,9 @@ export default function App() {
             onCreatePhrase={createPhrase}
             onSelectPhrase={selectPhrase}
             onRenamePhrase={renamePhrase}
+            onTogglePhraseParticipantVisibility={
+              togglePhraseParticipantVisibility
+            }
             onMovePhrase={movePhrase}
             onMovePhraseToIndex={movePhraseToIndex}
             onDeletePhrase={deletePhrase}
@@ -1089,6 +1130,9 @@ export default function App() {
             onCreatePhrase={createPhrase}
             onSelectPhrase={selectPhrase}
             onRenamePhrase={renamePhrase}
+            onTogglePhraseParticipantVisibility={
+              togglePhraseParticipantVisibility
+            }
             onMovePhrase={movePhrase}
             onMovePhraseToIndex={movePhraseToIndex}
             onDeletePhrase={deletePhrase}
@@ -1133,6 +1177,10 @@ export default function App() {
             combatDescription={combatDescription}
             participants={participants}
             phrases={phrases}
+            isReadOnly={combatShareRole === "read"}
+            onTogglePhraseParticipantVisibility={
+              togglePhraseParticipantVisibility
+            }
             onNavigate={setPage}
           />
         ) : null}
