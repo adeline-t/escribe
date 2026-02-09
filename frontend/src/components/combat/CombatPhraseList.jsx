@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { FaEllipsis, FaPen, FaPlus } from "react-icons/fa6";
+import { resolvePhraseName } from "../../../../shared/phraseModel.js";
 
 export default function CombatPhraseList({
   phrases,
@@ -93,8 +94,10 @@ export default function CombatPhraseList({
             </div>
           </div>
         ) : (
-          phrases.map((phrase, index) => (
-            <div
+          phrases.map((phrase, index) => {
+            const phraseName = resolvePhraseName(phrase?.name, index);
+            return (
+              <div
               key={phrase.id}
               className={`row-card row-card--soft row-grid-2 ${phrase.id === activePhraseId ? "is-active" : ""}`}
               draggable={!readOnly}
@@ -105,9 +108,7 @@ export default function CombatPhraseList({
             >
               {readOnly ? (
                 <div className="row">
-                  <div className="text-strong">
-                    {phrase.name?.trim() || `Phrase ${index + 1}`}
-                  </div>
+                  <div className="text-strong">{phraseName}</div>
                   <div className="meta">
                     {phrase.steps?.length ?? 0} passe
                     {(phrase.steps?.length ?? 0) > 1 ? "s" : ""}
@@ -117,7 +118,7 @@ export default function CombatPhraseList({
                 <>
                   <div className="row">
                     <div className="text-md">
-                      {phrase.name?.trim() || `Phrase ${index + 1}`}
+                      {phraseName}
                       {" • "}
                       <span className="meta">
                         {phrase.steps.length} passe
@@ -143,8 +144,7 @@ export default function CombatPhraseList({
                           onClick={() => {
                             onRequestRenamePhrase?.({
                               id: phrase.id,
-                              name:
-                                phrase.name?.trim() || `Phrase ${index + 1}`,
+                              name: phraseName,
                             });
                             setTimeout(closeMenu, 0);
                           }}
@@ -179,9 +179,7 @@ export default function CombatPhraseList({
                               onClick={() => {
                                 onRequestDeletePhrase({
                                   id: phrase.id,
-                                  name:
-                                    phrase.name?.trim() ||
-                                    `Phrase ${index + 1}`,
+                                  name: phraseName,
                                 });
                                 closeMenu();
                               }}
@@ -195,8 +193,9 @@ export default function CombatPhraseList({
                   </div>
                 </>
               )}
-            </div>
-          ))
+              </div>
+            );
+          })
         )}
       </div>
     </>

@@ -12,6 +12,7 @@ import {
   getVisibleParticipantIndexes,
   normalizeHiddenParticipantIndexes,
 } from "./participants.js";
+import { resolvePhraseName } from "../../../shared/phraseModel.js";
 
 function sanitizeFileName(value) {
   return String(value ?? "")
@@ -536,7 +537,7 @@ function CombatDocument({ combat, theme }) {
               <View style={styles.phraseHeaderBlock} wrap={false}>
                 <View style={styles.phraseHeader}>
                   <Text style={styles.phraseTitle}>
-                    {phrase.name || `Phrase ${phraseIndex + 1}`}
+                    {resolvePhraseName(phrase?.name, phraseIndex)}
                   </Text>
                   <Text style={styles.phraseMeta}>
                     {phrase.steps?.length ?? 0} passe

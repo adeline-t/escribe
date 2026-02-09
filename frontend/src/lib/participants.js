@@ -1,15 +1,17 @@
 import {
-  createEmptyParticipantState,
-  createPhraseModel,
   DEFAULT_COMBAT_NAME,
   DEFAULT_COMBAT_SHARE_ROLE,
   DEFAULT_COMBAT_TYPE,
   normalizeCombatShareRole,
   normalizeCombatType,
   normalizeHiddenParticipantIndexes as normalizeHiddenParticipantIndexesFromModel,
-  PARTICIPANT_MODES,
-  PARTICIPANT_ROLES,
 } from "../../../shared/combatModel.js";
+import { createPhraseModel } from "../../../shared/phraseModel.js";
+import {
+  createStepModel,
+  createStepParticipantModel,
+  LEGACY_STEP_LEXICON_KEY,
+} from "../../../shared/stepModel.js";
 
 export function buildParticipantLabel(index) {
   return `Combattant ${index + 1}`;
@@ -59,7 +61,7 @@ export function labelForParticipant(participant, index) {
 }
 
 export function emptyParticipantState() {
-  return createEmptyParticipantState();
+  return createStepParticipantModel();
 }
 
 export function normalizeHiddenParticipantIndexes(raw, participantCount) {
@@ -77,36 +79,7 @@ export function getVisibleParticipantIndexes(participantCount, hiddenIndexes) {
 }
 
 export function normalizeParticipant(item) {
-  const base = emptyParticipantState();
-  const role = PARTICIPANT_ROLES.includes(item?.role)
-    ? item.role
-    : base.role;
-  const mode = PARTICIPANT_MODES.includes(item?.mode)
-    ? item.mode
-    : base.mode;
-  return {
-    ...base,
-    ...item,
-    mode,
-    role,
-    actionDetails: Array.isArray(item?.actionDetails)
-      ? item.actionDetails.map((detail) => ({
-          action: detail?.action ?? "",
-          attribute: detail?.attribute ?? "",
-        }))
-      : [],
-    defenseDetails: Array.isArray(item?.defenseDetails)
-      ? item.defenseDetails.map((detail) => ({
-          defense: detail?.defense ?? "",
-          position: detail?.position ?? "",
-          attribute: detail?.attribute ?? "",
-        }))
-      : [],
-    attackAttribute: Array.isArray(item?.attackAttribute)
-      ? item.attackAttribute
-      : [],
-    noteOverrides: Boolean(item?.noteOverrides),
-  };
+  return createStepParticipantModel(item);
 }
 
 export function normalizeState(raw, defaultParticipants) {
@@ -133,16 +106,22 @@ export function normalizeState(raw, defaultParticipants) {
   const phrases = phrasesRaw.map((phrase, phraseIndex) => {
     const stepsRaw = Array.isArray(phrase?.steps) ? phrase.steps : [];
     const steps = stepsRaw.map((step) => {
-      const participantsRaw = Array.isArray(step?.participants)
+      const stepParticipantsRaw = Array.isArray(step?.participants)
         ? step.participants
         : [];
-      return {
-        ...step,
-        lexicon: typeof step?.lexicon === "string" ? step.lexicon : "classic",
-        participants: participants.map((_, index) =>
-          normalizeParticipant(participantsRaw[index] ?? {}),
-        ),
-      };
+      return createStepModel(
+        {
+          id: step?.id,
+          lexicon: step?.lexicon,
+          participants: participants.map((_, index) =>
+            normalizeParticipant(stepParticipantsRaw[index] ?? {}),
+          ),
+        },
+        {
+          // Compat legacy: une passe sans champ lexicon est traitée comme v1.
+          fallbackLexicon: LEGACY_STEP_LEXICON_KEY,
+        },
+      );
     });
     return createPhraseModel({
       id: phrase?.id,

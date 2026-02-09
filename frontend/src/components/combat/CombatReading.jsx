@@ -15,6 +15,7 @@ import {
   labelForParticipant,
   normalizeHiddenParticipantIndexes,
 } from "../../lib/participants.js";
+import { resolvePhraseName } from "../../../../shared/phraseModel.js";
 
 export default function CombatReading({
   mode = "edit",
@@ -45,16 +46,19 @@ export default function CombatReading({
   const hasNextPhrase =
     activePhraseIndex >= 0 && activePhraseIndex < phrases.length - 1;
   const hasSteps = Boolean(activePhrase?.steps?.length);
-  const phraseName = activePhrase?.name?.trim() || "";
+  const phraseName = resolvePhraseName(
+    activePhrase?.name,
+    activePhraseIndex >= 0 ? activePhraseIndex : 0,
+  );
   const activeVisibleParticipantIndexes = activePhrase
     ? getPhraseVisibleIndexes(activePhrase)
     : [];
   const showActiveIndexColumn = activeVisibleParticipantIndexes.length > 1;
-  const [phraseDraft, setPhraseDraft] = useState(activePhrase?.name ?? "");
+  const [phraseDraft, setPhraseDraft] = useState(phraseName);
 
   useEffect(() => {
-    setPhraseDraft(activePhrase?.name ?? "");
-  }, [activePhrase?.id, activePhrase?.name]);
+    setPhraseDraft(phraseName);
+  }, [activePhrase?.id, phraseName]);
 
   function getPhraseHiddenIndexes(phrase) {
     return normalizeHiddenParticipantIndexes(
@@ -442,7 +446,7 @@ export default function CombatReading({
               <div className="panel-header">
                 <div>
                   <h3 className="subtitle">
-                    {phrase.name || `Phrase ${phraseIndex + 1}`}
+                    {resolvePhraseName(phrase?.name, phraseIndex)}
                   </h3>
                   <p className="meta text-muted">
                     {phrase.steps?.length ?? 0} étape

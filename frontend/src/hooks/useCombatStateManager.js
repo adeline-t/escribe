@@ -5,22 +5,25 @@ import {
 } from "../lib/participants.js";
 import { useDebouncedStateSave } from "./useDebouncedStateSave.js";
 import {
-  createEmptyInsertedStepParticipant,
-  createEmptyParticipantState,
   createParticipantIdentity,
-  createPhraseModel,
-  createStepModel,
   DEFAULT_COMBAT_NAME,
   DEFAULT_COMBAT_SHARE_ROLE,
   DEFAULT_COMBAT_TYPE,
-  DEFAULT_STEP_LEXICON_KEY,
   normalizeCombatType,
   normalizeHiddenParticipantIndexes,
   OWNER_COMBAT_SHARE_ROLE,
 } from "../../../shared/combatModel.js";
+import { buildPhraseName, createPhraseModel } from "../../../shared/phraseModel.js";
+import {
+  createInsertedStepParticipantModel,
+  createStepParticipantModel,
+  createStepModel,
+  DEFAULT_STEP_LEXICON_KEY,
+  resolveStepLexiconKey,
+} from "../../../shared/stepModel.js";
 
 function buildEmptyForm(participants) {
-  return participants.map(() => createEmptyParticipantState());
+  return participants.map(() => createStepParticipantModel());
 }
 
 export function useCombatStateManager({ isSaveEnabled, saveState } = {}) {
@@ -31,7 +34,7 @@ export function useCombatStateManager({ isSaveEnabled, saveState } = {}) {
   const [phrases, setPhrases] = useState([]);
   const [activePhraseId, setActivePhraseId] = useState(null);
   const [form, setForm] = useState(
-    DEFAULT_PARTICIPANTS.map(() => createEmptyParticipantState()),
+    DEFAULT_PARTICIPANTS.map(() => createStepParticipantModel()),
   );
   const [editingStepId, setEditingStepId] = useState(null);
   const [insertStepIndex, setInsertStepIndex] = useState(null);
@@ -96,7 +99,7 @@ export function useCombatStateManager({ isSaveEnabled, saveState } = {}) {
       : DEFAULT_PARTICIPANTS.map((participant) => ({ ...participant }));
     const initialPhrase = createPhraseModel({
       index: 0,
-      name: "Phrase 1",
+      name: buildPhraseName(0),
       steps: [],
       hiddenParticipantIndexes: [],
       participantCount: resolvedParticipants.length,
@@ -185,7 +188,7 @@ export function useCombatStateManager({ isSaveEnabled, saveState } = {}) {
       const next = [...prev];
       if (count > next.length) {
         for (let i = next.length; i < count; i += 1) {
-          next.push(createEmptyParticipantState());
+          next.push(createStepParticipantModel());
         }
       }
       if (count < next.length) {
@@ -317,7 +320,9 @@ export function useCombatStateManager({ isSaveEnabled, saveState } = {}) {
     if (!activePhraseId) return;
     const step = createStepModel({
       lexicon: stepLexiconKey,
-      participants: participants.map(() => createEmptyInsertedStepParticipant()),
+      participants: participants.map(() =>
+        createInsertedStepParticipantModel(),
+      ),
     });
     setPhrases((prev) =>
       prev.map((phrase) => {
@@ -360,13 +365,11 @@ export function useCombatStateManager({ isSaveEnabled, saveState } = {}) {
     if (!step) return;
 
     setStepLexiconKey(
-      typeof step.lexicon === "string"
-        ? step.lexicon
-        : DEFAULT_STEP_LEXICON_KEY,
+      resolveStepLexiconKey(step?.lexicon),
     );
     setForm(
       step.participants.map((item) => ({
-        ...createEmptyParticipantState(),
+        ...createStepParticipantModel(),
         ...item,
         attackAttribute: Array.isArray(item.attackAttribute)
           ? item.attackAttribute
@@ -416,7 +419,7 @@ export function useCombatStateManager({ isSaveEnabled, saveState } = {}) {
     const nextNumber = phrases.length + 1;
     const newPhrase = createPhraseModel({
       index: nextNumber - 1,
-      name: `Phrase ${nextNumber}`,
+      name: buildPhraseName(nextNumber - 1),
       hiddenParticipantIndexes: [],
       participantCount: participants.length,
       steps: [],

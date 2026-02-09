@@ -48,25 +48,34 @@ import seedNewLexicon from "./lexicon-new.seed.json";
 import seedSabreLexicon from "./lexicon-sabre-laser.seed.json";
 import {
   createDefaultParticipants,
-  createPhraseModel,
   DEFAULT_COMBAT_NAME,
   DEFAULT_COMBAT_SHARE_ROLE,
   normalizeCombatType,
   normalizeHiddenParticipantIndexes,
   OWNER_COMBAT_SHARE_ROLE,
 } from "../../../shared/combatModel.js";
+import { createPhraseModel } from "../../../shared/phraseModel.js";
+import {
+  createStepModel,
+  LEGACY_STEP_LEXICON_KEY,
+  resolveStepLexiconKey,
+} from "../../../shared/stepModel.js";
 
 let schemaReady = false;
 let lexiconReady = false;
 let lexiconSeeded = false;
 
 function buildPhrasePayload(phrase, participantCount) {
+  const stepsRaw = Array.isArray(phrase?.steps) ? phrase.steps : [];
+  const steps = stepsRaw.map((step) =>
+    createStepModel(step, { fallbackLexicon: LEGACY_STEP_LEXICON_KEY }),
+  );
   return createPhraseModel({
     id: phrase?.id,
     name: phrase?.name,
     hiddenParticipantIndexes: phrase?.hiddenParticipantIndexes,
     participantCount,
-    steps: Array.isArray(phrase?.steps) ? phrase.steps : [],
+    steps,
   });
 }
 
@@ -224,13 +233,18 @@ export async function getCombatState(env, userId, combatId, isSuperAdmin = false
     try {
       const payload = JSON.parse(row.payload);
       if (payload?.steps) {
+        const stepsRaw = Array.isArray(payload.steps) ? payload.steps : [];
         return createPhraseModel({
           id: payload.id,
           name: payload.name,
           index,
           hiddenParticipantIndexes: payload.hiddenParticipantIndexes,
           participantCount: participants.length,
-          steps: Array.isArray(payload.steps) ? payload.steps : [],
+          steps: stepsRaw.map((step) =>
+            createStepModel(step, {
+              fallbackLexicon: LEGACY_STEP_LEXICON_KEY,
+            }),
+          ),
         });
       }
       if (payload?.participants) {
@@ -238,7 +252,11 @@ export async function getCombatState(env, userId, combatId, isSuperAdmin = false
           index,
           hiddenParticipantIndexes: [],
           participantCount: participants.length,
-          steps: [payload],
+          steps: [
+            createStepModel(payload, {
+              fallbackLexicon: LEGACY_STEP_LEXICON_KEY,
+            }),
+          ],
         });
       }
       return null;
@@ -358,8 +376,10 @@ async function detectLegacyLexiconByCombat(env, combatIds) {
             ? [payload]
             : [];
         for (const step of steps) {
-          const lexicon = typeof step?.lexicon === "string" ? step.lexicon : "classic";
-          if (lexicon === "classic") {
+          const lexicon = resolveStepLexiconKey(step?.lexicon, {
+            fallbackLexicon: LEGACY_STEP_LEXICON_KEY,
+          });
+          if (lexicon === LEGACY_STEP_LEXICON_KEY) {
             hasLegacy = true;
             break;
           }
