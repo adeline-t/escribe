@@ -1,9 +1,47 @@
+import { useEffect, useMemo, useState } from "react";
 import { FaXmark } from "react-icons/fa6";
 import { COMBAT_STEP_LABELS } from "../../lib/combats.js";
 import {
   useClassicCombatStepFormLogic,
   useSabreCombatStepFormLogic,
 } from "../../hooks/useCombatFormLogic.js";
+
+function hasStepFormContent(item) {
+  if (!item || typeof item !== "object") return false;
+  const note = typeof item.note === "string" ? item.note.trim() : "";
+  if (item.mode === "note") return Boolean(note);
+  if (item.mode === "choregraphie") return Boolean(item.chorePhase || note);
+  if (note) return true;
+  if (item.role === "attack") {
+    return Boolean(
+      item.offensive ||
+        item.action ||
+        item.target ||
+        item.attackMove ||
+        (Array.isArray(item.attackAttribute) && item.attackAttribute.length) ||
+        (Array.isArray(item.actionDetails) && item.actionDetails.length),
+    );
+  }
+  if (item.role === "preparation") {
+    return Boolean(
+      item.action ||
+        item.target ||
+        (Array.isArray(item.attackAttribute) && item.attackAttribute.length) ||
+        (Array.isArray(item.actionDetails) && item.actionDetails.length),
+    );
+  }
+  if (item.role === "defense") {
+    return Boolean(
+      item.defense ||
+        item.defensive ||
+        item.paradeNumber ||
+        item.paradeAttribute ||
+        item.defendMove ||
+        (Array.isArray(item.defenseDetails) && item.defenseDetails.length),
+    );
+  }
+  return false;
+}
 
 export default function CombatStepForm({
   form,
@@ -75,6 +113,9 @@ export default function CombatStepForm({
     removeAttackComplement,
     getV2Mode,
     resolveDefenseType,
+    getAttackActionValue,
+    getDefenseActionValue,
+    withCurrentOption,
     summaryLines,
     hasAnySummary,
     offensiveOptions,
@@ -88,6 +129,103 @@ export default function CombatStepForm({
     prepTypeList,
     attackMoveBaseValues,
   } = logic;
+  const [manuallyHiddenIndexes, setManuallyHiddenIndexes] = useState([]);
+  const [manuallyShownIndexes, setManuallyShownIndexes] = useState([]);
+
+  const autoHiddenIndexes = useMemo(
+    () =>
+      participants
+        .map((_, index) => index)
+        .filter(
+          (index) =>
+            index !== activeParticipantIndex && !hasStepFormContent(form[index]),
+        ),
+    [participants, activeParticipantIndex, form],
+  );
+
+  useEffect(() => {
+    const maxIndex = participants.length - 1;
+    setManuallyHiddenIndexes((prev) =>
+      prev.filter((index) => index >= 0 && index <= maxIndex),
+    );
+    setManuallyShownIndexes((prev) =>
+      prev.filter((index) => index >= 0 && index <= maxIndex),
+    );
+  }, [participants.length]);
+
+  const hiddenParticipantIndexes = useMemo(() => {
+    const hidden = new Set();
+    const manualHiddenSet = new Set(manuallyHiddenIndexes);
+    const manualShownSet = new Set(manuallyShownIndexes);
+    for (let index = 0; index < participants.length; index += 1) {
+      if (index === activeParticipantIndex) continue;
+      if (manualHiddenSet.has(index)) {
+        hidden.add(index);
+        continue;
+      }
+      if (manualShownSet.has(index)) continue;
+      if (autoHiddenIndexes.includes(index)) hidden.add(index);
+    }
+    return hidden;
+  }, [
+    participants.length,
+    activeParticipantIndex,
+    manuallyHiddenIndexes,
+    manuallyShownIndexes,
+    autoHiddenIndexes,
+  ]);
+
+  const visibleParticipantIndexes = useMemo(() => {
+    const visible = participants
+      .map((_, index) => index)
+      .filter((index) => !hiddenParticipantIndexes.has(index));
+    if (!visible.length && participants.length > 0) {
+      return [Math.max(0, activeParticipantIndex)];
+    }
+    return visible;
+  }, [participants, hiddenParticipantIndexes, activeParticipantIndex]);
+
+  const allParticipantsVisible =
+    visibleParticipantIndexes.length === participants.length;
+  const enableHorizontalGridScroll =
+    allParticipantsVisible && participants.length > 2;
+  const visibleCountClass = `participant-grid--count-${visibleParticipantIndexes.length}`;
+  const visibleColsClass =
+    visibleParticipantIndexes.length >= 1 &&
+    visibleParticipantIndexes.length <= 4
+      ? `cols-${visibleParticipantIndexes.length}`
+      : "";
+
+  function showAllParticipants() {
+    setManuallyHiddenIndexes([]);
+    setManuallyShownIndexes(participants.map((_, index) => index));
+  }
+
+  function toggleParticipantVisibility(index) {
+    const isHidden = hiddenParticipantIndexes.has(index);
+    if (isHidden) {
+      setManuallyHiddenIndexes((prev) => prev.filter((entry) => entry !== index));
+      setManuallyShownIndexes((prev) =>
+        prev.includes(index) ? prev : [...prev, index],
+      );
+      return;
+    }
+    const visibleCount = visibleParticipantIndexes.length;
+    const canHideCurrent = visibleCount > 1;
+    if (!canHideCurrent) return;
+    setManuallyShownIndexes((prev) => prev.filter((entry) => entry !== index));
+    setManuallyHiddenIndexes((prev) =>
+      prev.includes(index) ? prev : [...prev, index],
+    );
+    if (activeParticipantIndex === index) {
+      const fallback = visibleParticipantIndexes.find(
+        (entry) => entry !== index,
+      );
+      if (Number.isInteger(fallback)) {
+        setActiveParticipantIndex(fallback);
+      }
+    }
+  }
 
   return (
     <>
@@ -102,6 +240,47 @@ export default function CombatStepForm({
               </div>
             ))}
           </div>
+        </div>
+      ) : null}
+      {participants.length > 1 ? (
+        <div className="participant-visibility-toolbar">
+          <span className="participant-visibility-label">
+            {COMBAT_STEP_LABELS.columnVisibility}
+          </span>
+          <div className="participant-visibility-chips">
+            {participants.map((_, index) => {
+              const name = participantLabels[index];
+              const isActive = index === activeParticipantIndex;
+              const isHidden = hiddenParticipantIndexes.has(index);
+              return (
+                <button
+                  key={`visibility-${name}-${index}`}
+                  type="button"
+                  className={`participant-visibility-chip ${
+                    isHidden ? "is-hidden" : ""
+                  } ${isActive ? "is-active" : ""}`}
+                  onClick={() => toggleParticipantVisibility(index)}
+                  disabled={isReadOnly}
+                  aria-pressed={!isHidden}
+                  title={
+                    isHidden
+                      ? `Afficher ${name}`
+                      : `Masquer temporairement ${name}`
+                  }
+                >
+                  {name}
+                </button>
+              );
+            })}
+          </div>
+          <button
+            type="button"
+            className="button-ghost participant-visibility-reset"
+            onClick={showAllParticipants}
+            disabled={isReadOnly || allParticipantsVisible}
+          >
+            {COMBAT_STEP_LABELS.showAllColumns}
+          </button>
         </div>
       ) : null}
       <div
@@ -127,13 +306,37 @@ export default function CombatStepForm({
           );
         })}
       </div>
-      <div className={`participant-grid cols-${participants.length}`}>
-        {participants.map((_, index) => {
+      <div
+        className={`participant-grid-scroll ${
+          enableHorizontalGridScroll ? "is-scrollable" : ""
+        }`}
+      >
+      <div
+        className={`participant-grid ${visibleColsClass} ${visibleCountClass} ${
+          enableHorizontalGridScroll ? "is-scrollable" : ""
+        }`}
+      >
+        {visibleParticipantIndexes.map((index) => {
           const item = form[index];
           const name = participantLabels[index];
           // v2Mode est dérivé du role + des données existantes (compat legacy).
           const v2Mode = getV2Mode(item, index);
           const defenseDetail = getDefenseDetails(item)[0] ?? {};
+          const attackActionValue = getAttackActionValue(item);
+          const attackActionOptions = withCurrentOption(
+            offensiveOptions,
+            attackActionValue,
+          );
+          const prepActionValue = getActionDetails(item)[0]?.action ?? "";
+          const prepTypeOptions = withCurrentOption(
+            prepTypeList.map((value) => ({ value, label: value })),
+            prepActionValue,
+          );
+          const defenseActionValue = getDefenseActionValue(item);
+          const defenseActionOptions = withCurrentOption(
+            defensiveOptions,
+            defenseActionValue,
+          );
           // Le type de défense peut venir du builder local ou des données persistées.
           const defenseType = resolveDefenseType(item, index);
           return (
@@ -262,7 +465,7 @@ export default function CombatStepForm({
                           <label>
                             {uiLabels.offensive}
                             <select
-                              value={item.offensive}
+                              value={attackActionValue}
                               onChange={(event) =>
                                 onFormChange(index, {
                                   offensive: event.target.value,
@@ -270,7 +473,7 @@ export default function CombatStepForm({
                               }
                             >
                               <option value="">—</option>
-                              {offensiveOptions.map((option) => (
+                              {attackActionOptions.map((option) => (
                                 <option key={option.value} value={option.value}>
                                   {option.label}
                                 </option>
@@ -612,7 +815,7 @@ export default function CombatStepForm({
                           <label>
                             {uiLabels.defensive}
                             <select
-                              value={defenseDetail?.defense ?? ""}
+                              value={defenseActionValue}
                               onChange={(event) =>
                                 updateDefenseDetail(index, 0, {
                                   defense: event.target.value,
@@ -620,7 +823,7 @@ export default function CombatStepForm({
                               }
                             >
                               <option value="">—</option>
-                              {defensiveOptions.map((option) => (
+                              {defenseActionOptions.map((option) => (
                                 <option key={option.value} value={option.value}>
                                   {option.label}
                                 </option>
@@ -742,15 +945,15 @@ export default function CombatStepForm({
                         <label>
                           {COMBAT_STEP_LABELS.preparationType}
                           <select
-                            value={getActionDetails(item)[0]?.action ?? ""}
+                            value={prepActionValue}
                             onChange={(event) =>
                               updatePrepDetails(index, event.target.value, "")
                             }
                           >
                             <option value="">—</option>
-                            {prepTypeList.map((value) => (
-                              <option key={value} value={value}>
-                                {value}
+                            {prepTypeOptions.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
                               </option>
                             ))}
                           </select>
@@ -983,6 +1186,7 @@ export default function CombatStepForm({
             </div>
           );
         })}
+      </div>
       </div>
       <div className="form-actions">
         <button

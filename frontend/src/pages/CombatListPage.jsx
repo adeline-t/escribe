@@ -261,8 +261,24 @@ export default function CombatListPage({
     }
   }
 
-  function requestDeleteCombat(combat) {
-    setPendingCombatDelete(combat);
+  function requestDeleteCombat(combatOrId) {
+    if (combatOrId && typeof combatOrId === "object") {
+      setPendingCombatDelete(combatOrId);
+      return;
+    }
+    const numericId = Number(combatOrId);
+    if (!Number.isFinite(numericId)) {
+      setPendingCombatDelete(null);
+      setStatus("Suppression impossible: identifiant invalide.");
+      return;
+    }
+    const foundCombat = combats.find((combat) => Number(combat.id) === numericId);
+    setPendingCombatDelete(
+      foundCombat ?? {
+        id: numericId,
+        name: `#${numericId}`,
+      },
+    );
   }
 
   function closeDeleteCombatModal() {
@@ -271,7 +287,12 @@ export default function CombatListPage({
 
   async function confirmDeleteCombat() {
     if (!pendingCombatDelete) return;
-    const id = pendingCombatDelete.id;
+    const id = Number(pendingCombatDelete.id);
+    if (!Number.isFinite(id)) {
+      setStatus("Suppression impossible: identifiant invalide.");
+      setPendingCombatDelete(null);
+      return;
+    }
     await authFetch(`/api/combats/${id}/delete`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

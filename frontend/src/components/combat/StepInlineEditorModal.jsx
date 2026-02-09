@@ -63,6 +63,9 @@ export default function StepInlineEditorModal({
     updatePrepDetails,
     addAttackComplement,
     removeAttackComplement,
+    getAttackActionValue,
+    getDefenseActionValue,
+    withCurrentOption,
     v2Mode,
     defenseDetail,
     defenseType,
@@ -77,6 +80,21 @@ export default function StepInlineEditorModal({
     prepTypeList,
     attackMoveBaseValues,
   } = logic;
+  const attackActionValue = getAttackActionValue(inlineItem);
+  const attackActionOptions = withCurrentOption(
+    offensiveOptions,
+    attackActionValue,
+  );
+  const prepActionValue = getActionDetails(inlineItem)[0]?.action ?? "";
+  const prepTypeOptions = withCurrentOption(
+    prepTypeList.map((value) => ({ value, label: value })),
+    prepActionValue,
+  );
+  const defenseActionValue = getDefenseActionValue(inlineItem);
+  const defenseActionOptions = withCurrentOption(
+    defensiveOptions,
+    defenseActionValue,
+  );
 
   return (
     <div className="modal-backdrop" role="presentation" onClick={onClose}>
@@ -91,7 +109,7 @@ export default function StepInlineEditorModal({
           {COMBAT_STEP_LABELS.editStepTitle(inlineStepIndex, participantName)}
         </h3>
 
-        <div className="participant-card">
+        <div className="participant-card participant-card--inline-modal">
           <div className="participant-card-header">
             <div className="text-strong">{participantName}</div>
             {lexiconKey === "sabre-laser" ? (
@@ -222,13 +240,13 @@ export default function StepInlineEditorModal({
                       <label>
                         {uiLabels.offensive}
                         <select
-                          value={inlineItem.offensive}
+                          value={attackActionValue}
                           onChange={(event) =>
                             updateInlineItem({ offensive: event.target.value })
                           }
                         >
                           <option value="">—</option>
-                          {offensiveOptions.map((option) => (
+                          {attackActionOptions.map((option) => (
                             <option key={option.value} value={option.value}>
                               {option.label}
                             </option>
@@ -532,7 +550,7 @@ export default function StepInlineEditorModal({
                       <label>
                         {uiLabels.defensive}
                         <select
-                          value={defenseDetail?.defense ?? ""}
+                          value={defenseActionValue}
                           onChange={(event) =>
                             updateDefenseDetail(0, {
                               defense: event.target.value,
@@ -540,7 +558,7 @@ export default function StepInlineEditorModal({
                           }
                         >
                           <option value="">—</option>
-                          {defensiveOptions.map((option) => (
+                          {defenseActionOptions.map((option) => (
                             <option key={option.value} value={option.value}>
                               {option.label}
                             </option>
@@ -652,15 +670,15 @@ export default function StepInlineEditorModal({
                     <label>
                       {COMBAT_STEP_LABELS.preparationType}
                       <select
-                        value={getActionDetails(inlineItem)[0]?.action ?? ""}
+                        value={prepActionValue}
                         onChange={(event) =>
                           updatePrepDetails(event.target.value, "")
                         }
                       >
                         <option value="">—</option>
-                        {prepTypeList.map((value) => (
-                          <option key={value} value={value}>
-                            {value}
+                        {prepTypeOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
                           </option>
                         ))}
                       </select>

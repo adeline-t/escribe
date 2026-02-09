@@ -205,13 +205,49 @@ function getV2Mode(item) {
  * @returns {"parade"|"esquive"|""}
  */
 function getDefenseTypeFromDetail(defenseDetail) {
-  return defenseDetail?.defense === "parade" ||
-    defenseDetail?.position ||
-    defenseDetail?.attribute
+  const defenseLabel = String(defenseDetail?.defense ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[’']/g, "'")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+  const looksLikeParade =
+    defenseLabel === "parade" || defenseLabel.includes("parade");
+  return looksLikeParade || defenseDetail?.position || defenseDetail?.attribute
     ? "parade"
     : defenseDetail?.defense
       ? "esquive"
       : "";
+}
+
+/**
+ * Normalise une valeur textuelle pour comparaison souple
+ * (accents/casse/espace/punctuations légères).
+ *
+ * @param {string} value
+ * @returns {string}
+ */
+function normalizeLooseLabel(value) {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[’']/g, "'")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+const GENERIC_ATTACK_MARKERS = new Set([
+  "attaque",
+  "attack",
+  "preparation",
+  "préparation",
+]);
+
+function isGenericAttackMarker(value) {
+  const normalized = normalizeLooseLabel(value);
+  return GENERIC_ATTACK_MARKERS.has(normalized);
 }
 
 /**
@@ -518,10 +554,105 @@ function useSharedCombatStepLogic({
    */
   function resolveDefenseType(item, index) {
     const defenseDetail = getDefenseDetails(item ?? readItem(index))[0] ?? {};
+    const builderDefenseType = getBuilderSelection(index)?.defenseType;
     return (
-      getBuilderSelection(index)?.defenseType ??
-      getDefenseTypeFromDetail(defenseDetail)
+      builderDefenseType && String(builderDefenseType).trim()
+        ? builderDefenseType
+        : getDefenseTypeFromDetail(defenseDetail)
     );
+  }
+
+  /**
+   * Résout la valeur "action d'attaque" affichée dans le select.
+   *
+   * Compat:
+   * - ancien format: offensive="attaque", action="coup de pointe"
+   * - nouveau format: offensive="coup de pointe"
+   *
+   * @param {StepItem|number} itemOrIndex
+   * @returns {string}
+   */
+  function getAttackActionValue(itemOrIndex) {
+    const item =
+      typeof itemOrIndex === "number" ? readItem(itemOrIndex) : itemOrIndex;
+    const offensive = String(item?.offensive ?? "").trim();
+    const detailAction = String(getActionDetails(item ?? {})[0]?.action ?? "").trim();
+    const legacyAction = String(item?.action ?? "").trim();
+
+    const optionByNormalized = new Map(
+      options.offensiveOptions.map((option) => [
+        normalizeLooseLabel(option.value),
+        option.value,
+      ]),
+    );
+
+    const preferred = [];
+    if (offensive && !isGenericAttackMarker(offensive)) preferred.push(offensive);
+    if (detailAction) preferred.push(detailAction);
+    if (legacyAction) preferred.push(legacyAction);
+    if (offensive) preferred.push(offensive);
+
+    for (const candidate of preferred) {
+      const canonical = optionByNormalized.get(normalizeLooseLabel(candidate));
+      if (canonical) return canonical;
+    }
+    return preferred[0] ?? "";
+  }
+
+  /**
+   * Résout la valeur "action de défense" affichée dans le select esquive.
+   *
+   * Compat:
+   * - accepte des labels legacy (casse/accents différents)
+   * - conserve une valeur hors lexique pour éviter un select visuellement vide
+   *
+   * @param {StepItem|number} itemOrIndex
+   * @returns {string}
+   */
+  function getDefenseActionValue(itemOrIndex) {
+    const item =
+      typeof itemOrIndex === "number" ? readItem(itemOrIndex) : itemOrIndex;
+    const defenseDetail = getDefenseDetails(item ?? {})[0] ?? {};
+    const detailDefense = String(defenseDetail?.defense ?? "").trim();
+    const legacyDefense = String(item?.defense ?? "").trim();
+
+    const optionByNormalized = new Map(
+      options.defensiveOptions.map((option) => [
+        normalizeLooseLabel(option.value),
+        option.value,
+      ]),
+    );
+
+    const preferred = [];
+    if (detailDefense && !normalizeLooseLabel(detailDefense).includes("parade")) {
+      preferred.push(detailDefense);
+    }
+    if (legacyDefense && !normalizeLooseLabel(legacyDefense).includes("parade")) {
+      preferred.push(legacyDefense);
+    }
+    if (detailDefense) preferred.push(detailDefense);
+    if (legacyDefense) preferred.push(legacyDefense);
+
+    for (const candidate of preferred) {
+      const canonical = optionByNormalized.get(normalizeLooseLabel(candidate));
+      if (canonical) return canonical;
+    }
+    return preferred[0] ?? "";
+  }
+
+  /**
+   * Injecte la valeur courante d'un select si elle n'est pas dans les options
+   * (cas données legacy / import hors lexique), pour éviter un affichage vide.
+   *
+   * @param {OptionItem[]} optionsList
+   * @param {string} currentValue
+   * @returns {OptionItem[]}
+   */
+  function withCurrentOption(optionsList, currentValue) {
+    const value = String(currentValue ?? "").trim();
+    if (!value) return optionsList;
+    if (optionsList.some((option) => option.value === value)) return optionsList;
+    return [{ value, label: value }, ...optionsList];
   }
 
   return {
@@ -545,6 +676,9 @@ function useSharedCombatStepLogic({
     addAttackComplement,
     removeAttackComplement,
     resolveDefenseType,
+    getAttackActionValue,
+    getDefenseActionValue,
+    withCurrentOption,
     ...options,
   };
 }

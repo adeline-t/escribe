@@ -51,6 +51,34 @@ let schemaReady = false;
 let lexiconReady = false;
 let lexiconSeeded = false;
 
+function normalizeHiddenParticipantIndexes(raw, participantCount) {
+  const max = Math.max(0, Number(participantCount) || 0);
+  if (!Array.isArray(raw) || max <= 0) return [];
+  const seen = new Set();
+  const out = [];
+  for (const value of raw) {
+    const index = Number(value);
+    if (!Number.isInteger(index)) continue;
+    if (index < 0 || index >= max) continue;
+    if (seen.has(index)) continue;
+    seen.add(index);
+    out.push(index);
+  }
+  return out.sort((a, b) => a - b);
+}
+
+function buildPhrasePayload(phrase, participantCount) {
+  return {
+    id: phrase?.id ?? crypto.randomUUID(),
+    name: phrase?.name ?? "",
+    hiddenParticipantIndexes: normalizeHiddenParticipantIndexes(
+      phrase?.hiddenParticipantIndexes,
+      participantCount,
+    ),
+    steps: Array.isArray(phrase?.steps) ? phrase.steps : [],
+  };
+}
+
 export async function ensureSchema(env) {
   if (schemaReady) return;
   const required = ["combats", "combat_phrases", "combat_shares"];
@@ -179,6 +207,19 @@ export async function getCombatState(env, userId, combatId, isSuperAdmin = false
     .first();
   if (!combat?.id) return null;
 
+  let participants = [];
+  let form = null;
+  try {
+    participants = JSON.parse(combat.participants);
+  } catch {
+    participants = [];
+  }
+  try {
+    form = combat.draft ? JSON.parse(combat.draft) : null;
+  } catch {
+    form = null;
+  }
+
   const phraseRows = await env.DB
     .prepare(
       `SELECT payload FROM combat_phrases
@@ -195,6 +236,10 @@ export async function getCombatState(env, userId, combatId, isSuperAdmin = false
         return {
           id: payload.id ?? crypto.randomUUID(),
           name: payload.name ?? `Phrase ${index + 1}`,
+          hiddenParticipantIndexes: normalizeHiddenParticipantIndexes(
+            payload.hiddenParticipantIndexes,
+            participants.length,
+          ),
           steps: Array.isArray(payload.steps) ? payload.steps : []
         };
       }
@@ -202,6 +247,7 @@ export async function getCombatState(env, userId, combatId, isSuperAdmin = false
         return {
           id: crypto.randomUUID(),
           name: `Phrase ${index + 1}`,
+          hiddenParticipantIndexes: [],
           steps: [payload]
         };
       }
@@ -210,19 +256,6 @@ export async function getCombatState(env, userId, combatId, isSuperAdmin = false
       return null;
     }
   }).filter(Boolean) ?? [];
-
-  let participants = [];
-  let form = null;
-  try {
-    participants = JSON.parse(combat.participants);
-  } catch {
-    participants = [];
-  }
-  try {
-    form = combat.draft ? JSON.parse(combat.draft) : null;
-  } catch {
-    form = null;
-  }
 
   const isDemo = Boolean(combat.is_demo);
   const isOwner = combat.user_id === userId;
@@ -572,11 +605,7 @@ export async function saveState(env, userId, state, isSuperAdmin = false) {
         ).bind(
           combatId,
           index,
-          JSON.stringify({
-            id: phrase.id,
-            name: phrase.name,
-            steps: Array.isArray(phrase.steps) ? phrase.steps : []
-          }),
+          JSON.stringify(buildPhrasePayload(phrase, participants.length)),
           now
         )
       );
