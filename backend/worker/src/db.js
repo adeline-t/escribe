@@ -99,6 +99,14 @@ const CLASSIC_V2_TREE_BUCKET_MARKERS = {
     "position_complement",
     "parade-attribut",
   ]),
+  "defense-attribut": new Set([
+    "attributs_defense",
+    "attributs_defensifs",
+    "defense_complements",
+    "defense_complement",
+    "defense-attribut",
+    "defense-attribute",
+  ]),
   "attaque-attribut": new Set(["attack_complements", "attaque-attribut"]),
 };
 
@@ -115,8 +123,21 @@ const CLASSIC_V2_EDIT_PARENT_BY_TYPE = {
   "movement-complement": "movement_complements",
   "parade-numero": "positions",
   "guard-number": "positions",
-  "parade-attribut": "position_complements",
-  "guard-attribute": "position_complements",
+  // Keep parade attributes bound to position complements only.
+  "parade-attribut": ["position_complements", "parade-attribut"],
+  "guard-attribute": ["position_complements", "parade-attribut"],
+  "defense-attribut": [
+    "attributs_defense",
+    "attributs_defensifs",
+    "defense_complements",
+    "defense-attribut",
+  ],
+  "defense-attribute": [
+    "attributs_defense",
+    "attributs_defensifs",
+    "defense_complements",
+    "defense-attribut",
+  ],
   "attaque-attribut": "attack_complements",
   "attack-attribute": "attack_complements",
 };
@@ -343,12 +364,12 @@ function legacyPerformerToStoragePerformer(performer, lexiconReferenceIndex) {
       .flatMap((detail) => [
         resolveLexiconTerm(
           lexiconReferenceIndex,
-          ["defensive", "action", "parade-attribut"],
+          ["defense-attribut", "defensive", "action"],
           detail?.defense,
         ),
         ...resolveDelimitedLexiconTerms(
           lexiconReferenceIndex,
-          ["parade-attribut", "deplacement_complement", "attaque-attribut"],
+          ["defense-attribut", "parade-attribut", "deplacement_complement"],
           detail?.attribute,
         ),
       ])
@@ -1601,6 +1622,13 @@ function resolveClassicV2Type(type) {
   }
   if (normalized === "guard-number") return "parade-numero";
   if (normalized === "guard-attribute") return "parade-attribut";
+  if (
+    normalized === "defense-attribute" ||
+    normalized === "attributs_defense" ||
+    normalized === "attributs_defensifs"
+  ) {
+    return "defense-attribut";
+  }
   if (normalized === "attack-attribute") return "attaque-attribut";
   return normalized;
 }
@@ -1636,17 +1664,27 @@ export async function addClassicV2LexiconItem(env, type, label) {
   const resolvedType = normalizeClassicV2EditType(type);
   const normalizedLabel = String(label ?? "").trim();
   if (!resolvedType || !normalizedLabel) return null;
-  const parentLexiconId = CLASSIC_V2_EDIT_PARENT_BY_TYPE[resolvedType];
+  const parentLexiconIdValue = CLASSIC_V2_EDIT_PARENT_BY_TYPE[resolvedType];
+  const parentLexiconIds = Array.isArray(parentLexiconIdValue)
+    ? parentLexiconIdValue
+    : [parentLexiconIdValue];
 
   const exists = await hasClassicV2LexiconLabel(env, resolvedType, normalizedLabel);
   if (exists) return null;
 
-  const parent = await env.DB
-    .prepare(`SELECT id FROM lexicon WHERE lexicon_id = ?1 LIMIT 1`)
-    .bind(parentLexiconId)
-    .first();
+  let parent = null;
+  for (const parentLexiconId of parentLexiconIds) {
+    // eslint-disable-next-line no-await-in-loop
+    parent = await env.DB
+      .prepare(`SELECT id FROM lexicon WHERE lexicon_id = ?1 LIMIT 1`)
+      .bind(parentLexiconId)
+      .first();
+    if (parent?.id) break;
+  }
   if (!parent?.id) {
-    throw new Error(`Missing lexicon parent node: ${parentLexiconId}`);
+    throw new Error(
+      `Missing lexicon parent node: ${parentLexiconIds.join(" or ")}`,
+    );
   }
 
   const baseId = normalizeLexiconLabel(normalizedLabel)
@@ -2279,6 +2317,7 @@ function buildClassicV2LexiconBucketsFromRecursiveRows(rows) {
     offensive: [],
     action: [],
     defensive: [],
+    "defense-attribut": [],
     cible: [],
     deplacement: [],
     deplacement_complement: [],
@@ -2492,14 +2531,18 @@ function addStepPerformerLexiconRefs(performer, index) {
     );
   }
 
-  for (const defenseDetail of performer.defenseDetails ?? []) {
+  for (const [detailIndex, defenseDetail] of (
+    performer.defenseDetails ?? []
+  ).entries()) {
     const defenseName = String(defenseDetail?.defense ?? "").trim();
     if (normalizeLexiconLabel(defenseName) !== "parade") {
       addLexiconReference(
         refState,
         index,
         "defenseDetails.defense",
-        ["defensive"],
+        detailIndex === 0
+          ? ["defensive", "defense-attribut"]
+          : ["defense-attribut", "defensive"],
         defenseName,
       );
     }

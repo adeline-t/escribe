@@ -963,108 +963,6 @@ ON CONFLICT(lexicon_id) DO UPDATE SET
 
 INSERT INTO lexicon (lexicon_id, parent_id, name, description, deleted_at, source)
 SELECT
-  'position_lateral',
-  p.id,
-  'latérale',
-  'Parade latérale ou directe : parade exécutée directement d''une ligne haute vers l''autre ligne haute ou d''une ligne basse vers l''autre ligne basse',
-  NULL,
-  'seed'
-FROM (SELECT 1) AS _
-LEFT JOIN lexicon p ON p.lexicon_id = 'position_complements'
-ON CONFLICT(lexicon_id) DO UPDATE SET
-  parent_id = excluded.parent_id,
-  name = excluded.name,
-  description = excluded.description,
-  deleted_at = NULL,
-  source = 'seed';
-
-INSERT INTO lexicon (lexicon_id, parent_id, name, description, deleted_at, source)
-SELECT
-  'circular',
-  p.id,
-  'circulaire',
-  'Parades circulaires ou contres : parades exécutées en faisant un mouvement circulaire avec son arme afin de rejeter la pointe adverse d''une ligne vers une autre. On les appelle communément les contres',
-  NULL,
-  'seed'
-FROM (SELECT 1) AS _
-LEFT JOIN lexicon p ON p.lexicon_id = 'position_complements'
-ON CONFLICT(lexicon_id) DO UPDATE SET
-  parent_id = excluded.parent_id,
-  name = excluded.name,
-  description = excluded.description,
-  deleted_at = NULL,
-  source = 'seed';
-
-INSERT INTO lexicon (lexicon_id, parent_id, name, description, deleted_at, source)
-SELECT
-  'semi_circular',
-  p.id,
-  'semi-circulaire',
-  'Parades semi-circulaires : parades exécutées en faisant un demi-cercle de la ligne haute vers la ligne basse correspondante ou inversement',
-  NULL,
-  'seed'
-FROM (SELECT 1) AS _
-LEFT JOIN lexicon p ON p.lexicon_id = 'position_complements'
-ON CONFLICT(lexicon_id) DO UPDATE SET
-  parent_id = excluded.parent_id,
-  name = excluded.name,
-  description = excluded.description,
-  deleted_at = NULL,
-  source = 'seed';
-
-INSERT INTO lexicon (lexicon_id, parent_id, name, description, deleted_at, source)
-SELECT
-  'diagonal',
-  p.id,
-  'diagonale',
-  'Parades diagonales : parades exécutées en suivant une trajectoire d''une ligne haute vers une ligne basse opposée ou inversement',
-  NULL,
-  'seed'
-FROM (SELECT 1) AS _
-LEFT JOIN lexicon p ON p.lexicon_id = 'position_complements'
-ON CONFLICT(lexicon_id) DO UPDATE SET
-  parent_id = excluded.parent_id,
-  name = excluded.name,
-  description = excluded.description,
-  deleted_at = NULL,
-  source = 'seed';
-
-INSERT INTO lexicon (lexicon_id, parent_id, name, description, deleted_at, source)
-SELECT
-  'au_tac',
-  p.id,
-  'du tac',
-  'Parade du tac : c''est écarter la lame adverse avec un battement',
-  NULL,
-  'seed'
-FROM (SELECT 1) AS _
-LEFT JOIN lexicon p ON p.lexicon_id = 'position_complements'
-ON CONFLICT(lexicon_id) DO UPDATE SET
-  parent_id = excluded.parent_id,
-  name = excluded.name,
-  description = excluded.description,
-  deleted_at = NULL,
-  source = 'seed';
-
-INSERT INTO lexicon (lexicon_id, parent_id, name, description, deleted_at, source)
-SELECT
-  'yielding',
-  p.id,
-  'en cédant',
-  'Parades en cédant : elles consistent à détourner la lame adverse en l''entraînant (sans la quitter) dans une ligne autre que celle où devait se terminer l''offensive. Ces parades sont utilisées uniquement contre les offensives précédées de prises de fer',
-  NULL,
-  'seed'
-FROM (SELECT 1) AS _
-LEFT JOIN lexicon p ON p.lexicon_id = 'position_complements'
-ON CONFLICT(lexicon_id) DO UPDATE SET
-  parent_id = excluded.parent_id,
-  name = excluded.name,
-  description = excluded.description,
-  deleted_at = NULL,
-  source = 'seed';
-
-INSERT INTO lexicon (lexicon_id, parent_id, name, description, deleted_at, source)
-SELECT
   'high',
   p.id,
   'haute',
@@ -1103,91 +1001,6 @@ SELECT
   p.id,
   'inversée',
   'Quinte inversée : parade couvrant la tête et les épaules. La pointe légèrement vers le haut, la lame oblique, la paume vers l''arrière. Le poignet dans l''axe de l''avant-bras. La main est en supination ou semi-supination',
-  NULL,
-  'seed'
-FROM (SELECT 1) AS _
-LEFT JOIN lexicon p ON p.lexicon_id = 'position_complements'
-ON CONFLICT(lexicon_id) DO UPDATE SET
-  parent_id = excluded.parent_id,
-  name = excluded.name,
-  description = excluded.description,
-  deleted_at = NULL,
-  source = 'seed';
-
-INSERT INTO lexicon (lexicon_id, parent_id, name, description, deleted_at, source)
-SELECT
-  'free_hand',
-  p.id,
-  'main libre',
-  'Combat avec une seule arme, l''autre main étant libre',
-  NULL,
-  'seed'
-FROM (SELECT 1) AS _
-LEFT JOIN lexicon p ON p.lexicon_id = 'position_complements'
-ON CONFLICT(lexicon_id) DO UPDATE SET
-  parent_id = excluded.parent_id,
-  name = excluded.name,
-  description = excluded.description,
-  deleted_at = NULL,
-  source = 'seed';
-
-INSERT INTO lexicon (lexicon_id, parent_id, name, description, deleted_at, source)
-SELECT
-  'dagger_buckler',
-  p.id,
-  'dague / bocle',
-  'Combat avec arme principale et arme ou protection secondaire (dague, petit bouclier rond)',
-  NULL,
-  'seed'
-FROM (SELECT 1) AS _
-LEFT JOIN lexicon p ON p.lexicon_id = 'position_complements'
-ON CONFLICT(lexicon_id) DO UPDATE SET
-  parent_id = excluded.parent_id,
-  name = excluded.name,
-  description = excluded.description,
-  deleted_at = NULL,
-  source = 'seed';
-
-INSERT INTO lexicon (lexicon_id, parent_id, name, description, deleted_at, source)
-SELECT
-  'object',
-  p.id,
-  'cape / objet',
-  'Combat utilisant un objet défensif comme une cape en complément de l''arme',
-  NULL,
-  'seed'
-FROM (SELECT 1) AS _
-LEFT JOIN lexicon p ON p.lexicon_id = 'position_complements'
-ON CONFLICT(lexicon_id) DO UPDATE SET
-  parent_id = excluded.parent_id,
-  name = excluded.name,
-  description = excluded.description,
-  deleted_at = NULL,
-  source = 'seed';
-
-INSERT INTO lexicon (lexicon_id, parent_id, name, description, deleted_at, source)
-SELECT
-  'crossed',
-  p.id,
-  'en croix',
-  'Parade en croix : action défensive faite avec deux armes formant une croix de Saint-André. Parade double réalisée avec deux armes croisées. Utilisée pour se protéger notamment des coups violents précédés de moulinets et couronnés. Parade en croix haute : action défensive avec deux armes qui se croisent au-dessus de la tête, avec les deux pointes vers le ciel afin de se protéger des coups portés à la tête. Parade en croix basse : action défensive avec deux armes (double seconde) sur un coup d''estoc protégeant le bas ventre, les deux pointes vers le sol',
-  NULL,
-  'seed'
-FROM (SELECT 1) AS _
-LEFT JOIN lexicon p ON p.lexicon_id = 'position_complements'
-ON CONFLICT(lexicon_id) DO UPDATE SET
-  parent_id = excluded.parent_id,
-  name = excluded.name,
-  description = excluded.description,
-  deleted_at = NULL,
-  source = 'seed';
-
-INSERT INTO lexicon (lexicon_id, parent_id, name, description, deleted_at, source)
-SELECT
-  'double',
-  p.id,
-  'double',
-  'La parade double : elle s''exécute lorsque la dague vient renforcer la parade de l''arme principale, en se plaçant de côté dans une position parallèle',
   NULL,
   'seed'
 FROM (SELECT 1) AS _
@@ -1592,6 +1405,210 @@ ON CONFLICT(lexicon_id) DO UPDATE SET
 
 INSERT INTO lexicon (lexicon_id, parent_id, name, description, deleted_at, source)
 SELECT
+  'attributs_defense',
+  p.id,
+  'attributs de défense',
+  NULL,
+  NULL,
+  'seed'
+FROM (SELECT 1) AS _
+LEFT JOIN lexicon p ON p.lexicon_id = 'classic_v2_root'
+ON CONFLICT(lexicon_id) DO UPDATE SET
+  parent_id = excluded.parent_id,
+  name = excluded.name,
+  description = excluded.description,
+  deleted_at = NULL,
+  source = 'seed';
+
+INSERT INTO lexicon (lexicon_id, parent_id, name, description, deleted_at, source)
+SELECT
+  'position_lateral',
+  p.id,
+  'latérale',
+  'Parade latérale ou directe : parade exécutée directement d''une ligne haute vers l''autre ligne haute ou d''une ligne basse vers l''autre ligne basse',
+  NULL,
+  'seed'
+FROM (SELECT 1) AS _
+LEFT JOIN lexicon p ON p.lexicon_id = 'attributs_defense'
+ON CONFLICT(lexicon_id) DO UPDATE SET
+  parent_id = excluded.parent_id,
+  name = excluded.name,
+  description = excluded.description,
+  deleted_at = NULL,
+  source = 'seed';
+
+INSERT INTO lexicon (lexicon_id, parent_id, name, description, deleted_at, source)
+SELECT
+  'circular',
+  p.id,
+  'circulaire',
+  'Parades circulaires ou contres : parades exécutées en faisant un mouvement circulaire avec son arme afin de rejeter la pointe adverse d''une ligne vers une autre. On les appelle communément les contres',
+  NULL,
+  'seed'
+FROM (SELECT 1) AS _
+LEFT JOIN lexicon p ON p.lexicon_id = 'attributs_defense'
+ON CONFLICT(lexicon_id) DO UPDATE SET
+  parent_id = excluded.parent_id,
+  name = excluded.name,
+  description = excluded.description,
+  deleted_at = NULL,
+  source = 'seed';
+
+INSERT INTO lexicon (lexicon_id, parent_id, name, description, deleted_at, source)
+SELECT
+  'semi_circular',
+  p.id,
+  'semi-circulaire',
+  'Parades semi-circulaires : parades exécutées en faisant un demi-cercle de la ligne haute vers la ligne basse correspondante ou inversement',
+  NULL,
+  'seed'
+FROM (SELECT 1) AS _
+LEFT JOIN lexicon p ON p.lexicon_id = 'attributs_defense'
+ON CONFLICT(lexicon_id) DO UPDATE SET
+  parent_id = excluded.parent_id,
+  name = excluded.name,
+  description = excluded.description,
+  deleted_at = NULL,
+  source = 'seed';
+
+INSERT INTO lexicon (lexicon_id, parent_id, name, description, deleted_at, source)
+SELECT
+  'diagonal',
+  p.id,
+  'diagonale',
+  'Parades diagonales : parades exécutées en suivant une trajectoire d''une ligne haute vers une ligne basse opposée ou inversement',
+  NULL,
+  'seed'
+FROM (SELECT 1) AS _
+LEFT JOIN lexicon p ON p.lexicon_id = 'attributs_defense'
+ON CONFLICT(lexicon_id) DO UPDATE SET
+  parent_id = excluded.parent_id,
+  name = excluded.name,
+  description = excluded.description,
+  deleted_at = NULL,
+  source = 'seed';
+
+INSERT INTO lexicon (lexicon_id, parent_id, name, description, deleted_at, source)
+SELECT
+  'au_tac',
+  p.id,
+  'du tac',
+  'Parade du tac : c''est écarter la lame adverse avec un battement',
+  NULL,
+  'seed'
+FROM (SELECT 1) AS _
+LEFT JOIN lexicon p ON p.lexicon_id = 'attributs_defense'
+ON CONFLICT(lexicon_id) DO UPDATE SET
+  parent_id = excluded.parent_id,
+  name = excluded.name,
+  description = excluded.description,
+  deleted_at = NULL,
+  source = 'seed';
+
+INSERT INTO lexicon (lexicon_id, parent_id, name, description, deleted_at, source)
+SELECT
+  'yielding',
+  p.id,
+  'en cédant',
+  'Parades en cédant : elles consistent à détourner la lame adverse en l''entraînant (sans la quitter) dans une ligne autre que celle où devait se terminer l''offensive. Ces parades sont utilisées uniquement contre les offensives précédées de prises de fer',
+  NULL,
+  'seed'
+FROM (SELECT 1) AS _
+LEFT JOIN lexicon p ON p.lexicon_id = 'attributs_defense'
+ON CONFLICT(lexicon_id) DO UPDATE SET
+  parent_id = excluded.parent_id,
+  name = excluded.name,
+  description = excluded.description,
+  deleted_at = NULL,
+  source = 'seed';
+
+INSERT INTO lexicon (lexicon_id, parent_id, name, description, deleted_at, source)
+SELECT
+  'free_hand',
+  p.id,
+  'main libre',
+  'Combat avec une seule arme, l''autre main étant libre',
+  NULL,
+  'seed'
+FROM (SELECT 1) AS _
+LEFT JOIN lexicon p ON p.lexicon_id = 'attributs_defense'
+ON CONFLICT(lexicon_id) DO UPDATE SET
+  parent_id = excluded.parent_id,
+  name = excluded.name,
+  description = excluded.description,
+  deleted_at = NULL,
+  source = 'seed';
+
+INSERT INTO lexicon (lexicon_id, parent_id, name, description, deleted_at, source)
+SELECT
+  'dagger_buckler',
+  p.id,
+  'dague / bocle',
+  'Combat avec arme principale et arme ou protection secondaire (dague, petit bouclier rond)',
+  NULL,
+  'seed'
+FROM (SELECT 1) AS _
+LEFT JOIN lexicon p ON p.lexicon_id = 'attributs_defense'
+ON CONFLICT(lexicon_id) DO UPDATE SET
+  parent_id = excluded.parent_id,
+  name = excluded.name,
+  description = excluded.description,
+  deleted_at = NULL,
+  source = 'seed';
+
+INSERT INTO lexicon (lexicon_id, parent_id, name, description, deleted_at, source)
+SELECT
+  'object',
+  p.id,
+  'cape / objet',
+  'Combat utilisant un objet défensif comme une cape en complément de l''arme',
+  NULL,
+  'seed'
+FROM (SELECT 1) AS _
+LEFT JOIN lexicon p ON p.lexicon_id = 'attributs_defense'
+ON CONFLICT(lexicon_id) DO UPDATE SET
+  parent_id = excluded.parent_id,
+  name = excluded.name,
+  description = excluded.description,
+  deleted_at = NULL,
+  source = 'seed';
+
+INSERT INTO lexicon (lexicon_id, parent_id, name, description, deleted_at, source)
+SELECT
+  'crossed',
+  p.id,
+  'en croix',
+  'Parade en croix : action défensive faite avec deux armes formant une croix de Saint-André. Parade double réalisée avec deux armes croisées. Utilisée pour se protéger notamment des coups violents précédés de moulinets et couronnés. Parade en croix haute : action défensive avec deux armes qui se croisent au-dessus de la tête, avec les deux pointes vers le ciel afin de se protéger des coups portés à la tête. Parade en croix basse : action défensive avec deux armes (double seconde) sur un coup d''estoc protégeant le bas ventre, les deux pointes vers le sol',
+  NULL,
+  'seed'
+FROM (SELECT 1) AS _
+LEFT JOIN lexicon p ON p.lexicon_id = 'attributs_defense'
+ON CONFLICT(lexicon_id) DO UPDATE SET
+  parent_id = excluded.parent_id,
+  name = excluded.name,
+  description = excluded.description,
+  deleted_at = NULL,
+  source = 'seed';
+
+INSERT INTO lexicon (lexicon_id, parent_id, name, description, deleted_at, source)
+SELECT
+  'double',
+  p.id,
+  'double',
+  'La parade double : elle s''exécute lorsque la dague vient renforcer la parade de l''arme principale, en se plaçant de côté dans une position parallèle',
+  NULL,
+  'seed'
+FROM (SELECT 1) AS _
+LEFT JOIN lexicon p ON p.lexicon_id = 'attributs_defense'
+ON CONFLICT(lexicon_id) DO UPDATE SET
+  parent_id = excluded.parent_id,
+  name = excluded.name,
+  description = excluded.description,
+  deleted_at = NULL,
+  source = 'seed';
+
+INSERT INTO lexicon (lexicon_id, parent_id, name, description, deleted_at, source)
+SELECT
   'preparations',
   p.id,
   'préparations',
@@ -1917,4 +1934,16 @@ UPDATE lexicon
 SET deleted_at = COALESCE(deleted_at, CURRENT_TIMESTAMP)
 WHERE source = 'seed'
   AND deleted_at IS NULL
-  AND lexicon_id NOT IN ('classic_v2_root', 'target_zones', 'zone_head', 'zone_face', 'zone_figure', 'zone_front_shoulder', 'zone_back_shoulder', 'zone_chest', 'zone_arm', 'zone_front_leg', 'zone_back_leg', 'zone_flank', 'zone_belly', 'above', 'below', 'inside', 'outside', 'movements', 'foot_stamp', 'balestra', 'jump', 'guard_change', 'half_advance', 'half_pass', 'half_retreat', 'half_volta', 'lunge', 'fleche', 'advance', 'pass', 'lateral_step', 'quarter_volta', 'lunge_redoublement', 'guard_recovery', 'return_guard', 'retreat', 'volta', 'movement_complements', 'forward', 'backward', 'movement_lateral', 'interior', 'exterior', 'reverse', 'mov_diagonal', 'positions', 'position_1', 'position_2', 'position_3', 'position_4', 'position_5', 'position_6', 'position_7', 'position_8', 'position_9', 'position_complements', 'position_lateral', 'circular', 'semi_circular', 'diagonal', 'au_tac', 'yielding', 'high', 'low', 'inverted', 'free_hand', 'dagger_buckler', 'object', 'crossed', 'double', 'attack_types', 'thrust', 'cut', 'dagger_buckler_att', 'free_hand_att', 'object_att', 'attack_complements', 'crown', 'broken', 'lifted', 'diagonals', 'obverse_exterior', 'reverse_interior', 'emprenation', 'supination', 'streamer', 'grounded', 'defensive_actions', 'parry', 'unbalance', 'evasion_backward', 'evasion_low', 'evasion_jumping', 'preparations', 'engagement_simple', 'engagement_change', 'beat', 'pressure', 'froissement', 'opposition_prep', 'croise', 'bind', 'envelopment', 'feint', 'invitation', 'threat', 'disengagement', 'cut_over', 'derobement', 'contre_temps', 'riposte', 'counter_attack');
+  AND lexicon_id NOT IN ('classic_v2_root', 'target_zones', 'zone_head', 'zone_face', 'zone_figure', 'zone_front_shoulder', 'zone_back_shoulder', 'zone_chest', 'zone_arm', 'zone_front_leg', 'zone_back_leg', 'zone_flank', 'zone_belly', 'above', 'below', 'inside', 'outside', 'movements', 'foot_stamp', 'balestra', 'jump', 'guard_change', 'half_advance', 'half_pass', 'half_retreat', 'half_volta', 'lunge', 'fleche', 'advance', 'pass', 'lateral_step', 'quarter_volta', 'lunge_redoublement', 'guard_recovery', 'return_guard', 'retreat', 'volta', 'movement_complements', 'forward', 'backward', 'movement_lateral', 'interior', 'exterior', 'reverse', 'mov_diagonal', 'positions', 'position_1', 'position_2', 'position_3', 'position_4', 'position_5', 'position_6', 'position_7', 'position_8', 'position_9', 'position_complements', 'high', 'low', 'inverted', 'attack_types', 'thrust', 'cut', 'dagger_buckler_att', 'free_hand_att', 'object_att', 'attack_complements', 'crown', 'broken', 'lifted', 'diagonals', 'obverse_exterior', 'reverse_interior', 'emprenation', 'supination', 'streamer', 'grounded', 'defensive_actions', 'parry', 'unbalance', 'evasion_backward', 'evasion_low', 'evasion_jumping', 'attributs_defense', 'position_lateral', 'circular', 'semi_circular', 'diagonal', 'au_tac', 'yielding', 'free_hand', 'dagger_buckler', 'object', 'crossed', 'double', 'preparations', 'engagement_simple', 'engagement_change', 'beat', 'pressure', 'froissement', 'opposition_prep', 'croise', 'bind', 'envelopment', 'feint', 'invitation', 'threat', 'disengagement', 'cut_over', 'derobement', 'contre_temps', 'riposte', 'counter_attack');
+
+CREATE TABLE IF NOT EXISTS lexicon_cache_revision (
+  lexicon_key TEXT PRIMARY KEY,
+  revision INTEGER NOT NULL DEFAULT 0,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO lexicon_cache_revision (lexicon_key, revision, updated_at)
+VALUES ('classic-v2', 1, CURRENT_TIMESTAMP)
+ON CONFLICT(lexicon_key) DO UPDATE SET
+  revision = revision + 1,
+  updated_at = CURRENT_TIMESTAMP;

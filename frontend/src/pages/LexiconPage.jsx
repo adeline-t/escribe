@@ -280,6 +280,10 @@ export default function LexiconPage({
   }, [isMobile]);
 
   const filteredItems = useMemo(() => {
+    const collator = new Intl.Collator("fr", {
+      sensitivity: "base",
+      numeric: true,
+    });
     const query = search.trim().toLowerCase();
     let list = query
       ? items.filter((item) => item.label.toLowerCase().includes(query))
@@ -288,10 +292,29 @@ export default function LexiconPage({
       list = list.filter((item) => favoriteSet.has(item.label));
     }
     const sorted = [...list];
+
+    const sortFavoritesThenAlpha = (direction = "asc") => {
+      const favorites = sorted
+        .filter((item) => favoriteSet.has(item.label))
+        .sort((a, b) =>
+          direction === "asc"
+            ? collator.compare(a.label, b.label)
+            : collator.compare(b.label, a.label),
+        );
+      const others = sorted
+        .filter((item) => !favoriteSet.has(item.label))
+        .sort((a, b) =>
+          direction === "asc"
+            ? collator.compare(a.label, b.label)
+            : collator.compare(b.label, a.label),
+        );
+      return [...favorites, ...others];
+    };
+
     if (sort === "az") {
-      sorted.sort((a, b) => a.label.localeCompare(b.label, "fr"));
+      return sortFavoritesThenAlpha("asc");
     } else if (sort === "za") {
-      sorted.sort((a, b) => b.label.localeCompare(a.label, "fr"));
+      return sortFavoritesThenAlpha("desc");
     } else if (sort === "new") {
       sorted.sort((a, b) => b.id - a.id);
     } else if (sort === "old") {

@@ -1,5 +1,3 @@
-import lexiconJson from "../data/lexicon.json";
-import sabreLexiconJson from "../data/lexicon-sabre-laser.json";
 import { createDefaultPerformancePerformers } from "../../../shared/performanceModel.js";
 
 export const DEFAULT_PERFORMERS = createDefaultPerformancePerformers();
@@ -11,6 +9,7 @@ export const LEXICON_TYPES = [
   { key: "cible", label: "cibles" },
   { key: "deplacement", label: "déplacements" },
   { key: "defensive", label: "actions de défense" },
+  { key: "defense-attribut", label: "attributs de défense" },
   { key: "parade-numero", label: "positions de parade" },
   { key: "parade-attribut", label: "attributs de parade" },
 ];
@@ -20,6 +19,7 @@ export const NEW_LEXICON_TYPES = [
   { key: "attaque-attribut", label: "attributs d'attaque" },
   { key: "cible", label: "cibles" },
   { key: "defensive", label: "actions de défense" },
+  { key: "defense-attribut", label: "attributs de défense" },
   { key: "parade-numero", label: "positions de parade" },
   { key: "parade-attribut", label: "attributs de parade" },
   { key: "action", label: "préparations" },
@@ -57,6 +57,7 @@ export const LEXICON_CATEGORY_ORDER = {
     "attaque-attribut",
     "cible",
     "defensive",
+    "defense-attribut",
     "parade-numero",
     "parade-attribut",
     "action",
@@ -126,6 +127,14 @@ const CLASSIC_V2_RECURSIVE_BUCKET_MARKERS = {
     "position_complement",
     "parade-attribut",
   ]),
+  "defense-attribut": new Set([
+    "attributs_defense",
+    "attributs_defensifs",
+    "defense_complements",
+    "defense_complement",
+    "defense-attribut",
+    "defense-attribute",
+  ]),
   "attaque-attribut": new Set(["attack_complements", "attaque-attribut"]),
 };
 
@@ -168,6 +177,7 @@ function flattenClassicV2RecursiveLexicon(data) {
     offensive: [],
     action: [],
     defensive: [],
+    "defense-attribut": [],
     cible: [],
     deplacement: [],
     deplacement_complement: [],
@@ -256,13 +266,14 @@ export function normalizeLexicon(data) {
       [],
     paradeNumber: data["parade-numero"] ?? data.paradeNumero ?? [],
     paradeAttribute: data["parade-attribut"] ?? data.paradeAttribut ?? [],
+    defenseAttribute:
+      data["defense-attribut"] ??
+      data.defenseAttribut ??
+      data.attributsDefense ??
+      [],
     attackAttribute: data["attaque-attribut"] ?? data.attaqueAttribut ?? [],
   };
 }
-
-export const DEFAULT_LEXICON = lexiconJson;
-
-export const DEFAULT_SABRE_LEXICON = sabreLexiconJson;
 
 export function normalizeSabreLexicon(data) {
   const target = data.targets ?? data.cibles ?? [];
@@ -365,7 +376,7 @@ export function resolveLexiconTermLabel(normalizedLexicon, value, type = "") {
   if (fallbackId && normalizedLexicon?.termById?.[fallbackId]?.label) {
     return normalizedLexicon.termById[fallbackId].label;
   }
-  return token;
+  return decodeLegacyDisplayToken(token);
 }
 
 export function resolveLexiconTermId(normalizedLexicon, type, value) {
@@ -389,6 +400,16 @@ function normalizeTokenForLookup(value) {
     .replace(/\s+/g, " ")
     .trim()
     .toLowerCase();
+}
+
+function decodeLegacyDisplayToken(token) {
+  const raw = String(token ?? "").trim();
+  if (!raw) return "";
+  if (!raw.startsWith("legacy:")) return raw;
+  const [, , ...rest] = raw.split(":");
+  const candidate = rest.join(":").trim();
+  if (!candidate) return "";
+  return candidate.replace(/[_-]+/g, " ").trim();
 }
 
 function splitFlatV2Movement(data) {
@@ -484,6 +505,13 @@ export function normalizeNewLexicon(data) {
       flatData?.["parade-attribut"],
       flatData?.paradeAttribut,
     );
+    const defenseAttributeEntries = mergeUniqueTermEntries(
+      "defense-attribut",
+      flatData?.["defense-attribut"],
+      flatData?.defenseAttribut,
+      flatData?.attributs_defense,
+      flatData?.attributs_defensifs,
+    );
     const attackAttributeEntries = mergeUniqueTermEntries(
       "attaque-attribut",
       flatData?.["attaque-attribut"],
@@ -503,6 +531,7 @@ export function normalizeNewLexicon(data) {
       defensive: defensiveEntries,
       target: targetEntries,
       attaque_attribut: attackAttributeEntries,
+      defense_attribut: defenseAttributeEntries,
       parade_numero: paradeNumberEntries,
       parade_attribut: paradeAttributeEntries,
       deplacement: movementEntries,
@@ -524,6 +553,7 @@ export function normalizeNewLexicon(data) {
       attackMoveComplement: termIds(attackMoveComplementEntries),
       paradeNumber: termIds(paradeNumberEntries),
       paradeAttribute: termIds(paradeAttributeEntries),
+      defenseAttribute: termIds(defenseAttributeEntries),
       attackAttribute: termIds(attackAttributeEntries),
       preparationTypes: action,
       termEntries: entriesByType,
@@ -578,6 +608,13 @@ export function normalizeNewLexicon(data) {
     "parade-attribut",
     mouvement.position_complements,
   );
+  const defenseAttributeEntries = mergeUniqueTermEntries(
+    "defense-attribut",
+    defensives.complements,
+    defensives.attributs_defense,
+    actions.attributs_defense,
+    mouvement.attributs_defense,
+  );
   const attackAttributeEntries = mergeUniqueTermEntries(
     "attaque-attribut",
     offensives.complements,
@@ -588,6 +625,7 @@ export function normalizeNewLexicon(data) {
     defensive: defensiveEntries,
     target: targetEntries,
     attaque_attribut: attackAttributeEntries,
+    defense_attribut: defenseAttributeEntries,
     parade_numero: paradeNumberEntries,
     parade_attribut: paradeAttributeEntries,
     deplacement: attackMoveBaseEntries,
@@ -609,6 +647,7 @@ export function normalizeNewLexicon(data) {
     attackMoveComplement: termIds(attackMoveComplementEntries),
     paradeNumber: termIds(paradeNumberEntries),
     paradeAttribute: termIds(paradeAttributeEntries),
+    defenseAttribute: termIds(defenseAttributeEntries),
     attackAttribute: termIds(attackAttributeEntries),
     preparationTypes: termIds(actionEntries),
     termEntries: entriesByType,

@@ -202,7 +202,10 @@ export default function StepSummaryLine({
       ? item.defenseDetails
       : [];
     const defenseBitsFromDetails = defenseDetails
-      .map((detail) => {
+      .map((detail, detailIndex) => {
+        if (detailIndex > 0) {
+          return resolve("defense_attribut", detail?.defense);
+        }
         const parts = [];
         if (detail?.defense) parts.push(resolve("defensive", detail.defense));
         if (detail?.position)

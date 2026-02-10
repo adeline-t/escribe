@@ -236,36 +236,6 @@
       "nom": "compléments de position",
       "elements": [
         {
-          "id": "position_lateral",
-          "nom": "latérale",
-          "description": "Parade latérale ou directe : parade exécutée directement d'une ligne haute vers l'autre ligne haute ou d'une ligne basse vers l'autre ligne basse"
-        },
-        {
-          "id": "circular",
-          "nom": "circulaire",
-          "description": "Parades circulaires ou contres : parades exécutées en faisant un mouvement circulaire avec son arme afin de rejeter la pointe adverse d'une ligne vers une autre. On les appelle communément les contres"
-        },
-        {
-          "id": "semi_circular",
-          "nom": "semi-circulaire",
-          "description": "Parades semi-circulaires : parades exécutées en faisant un demi-cercle de la ligne haute vers la ligne basse correspondante ou inversement"
-        },
-        {
-          "id": "diagonal",
-          "nom": "diagonale",
-          "description": "Parades diagonales : parades exécutées en suivant une trajectoire d'une ligne haute vers une ligne basse opposée ou inversement"
-        },
-        {
-          "id": "au_tac",
-          "nom": "du tac",
-          "description": "Parade du tac : c'est écarter la lame adverse avec un battement"
-        },
-        {
-          "id": "yielding",
-          "nom": "en cédant",
-          "description": "Parades en cédant : elles consistent à détourner la lame adverse en l'entraînant (sans la quitter) dans une ligne autre que celle où devait se terminer l'offensive. Ces parades sont utilisées uniquement contre les offensives précédées de prises de fer"
-        },
-        {
           "id": "high",
           "nom": "haute",
           "description": "Position haute de la parade"
@@ -279,31 +249,6 @@
           "id": "inverted",
           "nom": "inversée",
           "description": "Quinte inversée : parade couvrant la tête et les épaules. La pointe légèrement vers le haut, la lame oblique, la paume vers l'arrière. Le poignet dans l'axe de l'avant-bras. La main est en supination ou semi-supination"
-        },
-        {
-          "id": "free_hand",
-          "nom": "main libre",
-          "description": "Combat avec une seule arme, l'autre main étant libre"
-        },
-        {
-          "id": "dagger_buckler",
-          "nom": "dague / bocle",
-          "description": "Combat avec arme principale et arme ou protection secondaire (dague, petit bouclier rond)"
-        },
-        {
-          "id": "object",
-          "nom": "cape / objet",
-          "description": "Combat utilisant un objet défensif comme une cape en complément de l'arme"
-        },
-        {
-          "id": "crossed",
-          "nom": "en croix",
-          "description": "Parade en croix : action défensive faite avec deux armes formant une croix de Saint-André. Parade double réalisée avec deux armes croisées. Utilisée pour se protéger notamment des coups violents précédés de moulinets et couronnés. Parade en croix haute : action défensive avec deux armes qui se croisent au-dessus de la tête, avec les deux pointes vers le ciel afin de se protéger des coups portés à la tête. Parade en croix basse : action défensive avec deux armes (double seconde) sur un coup d'estoc protégeant le bas ventre, les deux pointes vers le sol"
-        },
-        {
-          "id": "double",
-          "nom": "double",
-          "description": "La parade double : elle s'exécute lorsque la dague vient renforcer la parade de l'arme principale, en se plaçant de côté dans une position parallèle"
         }
       ]
     },
@@ -418,6 +363,67 @@
           "id": "evasion_jumping",
           "nom": "esquive en sautant",
           "description": "Esquive réalisée en sautant pour éviter un coup bas"
+        }
+      ]
+    },
+    {
+      "id": "attributs_defense",
+      "nom": "attributs de défense",
+      "elements": [
+        {
+          "id": "position_lateral",
+          "nom": "latérale",
+          "description": "Parade latérale ou directe : parade exécutée directement d'une ligne haute vers l'autre ligne haute ou d'une ligne basse vers l'autre ligne basse"
+        },
+        {
+          "id": "circular",
+          "nom": "circulaire",
+          "description": "Parades circulaires ou contres : parades exécutées en faisant un mouvement circulaire avec son arme afin de rejeter la pointe adverse d'une ligne vers une autre. On les appelle communément les contres"
+        },
+        {
+          "id": "semi_circular",
+          "nom": "semi-circulaire",
+          "description": "Parades semi-circulaires : parades exécutées en faisant un demi-cercle de la ligne haute vers la ligne basse correspondante ou inversement"
+        },
+        {
+          "id": "diagonal",
+          "nom": "diagonale",
+          "description": "Parades diagonales : parades exécutées en suivant une trajectoire d'une ligne haute vers une ligne basse opposée ou inversement"
+        },
+        {
+          "id": "au_tac",
+          "nom": "du tac",
+          "description": "Parade du tac : c'est écarter la lame adverse avec un battement"
+        },
+        {
+          "id": "yielding",
+          "nom": "en cédant",
+          "description": "Parades en cédant : elles consistent à détourner la lame adverse en l'entraînant (sans la quitter) dans une ligne autre que celle où devait se terminer l'offensive. Ces parades sont utilisées uniquement contre les offensives précédées de prises de fer"
+        },
+        {
+          "id": "free_hand",
+          "nom": "main libre",
+          "description": "Combat avec une seule arme, l'autre main étant libre"
+        },
+        {
+          "id": "dagger_buckler",
+          "nom": "dague / bocle",
+          "description": "Combat avec arme principale et arme ou protection secondaire (dague, petit bouclier rond)"
+        },
+        {
+          "id": "object",
+          "nom": "cape / objet",
+          "description": "Combat utilisant un objet défensif comme une cape en complément de l'arme"
+        },
+        {
+          "id": "crossed",
+          "nom": "en croix",
+          "description": "Parade en croix : action défensive faite avec deux armes formant une croix de Saint-André. Parade double réalisée avec deux armes croisées. Utilisée pour se protéger notamment des coups violents précédés de moulinets et couronnés. Parade en croix haute : action défensive avec deux armes qui se croisent au-dessus de la tête, avec les deux pointes vers le ciel afin de se protéger des coups portés à la tête. Parade en croix basse : action défensive avec deux armes (double seconde) sur un coup d'estoc protégeant le bas ventre, les deux pointes vers le sol"
+        },
+        {
+          "id": "double",
+          "nom": "double",
+          "description": "La parade double : elle s'exécute lorsque la dague vient renforcer la parade de l'arme principale, en se plaçant de côté dans une position parallèle"
         }
       ]
     },

@@ -117,20 +117,30 @@ export default function PerformanceFormPage({
   }, [performers.length, activePerformerIndex]);
 
   function createOrderOptions(map) {
+    const collator = new Intl.Collator("fr", {
+      sensitivity: "base",
+      numeric: true,
+    });
     return (list, typeKey, getLabel = (value) => value) => {
       const favs = new Set(map[typeKey] ?? []);
-      const favoriteItems = list
-        .filter((item) => {
-          const label = getLabel(item);
-          return favs.has(item) || favs.has(label);
-        })
-        .map((item) => ({ value: item, label: `★ ${getLabel(item)}` }));
-      const others = list
-        .filter((item) => {
-          const label = getLabel(item);
-          return !favs.has(item) && !favs.has(label);
-        })
-        .map((item) => ({ value: item, label: getLabel(item) }));
+      const entries = list.map((item) => {
+        const baseLabel = String(getLabel(item) ?? "").trim();
+        const isFavorite = favs.has(item) || favs.has(baseLabel);
+        return {
+          value: item,
+          label: isFavorite ? `★ ${baseLabel}` : baseLabel,
+          baseLabel,
+          isFavorite,
+        };
+      });
+      const favoriteItems = entries
+        .filter((entry) => entry.isFavorite)
+        .sort((a, b) => collator.compare(a.baseLabel, b.baseLabel))
+        .map(({ value, label }) => ({ value, label }));
+      const others = entries
+        .filter((entry) => !entry.isFavorite)
+        .sort((a, b) => collator.compare(a.baseLabel, b.baseLabel))
+        .map(({ value, label }) => ({ value, label }));
       return [...favoriteItems, ...others];
     };
   }

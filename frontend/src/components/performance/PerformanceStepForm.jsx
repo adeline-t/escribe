@@ -87,6 +87,7 @@ export default function PerformanceStepForm({
     attackAttributeOptions,
     targetOptions,
     defensiveOptions,
+    defenseAttributeOptions,
     paradeNumberOptions,
     attackMoveBaseOptions,
     attackMoveComplementOptions,
@@ -732,7 +733,7 @@ export default function PerformanceStepForm({
                     ) : null}
 
                     {!item.noteOverrides && v2Mode === "defense" ? (
-                      <div className="form-section">
+                      <div className="form-section form-section--attack-layout">
                         <div className="preparation-toggle-row">
                           <label className="preparation-switch">
                             <input
@@ -814,7 +815,7 @@ export default function PerformanceStepForm({
                             </select>
                           </label>
                         ) : null}
-                        <div className="action-row action-row--two">
+                        <div className="action-row action-row--two attack-layout-block attack-layout-block--offense">
                           <label>
                             {uiLabels.defensive}
                             <select
@@ -866,9 +867,9 @@ export default function PerformanceStepForm({
                                 }}
                               >
                                 <option value="">—</option>
-                                {paradeComplementOptions.map((value) => (
+                                {defenseAttributeOptions.map((value) => (
                                   <option key={value} value={value}>
-                                    {resolveTermLabel("parade_attribut", value)}
+                                    {resolveTermLabel("defense_attribut", value)}
                                   </option>
                                 ))}
                               </select>
@@ -876,11 +877,11 @@ export default function PerformanceStepForm({
                           </label>
                         </div>
                         {defenseActionAttributeTokens.length > 0 && (
-                          <div className="builder-tags">
+                          <div className="builder-tags attack-layout-full">
                             {defenseActionAttributeTokens.map((token) => (
                               <span key={token} className="builder-tag">
                                 <span className="builder-tag-value">
-                                  {resolveTermLabel("parade_attribut", token)}
+                                  {resolveTermLabel("defense_attribut", token)}
                                 </span>
                                 <button
                                   type="button"
@@ -903,98 +904,99 @@ export default function PerformanceStepForm({
                           </div>
                         )}
 
-                        <div className="form-section form-section--soft">
-                          <div className="action-row action-row--two">
-                            <label>
-                              {uiLabels.paradeNumber}
-                              <select
-                                value={defenseDetail?.position ?? ""}
-                                onChange={(event) =>
-                                  updateDefenseDetails(index, [
-                                    {
-                                      defense: defenseDetail?.defense ?? "",
-                                      position: event.target.value,
-                                      attribute: defenseDetail?.attribute ?? "",
-                                    },
-                                    ...defenseDetails.slice(1),
-                                  ])
-                                }
-                              >
-                                <option value="">—</option>
-                                {paradeNumberSelectOptions.map((option) => (
-                                  <option key={option.value} value={option.value}>
-                                    {option.label}
-                                  </option>
-                                ))}
-                              </select>
-                            </label>
-                            <label>
-                              {PERFORMANCE_STEP_LABELS.attributeLabel}
-                              <div className="input-row">
+                        {defenseActionValue === "parry" ? (
+                          <>
+                            <div className="action-row action-row--two attack-layout-block attack-layout-block--position">
+                              <label>
+                                {uiLabels.paradeNumber}
                                 <select
-                                  value={
-                                    builderSelections[index]?.paradeComplement ??
-                                    ""
+                                  value={defenseDetail?.position ?? ""}
+                                  onChange={(event) =>
+                                    updateDefenseDetails(index, [
+                                      {
+                                        defense: defenseDetail?.defense ?? "",
+                                        position: event.target.value,
+                                        attribute: defenseDetail?.attribute ?? "",
+                                      },
+                                      ...defenseDetails.slice(1),
+                                    ])
                                   }
-                                  onChange={(event) => {
-                                    const value = event.target.value;
-                                    if (!value) {
-                                      updateBuilderSelection(index, {
-                                        paradeComplement: "",
-                                      });
-                                      return;
-                                    }
-                                    const list = getDefenseAttributeTokens(item);
-                                    if (!list.includes(value)) {
-                                      setDefenseAttributeTokens(index, [
-                                        ...list,
-                                        value,
-                                      ]);
-                                    }
-                                    updateBuilderSelection(index, {
-                                      paradeComplement: "",
-                                    });
-                                  }}
                                 >
                                   <option value="">—</option>
-                                  {paradeComplementOptions.map((value) => (
-                                    <option key={value} value={value}>
-                                      {resolveTermLabel("parade_attribut", value)}
+                                  {paradeNumberSelectOptions.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                      {option.label}
                                     </option>
                                   ))}
                                 </select>
-                              </div>
-                            </label>
-                          </div>
-                          {getDefenseAttributeTokens(item).length > 0 && (
-                            <div className="builder-tags">
-                              {getDefenseAttributeTokens(item).map((token) => (
-                                <span key={token} className="builder-tag">
-                                  <span className="builder-tag-value">
-                                    {resolveTermLabel("parade_attribut", token)}
-                                  </span>
-                                  <button
-                                    type="button"
-                                    className="button-icon button-ghost builder-tag-remove"
-                                    onClick={() => {
-                                      const next = getDefenseAttributeTokens(
-                                        item,
-                                      ).filter((entry) => entry !== token);
-                                      setDefenseAttributeTokens(index, next);
+                              </label>
+                              <label>
+                                {PERFORMANCE_STEP_LABELS.attributeLabel}
+                                <div className="input-row">
+                                  <select
+                                    value={
+                                      builderSelections[index]?.paradeComplement ??
+                                      ""
+                                    }
+                                    onChange={(event) => {
+                                      const value = event.target.value;
+                                      if (!value) {
+                                        updateBuilderSelection(index, {
+                                          paradeComplement: "",
+                                        });
+                                        return;
+                                      }
+                                      const list = getDefenseAttributeTokens(item);
+                                      if (!list.includes(value)) {
+                                        setDefenseAttributeTokens(index, [
+                                          ...list,
+                                          value,
+                                        ]);
+                                      }
+                                      updateBuilderSelection(index, {
+                                        paradeComplement: "",
+                                      });
                                     }}
-                                    aria-label={`Retirer ${token}`}
-                                    title="Retirer"
                                   >
-                                    <FaXmark />
-                                  </button>
-                                </span>
-                              ))}
+                                    <option value="">—</option>
+                                    {paradeComplementOptions.map((value) => (
+                                      <option key={value} value={value}>
+                                        {resolveTermLabel("parade_attribut", value)}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </label>
                             </div>
-                          )}
-                        </div>
+                            {getDefenseAttributeTokens(item).length > 0 && (
+                              <div className="builder-tags attack-layout-full">
+                                {getDefenseAttributeTokens(item).map((token) => (
+                                  <span key={token} className="builder-tag">
+                                    <span className="builder-tag-value">
+                                      {resolveTermLabel("parade_attribut", token)}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      className="button-icon button-ghost builder-tag-remove"
+                                      onClick={() => {
+                                        const next = getDefenseAttributeTokens(
+                                          item,
+                                        ).filter((entry) => entry !== token);
+                                        setDefenseAttributeTokens(index, next);
+                                      }}
+                                      aria-label={`Retirer ${token}`}
+                                      title="Retirer"
+                                    >
+                                      <FaXmark />
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        ) : null}
 
-                        <div className="form-section form-section--soft">
-                          <div className="action-row action-row--two">
+                        <div className="action-row action-row--two attack-layout-block attack-layout-block--move">
                               <label>
                                 {PERFORMANCE_STEP_LABELS.movementLabel}
                                 <select
@@ -1065,7 +1067,7 @@ export default function PerformanceStepForm({
                             </div>
                             {getMoveParts(item.defendMove, attackMoveBaseValues)
                               .complements.length > 0 && (
-                              <div className="builder-tags">
+                              <div className="builder-tags attack-layout-full">
                                 {getMoveParts(
                                   item.defendMove,
                                   attackMoveBaseValues,
@@ -1094,18 +1096,11 @@ export default function PerformanceStepForm({
                                 ))}
                               </div>
                             )}
-                          </div>
                         </div>
                     ) : null}
 
                     {!item.noteOverrides && v2Mode === "movement" ? (
                       <div className="form-section">
-                        <div className="preparation-info-block">
-                          <div className="text-strong">déplacement</div>
-                          <div className="meta text-muted">
-                            utilisez attaque/défense pour ajouter une préparation liée
-                          </div>
-                        </div>
                         <div className="action-row action-row--two">
                           <label>
                             {PERFORMANCE_STEP_LABELS.movementLabel}

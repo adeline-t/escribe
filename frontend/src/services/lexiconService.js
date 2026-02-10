@@ -1,12 +1,23 @@
 export function createLexiconService(client) {
+  function cacheBustQuery(query = {}, enabled = true) {
+    if (!enabled) return query;
+    return {
+      ...query,
+      _cb: Date.now(),
+    };
+  }
+
   function buildScopedPath(type, scope) {
     if (scope === "personal") return `/api/lexicon/personal/${type}`;
     return `/api/lexicon/${type}`;
   }
 
   return {
-    async getLexicon({ lexicon } = {}) {
-      const path = client.withQuery("/api/lexicon", { lexicon });
+    async getLexicon({ lexicon, forceRefresh = true } = {}) {
+      const path = client.withQuery(
+        "/api/lexicon",
+        cacheBustQuery({ lexicon }, forceRefresh),
+      );
       const { response, payload } = await client.requestJson(path);
       return {
         ok: response.ok,
@@ -16,8 +27,11 @@ export function createLexiconService(client) {
       };
     },
 
-    async getFavorites({ lexicon, signal } = {}) {
-      const path = client.withQuery("/api/lexicon/favorites", { lexicon });
+    async getFavorites({ lexicon, signal, forceRefresh = true } = {}) {
+      const path = client.withQuery(
+        "/api/lexicon/favorites",
+        cacheBustQuery({ lexicon }, forceRefresh),
+      );
       const { response, payload } = await client.requestJson(path, { signal });
       return {
         ok: response.ok,
@@ -27,8 +41,17 @@ export function createLexiconService(client) {
       };
     },
 
-    async listItems({ type, scope = "global", lexicon, signal } = {}) {
-      const path = client.withQuery(buildScopedPath(type, scope), { lexicon });
+    async listItems({
+      type,
+      scope = "global",
+      lexicon,
+      signal,
+      forceRefresh = true,
+    } = {}) {
+      const path = client.withQuery(
+        buildScopedPath(type, scope),
+        cacheBustQuery({ lexicon }, forceRefresh),
+      );
       const { response, payload } = await client.requestJson(path, { signal });
       return {
         ok: response.ok,

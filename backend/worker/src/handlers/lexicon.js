@@ -38,6 +38,10 @@ const CLASSIC_V2_ALLOWED_TYPES = new Set([
   "guard-number",
   "parade-attribut",
   "guard-attribute",
+  "defense-attribut",
+  "defense-attribute",
+  "attributs_defense",
+  "attributs_defensifs",
   "attaque-attribut",
   "attack-attribute",
 ]);
@@ -57,6 +61,10 @@ const NEW_USER_TYPE_MAP = {
   "guard-number": "user_nl_guard_number",
   "parade-attribut": "user_nl_guard_attribute",
   "guard-attribute": "user_nl_guard_attribute",
+  "defense-attribut": "user_nl_guard_attribute",
+  "defense-attribute": "user_nl_guard_attribute",
+  attributs_defense: "user_nl_guard_attribute",
+  attributs_defensifs: "user_nl_guard_attribute",
   "attaque-attribut": "user_nl_attack_attribute",
   "attack-attribute": "user_nl_attack_attribute"
 };
@@ -126,9 +134,45 @@ const FAVORITE_TYPES = {
 const LEXICON_CACHE_TTL_SECONDS = 60 * 60 * 24;
 const LEXICON_CACHE_TTL_MS = LEXICON_CACHE_TTL_SECONDS * 1000;
 const lexiconResponseCache = new Map();
+const LEXICON_CACHE_ENABLED = false;
 
 function normalizeLexiconCacheKey(lexiconKey) {
   return lexiconKey === "classic" ? "classic-v2" : lexiconKey;
+}
+
+async function ensureLexiconCacheRevisionTable(env) {
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS lexicon_cache_revision (
+      lexicon_key TEXT PRIMARY KEY,
+      revision INTEGER NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`,
+  ).run();
+}
+
+async function getLexiconCacheRevision(env, cacheKey) {
+  await ensureLexiconCacheRevisionTable(env);
+  const row = await env.DB
+    .prepare(
+      "SELECT revision FROM lexicon_cache_revision WHERE lexicon_key = ?1 LIMIT 1",
+    )
+    .bind(cacheKey)
+    .first();
+  return Number(row?.revision ?? 0);
+}
+
+async function bumpLexiconCacheRevision(env, cacheKey) {
+  await ensureLexiconCacheRevisionTable(env);
+  await env.DB
+    .prepare(
+      `INSERT INTO lexicon_cache_revision (lexicon_key, revision, updated_at)
+       VALUES (?1, 1, CURRENT_TIMESTAMP)
+       ON CONFLICT(lexicon_key) DO UPDATE SET
+         revision = revision + 1,
+         updated_at = CURRENT_TIMESTAMP`,
+    )
+    .bind(cacheKey)
+    .run();
 }
 
 function createWeakEtag(value) {
@@ -140,9 +184,13 @@ function createWeakEtag(value) {
   return `W/\"${value.length.toString(16)}-${(hash >>> 0).toString(16)}\"`;
 }
 
-function getCachedLexicon(cacheKey) {
+function getCachedLexicon(cacheKey, revision) {
   const entry = lexiconResponseCache.get(cacheKey);
   if (!entry) return null;
+  if (entry.revision !== revision) {
+    lexiconResponseCache.delete(cacheKey);
+    return null;
+  }
   if (Date.now() - entry.cachedAt > LEXICON_CACHE_TTL_MS) {
     lexiconResponseCache.delete(cacheKey);
     return null;
@@ -150,11 +198,12 @@ function getCachedLexicon(cacheKey) {
   return entry;
 }
 
-function setCachedLexicon(cacheKey, payloadString) {
+function setCachedLexicon(cacheKey, payloadString, revision) {
   const etag = createWeakEtag(payloadString);
   const entry = {
     payloadString,
     etag,
+    revision,
     cachedAt: Date.now(),
   };
   lexiconResponseCache.set(cacheKey, entry);
@@ -188,15 +237,36 @@ export async function handleLexicon(request, env) {
   if (request.method === "GET") {
     const lexiconKey = getLexiconKey(request);
     const cacheKey = normalizeLexiconCacheKey(lexiconKey);
-    const ifNoneMatch = request.headers.get("If-None-Match");
 
-    let cached = getCachedLexicon(cacheKey);
+    // Temporary hard disable: always serve fresh lexicon from DB.
+    // Kept explicit because form screens were receiving stale terms from cache.
+    if (!LEXICON_CACHE_ENABLED) {
+      const lexicon =
+        cacheKey === "classic-v2"
+          ? await getLexicon(env)
+          : await getLexiconByKey(env, cacheKey);
+      return new Response(JSON.stringify({ lexicon }), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders,
+          ...getSecurityHeaders(),
+          "Cache-Control": "no-store, max-age=0",
+          Pragma: "no-cache",
+        },
+      });
+    }
+
+    const ifNoneMatch = request.headers.get("If-None-Match");
+    const revision = await getLexiconCacheRevision(env, cacheKey);
+
+    let cached = getCachedLexicon(cacheKey, revision);
     if (!cached) {
       const lexicon =
         cacheKey === "classic-v2"
           ? await getLexicon(env)
           : await getLexiconByKey(env, cacheKey);
-      cached = setCachedLexicon(cacheKey, JSON.stringify({ lexicon }));
+      cached = setCachedLexicon(cacheKey, JSON.stringify({ lexicon }), revision);
     }
 
     if (ifNoneMatch && ifNoneMatch === cached.etag) {
@@ -235,6 +305,7 @@ export async function handleLexicon(request, env) {
       return jsonResponse({ error: "invalid_lexicon" }, 400, corsHeaders);
     }
     await replaceLexiconByKey(env, lexiconKey, lexicon);
+    await bumpLexiconCacheRevision(env, normalizeLexiconCacheKey(lexiconKey));
     invalidateLexiconCache();
     await logAudit(env, "lexicon.replace", session.user.id, null, { lexicon: lexiconKey });
     return jsonResponse({ ok: true }, 200, corsHeaders);

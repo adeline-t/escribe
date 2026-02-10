@@ -303,7 +303,10 @@ function buildDefenseSummary(item, resolveTermLabel) {
     ? item.defenseDetails
     : [];
   const defenseBitsFromDetails = defenseDetails
-    .map((detail) => {
+    .map((detail, detailIndex) => {
+      if (detailIndex > 0) {
+        return resolveTerm("defense_attribut", detail?.defense, resolveTermLabel);
+      }
       const parts = [];
       if (detail?.defense) {
         parts.push(resolveTerm("defensive", detail.defense, resolveTermLabel));

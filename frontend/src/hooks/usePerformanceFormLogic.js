@@ -325,6 +325,7 @@ function isDisplacementPreparationToken(value) {
  *   attackAttributeOptions: OptionItem[],
  *   targetOptions: OptionItem[],
  *   defensiveOptions: OptionItem[],
+ *   defenseAttributeOptions: string[],
  *   paradeNumberOptions: OptionItem[],
  *   attackMoveBaseOptions: OptionItem[],
  *   attackMoveComplementOptions: string[],
@@ -378,6 +379,15 @@ function useLexiconOptions({ normalizedLexicon, favoriteKeys, orderOptions }) {
       ),
     [normalizedLexicon, favoriteKeys, orderOptions],
   );
+  const defenseAttributeOptions = useMemo(
+    () =>
+      orderOptions(
+        normalizedLexicon.defenseAttribute ?? [],
+        favoriteKeys.defenseAttribute ?? favoriteKeys.paradeAttribute,
+        (value) => resolveLabel("defense_attribut", value),
+      ).map((entry) => entry.value),
+    [normalizedLexicon, favoriteKeys, orderOptions],
+  );
   const paradeNumberOptions = useMemo(
     () =>
       orderOptions(
@@ -401,8 +411,13 @@ function useLexiconOptions({ normalizedLexicon, favoriteKeys, orderOptions }) {
     [normalizedLexicon],
   );
   const paradeComplementOptions = useMemo(
-    () => normalizedLexicon.paradeAttribute ?? [],
-    [normalizedLexicon],
+    () =>
+      orderOptions(
+        normalizedLexicon.paradeAttribute ?? [],
+        favoriteKeys.paradeAttribute,
+        (value) => resolveLabel("parade_attribut", value),
+      ).map((entry) => entry.value),
+    [normalizedLexicon, favoriteKeys, orderOptions],
   );
   const preparationTypeOptions = useMemo(
     () => normalizedLexicon.preparationTypes ?? [],
@@ -425,6 +440,7 @@ function useLexiconOptions({ normalizedLexicon, favoriteKeys, orderOptions }) {
     attackAttributeOptions,
     targetOptions,
     defensiveOptions,
+    defenseAttributeOptions,
     paradeNumberOptions,
     attackMoveBaseOptions,
     attackMoveComplementOptions,

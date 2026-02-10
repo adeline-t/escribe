@@ -1,7 +1,4 @@
-import { useEffect, useState } from "react";
-import {
-  DEFAULT_SABRE_LEXICON,
-} from "../lib/lexicon.js";
+import { useCallback, useEffect, useState } from "react";
 import { useWorkerServices } from "./useWorkerServices.js";
 
 export function useAppBootstrap({ apiBase, tokenKey }) {
@@ -16,9 +13,7 @@ export function useAppBootstrap({ apiBase, tokenKey }) {
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState("");
   const [newLexiconData, setNewLexiconData] = useState(() => ({}));
-  const [sabreLexiconData, setSabreLexiconData] = useState(
-    () => DEFAULT_SABRE_LEXICON,
-  );
+  const [sabreLexiconData, setSabreLexiconData] = useState(() => ({}));
   const [newFavorites, setNewFavorites] = useState({});
   const [sabreFavorites, setSabreFavorites] = useState({});
   const [backendVersion, setBackendVersion] = useState(null);
@@ -68,43 +63,39 @@ export function useAppBootstrap({ apiBase, tokenKey }) {
     };
   }, [authToken, auth]);
 
-  useEffect(() => {
-    let isMounted = true;
-    async function loadLexiconsAndFavorites() {
-      try {
-        const [sabreLexiconResult, newLexiconResult] = await Promise.all([
-          lexicon.getLexicon({ lexicon: "sabre-laser" }),
-          lexicon.getLexicon({ lexicon: "classic-v2" }),
-        ]);
+  const refreshLexiconsAndFavorites = useCallback(async () => {
+    try {
+      const [sabreLexiconResult, newLexiconResult] = await Promise.all([
+        lexicon.getLexicon({ lexicon: "sabre-laser" }),
+        lexicon.getLexicon({ lexicon: "classic-v2" }),
+      ]);
 
-        if (isMounted && sabreLexiconResult.ok && sabreLexiconResult.lexicon) {
-          setSabreLexiconData(sabreLexiconResult.lexicon);
-        }
-        if (isMounted && newLexiconResult.ok && newLexiconResult.lexicon) {
-          setNewLexiconData(newLexiconResult.lexicon);
-        }
-
-        if (!authUser) return;
-        const [sabreFavoritesResult, newFavoritesResult] = await Promise.all([
-          lexicon.getFavorites({ lexicon: "sabre-laser" }),
-          lexicon.getFavorites({ lexicon: "classic-v2" }),
-        ]);
-        if (isMounted && sabreFavoritesResult.ok) {
-          setSabreFavorites(sabreFavoritesResult.favorites);
-        }
-        if (isMounted && newFavoritesResult.ok) {
-          setNewFavorites(newFavoritesResult.favorites);
-        }
-      } catch (error) {
-        console.warn("Bootstrap load skipped:", error);
+      if (sabreLexiconResult.ok && sabreLexiconResult.lexicon) {
+        setSabreLexiconData(sabreLexiconResult.lexicon);
       }
-    }
+      if (newLexiconResult.ok && newLexiconResult.lexicon) {
+        setNewLexiconData(newLexiconResult.lexicon);
+      }
 
-    loadLexiconsAndFavorites();
-    return () => {
-      isMounted = false;
-    };
+      if (!authUser) return;
+      const [sabreFavoritesResult, newFavoritesResult] = await Promise.all([
+        lexicon.getFavorites({ lexicon: "sabre-laser" }),
+        lexicon.getFavorites({ lexicon: "classic-v2" }),
+      ]);
+      if (sabreFavoritesResult.ok) {
+        setSabreFavorites(sabreFavoritesResult.favorites);
+      }
+      if (newFavoritesResult.ok) {
+        setNewFavorites(newFavoritesResult.favorites);
+      }
+    } catch (error) {
+      console.warn("Bootstrap load skipped:", error);
+    }
   }, [authUser, lexicon]);
+
+  useEffect(() => {
+    refreshLexiconsAndFavorites();
+  }, [refreshLexiconsAndFavorites]);
 
   useEffect(() => {
     let isMounted = true;
@@ -195,6 +186,7 @@ export function useAppBootstrap({ apiBase, tokenKey }) {
     setNewFavorites,
     setSabreFavorites,
     backendVersion,
+    refreshLexiconsAndFavorites,
     login,
     register,
     logout,

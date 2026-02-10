@@ -127,6 +127,21 @@ sqlLines.push(
   `  AND lexicon_id NOT IN (${seedIdList});`,
 );
 
+sqlLines.push(
+  "",
+  "CREATE TABLE IF NOT EXISTS lexicon_cache_revision (",
+  "  lexicon_key TEXT PRIMARY KEY,",
+  "  revision INTEGER NOT NULL DEFAULT 0,",
+  "  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP",
+  ");",
+  "",
+  "INSERT INTO lexicon_cache_revision (lexicon_key, revision, updated_at)",
+  "VALUES ('classic-v2', 1, CURRENT_TIMESTAMP)",
+  "ON CONFLICT(lexicon_key) DO UPDATE SET",
+  "  revision = revision + 1,",
+  "  updated_at = CURRENT_TIMESTAMP;",
+);
+
 await writeFile(sqlPath, `${sqlLines.join("\n")}\n`, "utf-8");
 console.log("Recursive lexicon synced to:");
 console.log(`- ${sqlPath}`);

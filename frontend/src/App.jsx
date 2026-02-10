@@ -69,6 +69,7 @@ export default function App() {
     setNewFavorites,
     setSabreFavorites,
     backendVersion,
+    refreshLexiconsAndFavorites,
     login,
     register,
     logout,
@@ -170,6 +171,19 @@ export default function App() {
       isMounted = false;
     };
   }, [authUser, performances]);
+
+  useEffect(() => {
+    if (!authUser) return;
+    if (
+      page !== "performance-create" &&
+      page !== "performance-create-sabre" &&
+      page !== "performance-reader" &&
+      page !== "lexicon"
+    ) {
+      return;
+    }
+    refreshLexiconsAndFavorites().catch(() => null);
+  }, [authUser, page, refreshLexiconsAndFavorites]);
 
   async function loadPerformanceById(id) {
     if (!id) return;
