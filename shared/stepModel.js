@@ -1,6 +1,6 @@
 export const DEFAULT_STEP_LEXICON_KEY = "classic-v2";
 export const LEGACY_STEP_LEXICON_KEY = "classic";
-export const STEP_PERFORMER_MODES = ["combat", "note", "choreography"];
+export const STEP_PERFORMER_MODES = ["combat", "note"];
 export const STEP_PERFORMER_ROLES = ["none", "attack", "defense", "movement"];
 
 // Canonical structure for one performer inside a step.
@@ -22,7 +22,6 @@ export const DEFAULT_STEP_PERFORMER = Object.freeze({
   paradeNumber: "",
   paradeAttribute: "",
   defendMove: "",
-  chorePhase: "",
   note: "",
   noteOverrides: false,
   // Snapshot of selected lexicon terms for resilient persistence.
@@ -68,7 +67,6 @@ function normalizeLexiconRefs(raw) {
 }
 
 function normalizeStepMode(mode) {
-  if (mode === "choregraphie") return "choreography";
   return mode;
 }
 

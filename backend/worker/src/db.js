@@ -700,7 +700,6 @@ function storagePerformerToLegacyPerformer(storagePerformer, lexiconNameById = n
           .join(" · ")
       : "",
     defendMove: hasDefense ? movementValueParts.join(" · ") : "",
-    chorePhase: "",
     note: typeof safe.note === "string" ? safe.note : "",
     noteOverrides: false,
   };
@@ -884,15 +883,7 @@ export async function ensureSchema(env) {
 export async function ensureLexiconSchema(env) {
   if (lexiconReady) return;
   const required = [
-    "sl_weapons",
-    "sl_choreography_phases",
-    "sl_targets",
-    "sl_offensive_techniques",
-    "sl_offensive_attributes",
-    "sl_defensive_techniques",
-    "sl_defensive_attributes",
-    "sl_preparations",
-    "sl_movements",
+    "lexicon_light_saber",
     "lexicon",
     "user_nl_offensive",
     "user_nl_action",
@@ -903,15 +894,7 @@ export async function ensureLexiconSchema(env) {
     "user_nl_guard_number",
     "user_nl_guard_attribute",
     "user_nl_attack_attribute",
-    "user_sl_weapons",
-    "user_sl_choreography_phases",
-    "user_sl_targets",
-    "user_sl_offensive_techniques",
-    "user_sl_offensive_attributes",
-    "user_sl_defensive_techniques",
-    "user_sl_defensive_attributes",
-    "user_sl_preparations",
-    "user_sl_movements",
+    "user_lexicon_light_saber",
     "user_lexicon_favorites"
   ];
   const missing = [];
@@ -942,7 +925,9 @@ async function ensureLexiconSeeded(env) {
   if (lexiconSeeded) return;
   await ensureLexiconSchema(env);
   const sabreRow = await env.DB
-    .prepare("SELECT COUNT(*) AS count FROM sl_weapons")
+    .prepare(
+      "SELECT COUNT(*) AS count FROM lexicon_light_saber WHERE deleted_at IS NULL",
+    )
     .first();
   const sabreCount = Number(sabreRow?.count ?? 0);
   if (sabreCount === 0) {
@@ -1727,12 +1712,20 @@ export async function deleteClassicV2LexiconItem(env, type, id) {
 }
 
 export async function getLexiconItems(env, table) {
+  const token = parseLexiconTableToken(table);
+  if (token?.scope === "global") {
+    return getSaberLexiconItemsByType(env, token.type);
+  }
   await ensureLexiconSeeded(env);
   const rows = await env.DB.prepare(`SELECT id, label FROM ${table} ORDER BY id`).all();
   return rows?.results ?? [];
 }
 
 export async function getUserLexiconItems(env, table, userId) {
+  const token = parseLexiconTableToken(table);
+  if (token?.scope === "user") {
+    return getSaberLexiconItemsByType(env, token.type, { userId });
+  }
   await ensureLexiconSeeded(env);
   const rows = await env.DB
     .prepare(`SELECT id, label FROM ${table} WHERE user_id = ?1 ORDER BY id`)
@@ -1742,6 +1735,21 @@ export async function getUserLexiconItems(env, table, userId) {
 }
 
 export async function addLexiconItem(env, table, label) {
+  const token = parseLexiconTableToken(table);
+  if (token?.scope === "global") {
+    const parentId = await resolveSaberParentDbId(env, token.type);
+    if (!parentId) return null;
+    const lexiconId = `custom_${crypto.randomUUID()}`;
+    const result = await env.DB
+      .prepare(
+        `INSERT INTO lexicon_light_saber (lexicon_id, parent_id, name, description, deleted_at, source)
+         VALUES (?1, ?2, ?3, NULL, NULL, 'custom')
+         RETURNING id, name`,
+      )
+      .bind(lexiconId, parentId, label)
+      .first();
+    return result ? { id: Number(result.id), label: String(result.name ?? label) } : null;
+  }
   await ensureLexiconSeeded(env);
   const result = await env.DB.prepare(`INSERT INTO ${table} (label) VALUES (?1) RETURNING id, label`)
     .bind(label)
@@ -1750,6 +1758,21 @@ export async function addLexiconItem(env, table, label) {
 }
 
 export async function addUserLexiconItem(env, table, userId, label) {
+  const token = parseLexiconTableToken(table);
+  if (token?.scope === "user") {
+    const parentId = await resolveSaberParentDbId(env, token.type, { userId });
+    if (!parentId) return null;
+    const lexiconId = `user_${userId}_${crypto.randomUUID()}`;
+    const result = await env.DB
+      .prepare(
+        `INSERT INTO user_lexicon_light_saber (user_id, lexicon_id, parent_id, name, description, deleted_at, source)
+         VALUES (?1, ?2, ?3, ?4, NULL, NULL, 'custom')
+         RETURNING id, name`,
+      )
+      .bind(userId, lexiconId, parentId, label)
+      .first();
+    return result ? { id: Number(result.id), label: String(result.name ?? label) } : null;
+  }
   await ensureLexiconSeeded(env);
   const result = await env.DB
     .prepare(`INSERT INTO ${table} (user_id, label) VALUES (?1, ?2) RETURNING id, label`)
@@ -1759,11 +1782,29 @@ export async function addUserLexiconItem(env, table, userId, label) {
 }
 
 export async function deleteLexiconItem(env, table, id) {
+  const token = parseLexiconTableToken(table);
+  if (token?.scope === "global") {
+    await ensureLexiconSeeded(env);
+    await env.DB
+      .prepare(`DELETE FROM lexicon_light_saber WHERE id = ?1`)
+      .bind(id)
+      .run();
+    return;
+  }
   await ensureLexiconSeeded(env);
   await env.DB.prepare(`DELETE FROM ${table} WHERE id = ?1`).bind(id).run();
 }
 
 export async function deleteUserLexiconItem(env, table, userId, id) {
+  const token = parseLexiconTableToken(table);
+  if (token?.scope === "user") {
+    await ensureLexiconSeeded(env);
+    await env.DB
+      .prepare(`DELETE FROM user_lexicon_light_saber WHERE id = ?1 AND user_id = ?2`)
+      .bind(id, userId)
+      .run();
+    return;
+  }
   await ensureLexiconSeeded(env);
   await env.DB
     .prepare(`DELETE FROM ${table} WHERE id = ?1 AND user_id = ?2`)
@@ -1772,6 +1813,11 @@ export async function deleteUserLexiconItem(env, table, userId, id) {
 }
 
 export async function hasLexiconLabel(env, table, label) {
+  const token = parseLexiconTableToken(table);
+  if (token?.scope === "global") {
+    const items = await getSaberLexiconItemsByType(env, token.type);
+    return items.some((item) => normalizeLexiconLabel(item.label) === normalizeLexiconLabel(label));
+  }
   await ensureLexiconSeeded(env);
   const row = await env.DB
     .prepare(`SELECT id FROM ${table} WHERE lower(label) = lower(?1) LIMIT 1`)
@@ -1781,6 +1827,11 @@ export async function hasLexiconLabel(env, table, label) {
 }
 
 export async function hasUserLexiconLabel(env, table, userId, label) {
+  const token = parseLexiconTableToken(table);
+  if (token?.scope === "user") {
+    const items = await getSaberLexiconItemsByType(env, token.type, { userId });
+    return items.some((item) => normalizeLexiconLabel(item.label) === normalizeLexiconLabel(label));
+  }
   await ensureLexiconSeeded(env);
   const row = await env.DB
     .prepare(`SELECT id FROM ${table} WHERE user_id = ?1 AND lower(label) = lower(?2) LIMIT 1`)
@@ -1836,17 +1887,153 @@ export async function replaceLexicon(env, lexicon) {
 
 const LEXICON_TABLES = {
   "sabre-laser": {
-    armes: "sl_weapons",
-    phases_choregraphie: "sl_choreography_phases",
-    cibles: "sl_targets",
-    techniques_offensives: "sl_offensive_techniques",
-    attributs_offensifs: "sl_offensive_attributes",
-    techniques_defensives: "sl_defensive_techniques",
-    attributs_defensifs: "sl_defensive_attributes",
-    preparations: "sl_preparations",
-    deplacements: "sl_movements"
+    armes: "lexicon_light_saber:armes",
+    cibles: "lexicon_light_saber:cibles",
+    techniques_offensives: "lexicon_light_saber:techniques_offensives",
+    attributs_offensifs: "lexicon_light_saber:attributs_offensifs",
+    techniques_defensives: "lexicon_light_saber:techniques_defensives",
+    attributs_defensifs: "lexicon_light_saber:attributs_defensifs",
+    preparations: "lexicon_light_saber:preparations",
+    deplacements: "lexicon_light_saber:deplacements"
   }
 };
+
+const SABER_TABLE_TOKEN_PREFIX = "lexicon_light_saber:";
+const SABER_USER_TABLE_TOKEN_PREFIX = "user_lexicon_light_saber:";
+
+const SABER_TYPE_PARENT_IDS = {
+  armes: ["armes", "weapons"],
+  postures_base: ["postures_base"],
+  garde_principale: ["garde_principale"],
+  cibles: ["cibles", "targets", "target_zones", "zones_touche"],
+  actions_offensives: ["actions_offensives", "offensive_actions"],
+  techniques_offensives: ["actions_offensives", "offensive_actions", "trajectoires_attaque"],
+  attributs_attaque: ["attributs_attaque", "attack_attributes"],
+  attributs_offensifs: [
+    "attributs_attaque",
+    "attack_attributes",
+    "position_main",
+    "intensites_frappe",
+    "types_attaques",
+    "varietes_attaques",
+  ],
+  actions_defensives: ["actions_defensives", "defensive_actions"],
+  techniques_defensives: ["actions_defensives", "defensive_actions", "parades", "esquives"],
+  attributs_defense: ["attributs_defense", "defense_attributes"],
+  attributs_defensifs: ["attributs_defense", "defense_attributes", "comportements_lame"],
+  preparations: ["preparations"],
+  deplacements: ["deplacements", "movements"],
+};
+
+function parseLexiconTableToken(table) {
+  if (typeof table !== "string") return null;
+  if (table.startsWith(SABER_TABLE_TOKEN_PREFIX)) {
+    return { scope: "global", type: table.slice(SABER_TABLE_TOKEN_PREFIX.length) };
+  }
+  if (table.startsWith(SABER_USER_TABLE_TOKEN_PREFIX)) {
+    return { scope: "user", type: table.slice(SABER_USER_TABLE_TOKEN_PREFIX.length) };
+  }
+  return null;
+}
+
+function getSaberTypeParentIds(type) {
+  const normalized = String(type ?? "").trim();
+  return SABER_TYPE_PARENT_IDS[normalized] ?? [normalized];
+}
+
+async function getTreeRowsFromTable(env, table, { userId = null, includeDeleted = false } = {}) {
+  await ensureLexiconSeeded(env);
+  const whereParts = [];
+  const binds = [];
+  if (table === "user_lexicon_light_saber") {
+    whereParts.push("user_id = ?1");
+    binds.push(userId);
+    if (!includeDeleted) whereParts.push("deleted_at IS NULL");
+  } else if (!includeDeleted) {
+    whereParts.push("deleted_at IS NULL");
+  }
+  const where = whereParts.length ? `WHERE ${whereParts.join(" AND ")}` : "";
+  const sql = `SELECT id, lexicon_id, parent_id, name, description FROM ${table} ${where} ORDER BY id`;
+  const stmt = env.DB.prepare(sql);
+  const rows = binds.length ? await stmt.bind(...binds).all() : await stmt.all();
+  return rows?.results ?? [];
+}
+
+function collectLeafNodesByRootLexiconIds(rows, rootLexiconIds) {
+  const byId = new Map();
+  const childrenById = new Map();
+  const roots = new Set();
+  for (const row of rows ?? []) {
+    const rowId = Number(row?.id);
+    if (!Number.isInteger(rowId)) continue;
+    byId.set(rowId, row);
+    const parentId = Number(row?.parent_id);
+    if (Number.isInteger(parentId)) {
+      if (!childrenById.has(parentId)) childrenById.set(parentId, []);
+      childrenById.get(parentId).push(rowId);
+    }
+    const lexiconId = String(row?.lexicon_id ?? "").trim();
+    if (rootLexiconIds.has(lexiconId)) roots.add(rowId);
+  }
+
+  const reachable = new Set();
+  const stack = [...roots];
+  while (stack.length) {
+    const current = stack.pop();
+    if (reachable.has(current)) continue;
+    reachable.add(current);
+    for (const childId of childrenById.get(current) ?? []) stack.push(childId);
+  }
+
+  const leaves = [];
+  for (const rowId of reachable) {
+    if ((childrenById.get(rowId) ?? []).length > 0) continue;
+    const row = byId.get(rowId);
+    if (!row) continue;
+    leaves.push({
+      id: Number(row.id),
+      label: String(row.name ?? "").trim(),
+      description:
+        row?.description == null ? "" : String(row.description).trim(),
+      lexicon_id: String(row.lexicon_id ?? "").trim(),
+    });
+  }
+  leaves.sort((a, b) => a.label.localeCompare(b.label, "fr"));
+  return leaves;
+}
+
+async function getSaberLexiconItemsByType(env, type, { userId = null } = {}) {
+  const table = userId == null ? "lexicon_light_saber" : "user_lexicon_light_saber";
+  const rows = await getTreeRowsFromTable(env, table, { userId });
+  const parentIds = getSaberTypeParentIds(type);
+  const leaves = collectLeafNodesByRootLexiconIds(rows, new Set(parentIds));
+  return leaves.map((item, index) => ({
+    id: index + 1,
+    label: item.label,
+    description: item.description ?? "",
+    lexicon_id: item.lexicon_id,
+    row_id: item.id,
+  }));
+}
+
+async function resolveSaberParentDbId(env, type, { userId = null } = {}) {
+  const table = userId == null ? "lexicon_light_saber" : "user_lexicon_light_saber";
+  const parentIds = getSaberTypeParentIds(type);
+  for (const lexiconId of parentIds) {
+    const sql =
+      userId == null
+        ? `SELECT id FROM ${table} WHERE lexicon_id = ?1 AND deleted_at IS NULL LIMIT 1`
+        : `SELECT id FROM ${table} WHERE user_id = ?1 AND lexicon_id = ?2 AND deleted_at IS NULL LIMIT 1`;
+    const stmt = env.DB.prepare(sql);
+    // eslint-disable-next-line no-await-in-loop
+    const row =
+      userId == null
+        ? await stmt.bind(lexiconId).first()
+        : await stmt.bind(userId, lexiconId).first();
+    if (row?.id) return Number(row.id);
+  }
+  return null;
+}
 
 function isRecursiveLexiconPayload(lexicon) {
   if (!lexicon || typeof lexicon !== "object" || Array.isArray(lexicon)) {
@@ -1871,7 +2058,7 @@ function getRecursiveChildren(rawNode) {
   return children;
 }
 
-function normalizeRecursiveLexiconSeed(seed) {
+function normalizeRecursiveLexiconSeed(seed, { applyClassicCompat = true } = {}) {
   if (!seed || typeof seed !== "object") return null;
   const usedIds = new Set();
   let autoIndex = 0;
@@ -1895,13 +2082,14 @@ function normalizeRecursiveLexiconSeed(seed) {
     const normalizedRaw = String(rawId ?? "").trim();
     if (!normalizedRaw) return normalizedRaw;
 
-    const parentOverrides = parentLexiconId
+    const parentOverrides = applyClassicCompat && parentLexiconId
       ? CLASSIC_V2_COMPAT_ID_BY_PARENT[parentLexiconId] ?? null
       : null;
     if (parentOverrides && parentOverrides[normalizedRaw]) {
       return parentOverrides[normalizedRaw];
     }
 
+    if (!applyClassicCompat) return normalizedRaw;
     return CLASSIC_V2_COMPAT_ID_ALIASES[normalizedRaw] ?? normalizedRaw;
   }
 
@@ -1924,22 +2112,32 @@ function normalizeRecursiveLexiconSeed(seed) {
     return { lexiconId, name, description, children };
   }
 
-  return visit(seed, "classic_v2_root", null);
+  const fallbackRootId = applyClassicCompat ? "classic_v2_root" : "light_saber_root";
+  return visit(seed, fallbackRootId, null);
 }
 
-async function replaceRecursiveLexicon(env, recursiveLexicon) {
+async function replaceRecursiveLexiconInTable(
+  env,
+  recursiveLexicon,
+  {
+    table = "lexicon",
+    applyClassicCompat = true,
+    softDeleteEnabled = true,
+  } = {},
+) {
   await ensureLexiconSchema(env);
-  const normalizedTree = normalizeRecursiveLexiconSeed(recursiveLexicon);
+  const normalizedTree = normalizeRecursiveLexiconSeed(recursiveLexicon, {
+    applyClassicCompat,
+  });
   if (!normalizedTree) return;
-  const softDeleteEnabled = await hasLexiconSoftDeleteSupport(env);
 
   if (!softDeleteEnabled) {
-    await env.DB.prepare("DELETE FROM lexicon").run();
+    await env.DB.prepare(`DELETE FROM ${table}`).run();
 
     async function insertNode(node, parentId = null) {
       const inserted = await env.DB
         .prepare(
-          `INSERT INTO lexicon (lexicon_id, parent_id, name, description)
+          `INSERT INTO ${table} (lexicon_id, parent_id, name, description)
            VALUES (?1, ?2, ?3, ?4)
            RETURNING id`,
         )
@@ -1977,7 +2175,7 @@ async function replaceRecursiveLexicon(env, recursiveLexicon) {
   for (const entry of seedEntries) {
     // eslint-disable-next-line no-await-in-loop
     const existing = await env.DB
-      .prepare(`SELECT id FROM lexicon WHERE lexicon_id = ?1 LIMIT 1`)
+      .prepare(`SELECT id FROM ${table} WHERE lexicon_id = ?1 LIMIT 1`)
       .bind(entry.lexiconId)
       .first();
 
@@ -1987,7 +2185,7 @@ async function replaceRecursiveLexicon(env, recursiveLexicon) {
       if (!parentId) {
         // eslint-disable-next-line no-await-in-loop
         const parent = await env.DB
-          .prepare(`SELECT id FROM lexicon WHERE lexicon_id = ?1 LIMIT 1`)
+          .prepare(`SELECT id FROM ${table} WHERE lexicon_id = ?1 LIMIT 1`)
           .bind(entry.parentLexiconId)
           .first();
         parentId = parent?.id ?? null;
@@ -1998,7 +2196,7 @@ async function replaceRecursiveLexicon(env, recursiveLexicon) {
       // eslint-disable-next-line no-await-in-loop
       await env.DB
         .prepare(
-          `UPDATE lexicon
+          `UPDATE ${table}
            SET parent_id = ?1,
                name = ?2,
                description = ?3,
@@ -2015,7 +2213,7 @@ async function replaceRecursiveLexicon(env, recursiveLexicon) {
     // eslint-disable-next-line no-await-in-loop
     const inserted = await env.DB
       .prepare(
-        `INSERT INTO lexicon (lexicon_id, parent_id, name, description, deleted_at, source)
+        `INSERT INTO ${table} (lexicon_id, parent_id, name, description, deleted_at, source)
          VALUES (?1, ?2, ?3, ?4, NULL, 'seed')
          RETURNING id`,
       )
@@ -2027,7 +2225,7 @@ async function replaceRecursiveLexicon(env, recursiveLexicon) {
   }
 
   const allRows = await env.DB
-    .prepare(`SELECT id, lexicon_id, source, deleted_at FROM lexicon`)
+    .prepare(`SELECT id, lexicon_id, source, deleted_at FROM ${table}`)
     .all();
   for (const row of allRows?.results ?? []) {
     const lexiconId = String(row?.lexicon_id ?? "").trim();
@@ -2037,10 +2235,19 @@ async function replaceRecursiveLexicon(env, recursiveLexicon) {
     if (row?.deleted_at) continue;
     // eslint-disable-next-line no-await-in-loop
     await env.DB
-      .prepare(`UPDATE lexicon SET deleted_at = ?1 WHERE id = ?2`)
+      .prepare(`UPDATE ${table} SET deleted_at = ?1 WHERE id = ?2`)
       .bind(new Date().toISOString(), row.id)
       .run();
   }
+}
+
+async function replaceRecursiveLexicon(env, recursiveLexicon) {
+  const softDeleteEnabled = await hasLexiconSoftDeleteSupport(env);
+  await replaceRecursiveLexiconInTable(env, recursiveLexicon, {
+    table: "lexicon",
+    applyClassicCompat: true,
+    softDeleteEnabled,
+  });
 }
 
 async function getRecursiveLexiconRows(env, { includeDeleted = false } = {}) {
@@ -2442,6 +2649,14 @@ async function getClassicV2LexiconReferenceIndex(env) {
 export async function replaceLexiconByKey(env, lexiconKey, lexicon) {
   await ensureLexiconSchema(env);
   const resolvedLexiconKey = lexiconKey === "classic" ? "classic-v2" : lexiconKey;
+  if (resolvedLexiconKey === "sabre-laser" && isRecursiveLexiconPayload(lexicon)) {
+    await replaceRecursiveLexiconInTable(env, lexicon, {
+      table: "lexicon_light_saber",
+      applyClassicCompat: false,
+      softDeleteEnabled: true,
+    });
+    return;
+  }
   if (resolvedLexiconKey === "classic-v2" && isRecursiveLexiconPayload(lexicon)) {
     await replaceRecursiveLexicon(env, lexicon);
     return;
@@ -2470,6 +2685,10 @@ export async function getLexiconByKey(env, lexiconKey) {
   if (resolvedLexiconKey === "classic-v2") {
     const recursiveRows = await getRecursiveLexiconRows(env);
     return buildRecursiveLexiconFromRows(recursiveRows);
+  }
+  if (resolvedLexiconKey === "sabre-laser") {
+    const rows = await getTreeRowsFromTable(env, "lexicon_light_saber");
+    return buildRecursiveLexiconFromRows(rows);
   }
 
   if (!lexicon && tables) {

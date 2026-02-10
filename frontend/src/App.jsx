@@ -564,7 +564,6 @@ export default function App() {
             onRemoveStep={removeStep}
             onCancelEditStep={cancelEditStep}
             editingStepId={editingStepId}
-            phaseOptions={normalizedSabreLexicon.phases ?? []}
             buildPerformerLabel={buildPerformerLabel}
             buildSummaryLine={buildSummaryLine}
             buildSummaryLines={buildSummaryLines}

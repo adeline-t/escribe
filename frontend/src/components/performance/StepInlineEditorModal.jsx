@@ -11,8 +11,6 @@ export default function StepInlineEditorModal({
   inlineItem,
   performerLabels,
   inlineStepIndex,
-  showPhase,
-  phaseOptions,
   uiLabels,
   favoriteKeys,
   normalizedLexicon,
@@ -158,18 +156,6 @@ export default function StepInlineEditorModal({
                 >
                   {PERFORMANCE_STEP_LABELS.modeNote}
                 </button>
-                {showPhase ? (
-                  <button
-                    type="button"
-                    className={`segmented-button ${
-                      inlineItem.mode === "choreography" ? "is-active" : ""
-                    }`}
-                    aria-pressed={inlineItem.mode === "choreography"}
-                    onClick={() => updateInlineItem({ mode: "choreography" })}
-                  >
-                    {PERFORMANCE_STEP_LABELS.modeChoregraphie}
-                  </button>
-                ) : null}
                 <button
                   type="button"
                   className={`segmented-button ${
@@ -187,7 +173,7 @@ export default function StepInlineEditorModal({
             ) : null}
           </div>
 
-          {inlineItem.mode !== "choreography" ? (
+          {inlineItem.mode === "combat" ? (
             <div className="performer-fields">
               <>
                 <div
@@ -977,27 +963,6 @@ export default function StepInlineEditorModal({
                   </div>
                 ) : null}
               </>
-            </div>
-          ) : null}
-
-          {inlineItem.mode === "choreography" ? (
-            <div className="performer-fields">
-              <label>
-                Phase de chorégraphie
-                <select
-                  value={inlineItem.chorePhase}
-                  onChange={(event) =>
-                    updateInlineItem({ chorePhase: event.target.value })
-                  }
-                >
-                  <option value="">—</option>
-                  {phaseOptions.map((phase) => (
-                    <option key={phase} value={phase}>
-                      {phase}
-                    </option>
-                  ))}
-                </select>
-              </label>
             </div>
           ) : null}
 

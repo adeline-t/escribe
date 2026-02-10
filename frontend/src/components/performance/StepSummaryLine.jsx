@@ -83,25 +83,6 @@ export default function StepSummaryLine({
     item?.role !== "preparation" &&
     Boolean(preparationAction);
 
-  if (item.mode === "choreography") {
-    return (
-      <span>
-        chorégraphie{" "}
-        {item.chorePhase ? (
-          <span className="note-inline">{item.chorePhase}</span>
-        ) : (
-          ""
-        )}
-        {item.note ? (
-          <span>
-            {" "}
-            (<span className="note-inline">{item.note}</span>)
-          </span>
-        ) : null}
-      </span>
-    );
-  }
-
   if (item.mode === "note") {
     if (!item.note) return null;
     return <span><span className="note-inline">{item.note}</span></span>;

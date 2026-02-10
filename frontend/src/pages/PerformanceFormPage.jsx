@@ -32,7 +32,6 @@ export default function PerformanceFormPage({
   favoriteTypeKeys,
   showParadeNumber = true,
   performerWeaponOptions,
-  phaseOptions,
   isReadOnly = false,
   onPerformerCountChange,
   onPerformerNameChange,
@@ -73,7 +72,6 @@ export default function PerformanceFormPage({
   const showWeapons =
     Array.isArray(performerWeaponOptions) &&
     performerWeaponOptions.length > 0;
-  const showPhase = Array.isArray(phaseOptions) && phaseOptions.length > 0;
   const availableLexiconKeys = lexiconByKey ? Object.keys(lexiconByKey) : [];
   const activeLexiconKey = lexiconKey ?? availableLexiconKeys[0];
   const resolvedLexicon =
@@ -214,8 +212,6 @@ export default function PerformanceFormPage({
       performerLabels={performerLabels}
       activePerformerIndex={activePerformerIndex}
       setActivePerformerIndex={setActivePerformerIndex}
-      showPhase={showPhase}
-      phaseOptions={phaseOptions}
       uiLabels={uiLabels}
       favoriteKeys={favoriteKeys}
       normalizedLexicon={resolvedLexicon}
@@ -231,7 +227,7 @@ export default function PerformanceFormPage({
       onCancelEditStep={onCancelEditStep}
       buildSummaryLine={buildSummaryLine}
       showParadeNumber={showParadeNumber}
-      formVariant={showPhase && !showParadeNumber ? "sabre" : "classic"}
+      formVariant={lexiconKey === "sabre-laser" ? "sabre" : "classic"}
     />
   );
 
@@ -312,8 +308,6 @@ export default function PerformanceFormPage({
         inlineItem={inlineItem}
         performerLabels={performerLabels}
         inlineStepIndex={inlineStepIndex}
-        showPhase={showPhase}
-        phaseOptions={phaseOptions}
         uiLabels={uiLabels}
         favoriteKeys={favoriteKeys}
         normalizedLexicon={inlineLexicon}

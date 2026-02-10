@@ -28,15 +28,15 @@ export const NEW_LEXICON_TYPES = [
 ];
 
 export const SABRE_LEXICON_TYPES = [
-  { key: "armes", label: "Armes" },
-  { key: "phases_choregraphie", label: "Phases chorégraphie" },
-  { key: "cibles", label: "Cibles" },
-  { key: "techniques_offensives", label: "Techniques offensives" },
-  { key: "attributs_offensifs", label: "Attributs offensifs" },
-  { key: "techniques_defensives", label: "Techniques défensives" },
-  { key: "attributs_defensifs", label: "Attributs défensifs" },
-  { key: "preparations", label: "Préparations" },
+  { key: "cibles", label: "Cibles et positions" },
+  { key: "postures_base", label: "Postures de base" },
+  { key: "garde_principale", label: "Gardes principales" },
   { key: "deplacements", label: "Déplacements" },
+  { key: "actions_offensives", label: "Actions offensives" },
+  { key: "attributs_attaque", label: "Attributs d'attaque" },
+  { key: "actions_defensives", label: "Actions défensives" },
+  { key: "attributs_defense", label: "Attributs de défense" },
+  { key: "preparations", label: "Préparations" },
 ];
 
 // Display order for lexicon categories in the lexicon page.
@@ -64,15 +64,15 @@ export const LEXICON_CATEGORY_ORDER = {
     "deplacement_complement",
   ],
   "sabre-laser": [
-    "armes",
-    "phases_choregraphie",
-    "techniques_offensives",
-    "attributs_offensifs",
     "cibles",
-    "techniques_defensives",
-    "attributs_defensifs",
-    "preparations",
+    "postures_base",
+    "garde_principale",
     "deplacements",
+    "actions_offensives",
+    "attributs_attaque",
+    "actions_defensives",
+    "attributs_defense",
+    "preparations",
   ],
 };
 
@@ -278,7 +278,6 @@ export function normalizeSabreLexicon(data) {
     paradeNumber: [],
     paradeAttribute: data.attributs_defensifs ?? [],
     attackAttribute: data.attributs_offensifs ?? [],
-    phases: data.phases_choregraphie ?? [],
     armes: data.armes ?? [],
   };
 }

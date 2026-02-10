@@ -13,8 +13,6 @@ export default function PerformanceStepForm({
   performerLabels,
   activePerformerIndex,
   setActivePerformerIndex,
-  showPhase,
-  phaseOptions,
   uiLabels,
   favoriteKeys,
   normalizedLexicon,
@@ -361,18 +359,6 @@ export default function PerformanceStepForm({
                     >
                       {PERFORMANCE_STEP_LABELS.modeNote}
                     </button>
-                    {showPhase ? (
-                      <button
-                        type="button"
-                        className={`segmented-button ${item.mode === "choreography" ? "is-active" : ""}`}
-                        aria-pressed={item.mode === "choreography"}
-                        onClick={() =>
-                          onFormChange(index, { mode: "choreography" })
-                        }
-                      >
-                      {PERFORMANCE_STEP_LABELS.modeChoregraphie}
-                      </button>
-                    ) : null}
                     <button
                       type="button"
                       className={`segmented-button ${item.mode === "combat" ? "is-active" : ""}`}
@@ -1277,55 +1263,7 @@ export default function PerformanceStepForm({
                 </div>
               ) : null}
 
-              {item.mode === "choreography" ? (
-                <div className="performer-fields">
-                  <label>
-                    {PERFORMANCE_STEP_LABELS.chorePhase}
-                    {isSabre ? (
-                      <span className="field-hint">
-                        {PERFORMANCE_STEP_LABELS.choreHint}
-                      </span>
-                    ) : null}
-                    <select
-                      value={item.chorePhase}
-                      onChange={(event) =>
-                        onFormChange(index, { chorePhase: event.target.value })
-                      }
-                    >
-                      <option value="">—</option>
-                      {phaseOptions.map((phase) => (
-                        <option key={phase} value={phase}>
-                          {phase}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  {item.chorePhase ? (
-                    <label>
-                      {uiLabels.notes}
-                      <div className="input-with-clear">
-                        <input
-                          value={item.note}
-                          onChange={(event) =>
-                            onFormChange(index, { note: event.target.value })
-                          }
-                        />
-                        {item.note ? (
-                          <button
-                            type="button"
-                            className="input-clear"
-                            onClick={() => onFormChange(index, { note: "" })}
-                            aria-label={PERFORMANCE_STEP_LABELS.noteClear}
-                            title="Effacer"
-                          />
-                        ) : null}
-                      </div>
-                    </label>
-                  ) : null}
-                </div>
-              ) : null}
-
-              {item.mode !== "combat" && item.mode !== "choreography" ? (
+              {item.mode !== "combat" ? (
                 <div className="performer-fields">
                   <label>
                     {uiLabels.notes}

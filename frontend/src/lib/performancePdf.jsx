@@ -38,7 +38,6 @@ function sanitizeFileName(value) {
 function getCardVariant(item) {
   if (!item) return "empty";
   if (item.mode === "note") return "neutral";
-  if (item.mode === "choreography") return "neutral";
   if (item.role === "attack") return "action";
   if (item.role === "movement" || item.role === "preparation") return "preparation";
   if (item.role === "defense") return "reaction";
@@ -363,20 +362,6 @@ function createHelpers(styles, { lexicon } = {}) {
     if (item.mode === "note") {
       if (!item.note) return null;
       return <Text style={styles.cardText}>{item.note}</Text>;
-    }
-
-    if (item.mode === "choreography") {
-      return (
-        <View style={styles.cardStack}>
-          <Text style={styles.cardText}>chorégraphie</Text>
-          {item.chorePhase ? (
-            <Text style={styles.cardNote}>{item.chorePhase}</Text>
-          ) : null}
-          {item.note ? (
-            <Text style={styles.cardNote}>({item.note})</Text>
-          ) : null}
-        </View>
-      );
     }
 
     if (item.noteOverrides) {

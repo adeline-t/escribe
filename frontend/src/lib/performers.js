@@ -235,13 +235,6 @@ function buildPreparationPrefix(item, resolveTermLabel) {
   return `${resolveTerm("action", action, resolveTermLabel)}`;
 }
 
-function buildChoreographySummary(item, { includeNoteWhenEmpty }) {
-  const note = item.note ? ` (${item.note})` : "";
-  if (item.chorePhase) return `${item.chorePhase}${note}`;
-  if (item.note && includeNoteWhenEmpty) return `${item.note}`;
-  return "chorégraphie";
-}
-
 function buildAttackSummary(item, resolveTermLabel) {
   const preparationPrefix = buildPreparationPrefix(item, resolveTermLabel);
   const preparationTiming =
@@ -378,10 +371,6 @@ function buildCombatSummary(item, resolveTermLabel) {
 }
 
 export function buildSummaryLine(item, resolveTermLabel = null) {
-  if (item.mode === "choreography") {
-    return buildChoreographySummary(item, { includeNoteWhenEmpty: true });
-  }
-
   if (item.mode === "note") {
     return buildNoteSummary(item);
   }
@@ -390,10 +379,6 @@ export function buildSummaryLine(item, resolveTermLabel = null) {
 }
 
 export function buildSummaryLines(item, resolveTermLabel = null) {
-  if (item.mode === "choreography") {
-    return [buildChoreographySummary(item, { includeNoteWhenEmpty: false })];
-  }
-
   if (item.mode === "note") {
     return [buildNoteSummary(item)].filter(Boolean);
   }

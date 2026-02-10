@@ -3,7 +3,7 @@
  * These functions guarantee stable performer IDs across reads/writes.
  */
 export function normalizeStepMode(mode) {
-  return mode === "choregraphie" ? "choreography" : mode;
+  return mode;
 }
 
 export function normalizePerformerIdentity(performer, index = 0) {

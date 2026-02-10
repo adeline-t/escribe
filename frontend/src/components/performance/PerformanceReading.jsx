@@ -143,7 +143,6 @@ export default function PerformanceReading({
     if (item.role === "movement" || item.role === "preparation") return "preparation";
     if (
       item.role === "attack" ||
-      item.mode === "choreography" ||
       item.mode === "note"
     ) {
       return "action";

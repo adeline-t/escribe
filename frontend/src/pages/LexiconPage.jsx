@@ -35,6 +35,11 @@ export default function LexiconPage({
     () => getLexiconTypesForMode(lexiconKey),
     [lexiconKey],
   );
+  const [nonEmptyTypeKeys, setNonEmptyTypeKeys] = useState(null);
+  const visibleLexiconTypes = useMemo(() => {
+    if (lexiconKey !== "sabre-laser" || !nonEmptyTypeKeys) return lexiconTypes;
+    return lexiconTypes.filter((type) => nonEmptyTypeKeys.has(type.key));
+  }, [lexiconKey, lexiconTypes, nonEmptyTypeKeys]);
   const [activeType, setActiveType] = useState(lexiconTypes[0]?.key ?? "");
   const [scope, setScope] = useState("global");
   const [items, setItems] = useState([]);
@@ -54,9 +59,24 @@ export default function LexiconPage({
   const { lexicon: lexiconService } = useWorkerServices(apiBase, authToken);
 
   const activeLabel = useMemo(
-    () => lexiconTypes.find((type) => type.key === activeType)?.label ?? "",
-    [activeType, lexiconTypes],
+    () =>
+      visibleLexiconTypes.find((type) => type.key === activeType)?.label ?? "",
+    [activeType, visibleLexiconTypes],
   );
+  const glossaryInfo = useMemo(() => {
+    if (lexiconKey === "sabre-laser") {
+      return {
+        title: "Source des définitions",
+        label: "Sabre Laser – Livret 1 Cahier Technique v02.7.2 Dec25",
+        url: "https://www.ffescrime.fr/wp-content/uploads/2025/12/Sabre-Laser-Livret-1-Cahier-Technique-v02.7.2-Dec25.pdf",
+      };
+    }
+    return {
+      title: "Source des définitions",
+      label: "Glossaire escrime artistique et de spectacle octobre 2022",
+      url: "https://www.ffescrime.fr/wp-content/uploads/2023/10/Glossaire-escrime-artistique-spectacle-octobre-2023_compressed.pdf",
+    };
+  }, [lexiconKey]);
 
   const canEditGlobal =
     authUser && ["admin", "superadmin"].includes(authUser.role);
@@ -96,7 +116,14 @@ export default function LexiconPage({
           merged.set(item.label, item);
         });
         (globalResult.items ?? []).forEach((item) => {
-          if (!merged.has(item.label)) merged.set(item.label, item);
+          const existing = merged.get(item.label);
+          if (!existing) {
+            merged.set(item.label, item);
+            return;
+          }
+          if (!existing.description && item.description) {
+            merged.set(item.label, { ...existing, description: item.description });
+          }
         });
         setItems(Array.from(merged.values()));
       } else {
@@ -146,11 +173,72 @@ export default function LexiconPage({
   }, [authUser, lexiconKey, setNewFavorites, setSabreFavorites, lexiconService]);
 
   useEffect(() => {
-    setActiveType(lexiconTypes[0]?.key ?? "");
+    setActiveType(visibleLexiconTypes[0]?.key ?? "");
     setScope("global");
     setView("all");
     setSearch("");
-  }, [lexiconKey, lexiconTypes]);
+  }, [lexiconKey, visibleLexiconTypes]);
+
+  useEffect(() => {
+    if (lexiconKey !== "sabre-laser") {
+      setNonEmptyTypeKeys(null);
+      return;
+    }
+    const controller = new AbortController();
+    (async () => {
+      try {
+        const checks = await Promise.all(
+          lexiconTypes.map(async (type) => {
+            if (scope === "all") {
+              const [globalResult, personalResult] = await Promise.all([
+                lexiconService.listItems({
+                  type: type.key,
+                  scope: "global",
+                  lexicon: lexiconKey,
+                  signal: controller.signal,
+                }),
+                lexiconService.listItems({
+                  type: type.key,
+                  scope: "personal",
+                  lexicon: lexiconKey,
+                  signal: controller.signal,
+                }),
+              ]);
+              return [
+                type.key,
+                (globalResult.items ?? []).length +
+                  (personalResult.items ?? []).length >
+                  0,
+              ];
+            }
+            const result = await lexiconService.listItems({
+              type: type.key,
+              scope,
+              lexicon: lexiconKey,
+              signal: controller.signal,
+            });
+            return [type.key, (result.items ?? []).length > 0];
+          }),
+        );
+        setNonEmptyTypeKeys(
+          new Set(
+            checks.filter(([, hasItems]) => hasItems).map(([key]) => key),
+          ),
+        );
+      } catch (error) {
+        if (error?.name !== "AbortError") {
+          setNonEmptyTypeKeys(null);
+        }
+      }
+    })();
+    return () => controller.abort();
+  }, [lexiconKey, lexiconTypes, scope, lexiconService]);
+
+  useEffect(() => {
+    if (!visibleLexiconTypes.some((type) => type.key === activeType)) {
+      setActiveType(visibleLexiconTypes[0]?.key ?? "");
+    }
+  }, [activeType, visibleLexiconTypes]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -326,6 +414,18 @@ export default function LexiconPage({
             </button>
           </div>
         </div>
+        <div className="banner banner--warning text-sm">
+          <strong>{glossaryInfo.title}:</strong>{" "}
+          Les définitions sont extraites du document officiel de la FFE{" "}
+          <a
+            href={glossaryInfo.url}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {glossaryInfo.label}
+          </a>
+          .
+        </div>
         <div
           className={
             isMobile
@@ -340,7 +440,7 @@ export default function LexiconPage({
               <div className="kicker">Catégories</div>
             </div>
             <div className="stack-2 lexicon-categories__list">
-              {lexiconTypes.map((type) => (
+              {visibleLexiconTypes.map((type) => (
                 <button
                   key={type.key}
                   type="button"

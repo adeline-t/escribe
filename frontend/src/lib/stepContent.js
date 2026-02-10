@@ -9,9 +9,6 @@ export function hasPerformerStepContent(item) {
   const note = String(item.note ?? "").trim();
 
   if (mode === "note") return Boolean(note);
-  if (mode === "choregraphie" || mode === "choreography") {
-    return Boolean(item.chorePhase) || Boolean(note);
-  }
   if (note) return true;
 
   const hasMoveDetails =
