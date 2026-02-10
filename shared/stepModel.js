@@ -7,11 +7,15 @@ export const STEP_PERFORMER_ROLES = ["none", "attack", "defense", "preparation"]
 export const DEFAULT_STEP_PERFORMER = Object.freeze({
   mode: "combat",
   role: "attack",
+  preparationAction: "",
+  preparationTiming: "before",
   offensive: "",
   action: "",
   actionDetails: [],
   target: "",
   attackMove: "",
+  move: "",
+  moveDetails: [],
   attackAttribute: [],
   defense: "",
   defenseDetails: [],
@@ -47,6 +51,11 @@ function normalizeStringArray(raw) {
   return Array.isArray(raw) ? raw : [];
 }
 
+function normalizePreparationTiming(value) {
+  const timing = String(value ?? "").trim().toLowerCase();
+  return timing === "after" ? "after" : "before";
+}
+
 function normalizeLexiconRefs(raw) {
   if (!Array.isArray(raw)) return [];
   return raw
@@ -80,6 +89,13 @@ export function createStepPerformerModel(overrides = {}) {
     actionDetails: normalizeActionDetails(overrides?.actionDetails),
     defenseDetails: normalizeDefenseDetails(overrides?.defenseDetails),
     attackAttribute: normalizeStringArray(overrides?.attackAttribute),
+    move: typeof overrides?.move === "string" ? overrides.move : "",
+    moveDetails: normalizeStringArray(overrides?.moveDetails),
+    preparationAction:
+      typeof overrides?.preparationAction === "string"
+        ? overrides.preparationAction
+        : "",
+    preparationTiming: normalizePreparationTiming(overrides?.preparationTiming),
     noteOverrides: Boolean(overrides?.noteOverrides),
     lexiconRefs: normalizeLexiconRefs(overrides?.lexiconRefs),
   };

@@ -9,12 +9,12 @@ Ce document décrit les étapes **local**, **dev** et **prod** ainsi que les fic
 | Local | Front + API Express | `npm run dev:all` |
 | Local | Front + Worker local | `npm run deploy:local` |
 | Local | Migrations D1 local | `npm run db:migrate:local` |
-| Local | Seed D1 local | `npm run db:seed:local` |
+| Local | Seed D1 local | `npm run db:seed:recursive:local` |
 | Dev | Migrations D1 dev | `npm run db:migrate:dev` |
-| Dev | Seed D1 dev | `npm run db:seed:dev` |
+| Dev | Seed D1 dev | `npm run db:seed:recursive:dev` |
 | Dev | Déployer Worker dev | `npm run deploy:worker:dev` |
 | Prod | Migrations D1 prod | `npm run db:migrate:prod` |
-| Prod | Seed D1 prod | `npm run db:seed:prod` |
+| Prod | Seed D1 prod | `npm run db:seed:recursive:prod` |
 | Prod | Déployer Worker | `npm run deploy:worker` |
 | Prod | Build front | `npm run build` |
 | Prod | Déployer Pages | `npm run pages:deploy` |
@@ -49,7 +49,7 @@ Ce document décrit les étapes **local**, **dev** et **prod** ainsi que les fic
    ```
 3. Seed la base locale D1
    ```bash
-   npm run db:seed:local
+   npm run db:seed:recursive:local
    ```
 4. Lancer le Worker local + front
    ```bash
@@ -61,9 +61,8 @@ Ce document décrit les étapes **local**, **dev** et **prod** ainsi que les fic
 - `frontend/.env.development` (si utilisé)
 - `.env` (Express local)
 - `backend/worker/wrangler.toml` (config Worker)
-- `db/lexicon.sql` (seed D1)
-- `frontend/src/data/lexicon.json` (source lexique)
-- `backend/worker/src/lexicon.seed.json` (seed Worker)
+- `db/lexicon-recursive.sql` (seed D1 v2)
+- `backend/worker/src/lexicon-recursive.seed.json` (source lexique v2)
 
 ---
 
@@ -83,7 +82,7 @@ Ce document décrit les étapes **local**, **dev** et **prod** ainsi que les fic
    ```
 3. Seed la base dev
    ```bash
-   npm run db:seed:dev
+   npm run db:seed:recursive:dev
    ```
 4. Déployer le Worker dev
    ```bash
@@ -94,9 +93,8 @@ Ce document décrit les étapes **local**, **dev** et **prod** ainsi que les fic
 
 ### Fichiers liés
 - `backend/worker/wrangler.toml` (env `dev`)
-- `db/lexicon.sql` (seed D1 dev)
-- `frontend/src/data/lexicon.json` (source lexique)
-- `backend/worker/src/lexicon.seed.json` (seed Worker)
+- `db/lexicon-recursive.sql` (seed D1 v2 dev)
+- `backend/worker/src/lexicon-recursive.seed.json` (source lexique v2)
 
 ---
 
@@ -116,7 +114,7 @@ Ce document décrit les étapes **local**, **dev** et **prod** ainsi que les fic
    ```
 3. Seed la base prod
    ```bash
-   npm run db:seed:prod
+   npm run db:seed:recursive:prod
    ```
 4. Déployer le Worker
    ```bash
@@ -140,16 +138,14 @@ npm run deploy:prod
 ### Fichiers liés
 - `backend/worker/wrangler.toml` (env prod)
 - `frontend/.env.production` (base API prod)
-- `db/lexicon.sql` (seed D1 prod)
-- `frontend/src/data/lexicon.json` (source lexique)
-- `backend/worker/src/lexicon.seed.json` (seed Worker)
+- `db/lexicon-recursive.sql` (seed D1 v2 prod)
+- `backend/worker/src/lexicon-recursive.seed.json` (source lexique v2)
 
 ---
 
 ## Notes utiles
 
-- Le lexique est **centralisé** dans `frontend/src/data/lexicon.json`.
+- Le lexique v2 est **centralisé** dans `backend/worker/src/lexicon-recursive.seed.json`.
 - `npm run db:seed:from-json` régénère automatiquement :
-  - `backend/worker/src/lexicon.seed.json`
-  - `db/lexicon.sql`
+  - `db/lexicon-recursive.sql`
 - Le Worker ne seed le lexique que si les tables sont vides.

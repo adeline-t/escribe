@@ -23,7 +23,6 @@ import {
 } from "react-icons/fa6";
 import {
   DEFAULT_PERFORMERS,
-  normalizeLexicon,
   normalizeNewLexicon,
   normalizeSabreLexicon,
   resolveLexiconTermLabel,
@@ -62,7 +61,6 @@ export default function App() {
     authToken,
     authLoading,
     authError,
-    lexiconData,
     newLexiconData,
     sabreLexiconData,
     favorites,
@@ -126,15 +124,11 @@ export default function App() {
     toggleDeletionMode,
   } = performanceState;
 
-  const normalizedLexicon = useMemo(
-    () => normalizeLexicon(lexiconData),
-    [lexiconData],
-  );
-
   const normalizedNewLexicon = useMemo(
     () => normalizeNewLexicon(newLexiconData),
     [newLexiconData],
   );
+  const normalizedLexicon = normalizedNewLexicon;
 
   const normalizedSabreLexicon = useMemo(
     () => normalizeSabreLexicon(sabreLexiconData),
@@ -143,11 +137,7 @@ export default function App() {
   const resolveAnyTermLabel = (type, value) => {
     const token = String(value ?? "").trim();
     if (!token) return "";
-    const candidates = [
-      normalizedNewLexicon,
-      normalizedLexicon,
-      normalizedSabreLexicon,
-    ];
+    const candidates = [normalizedNewLexicon, normalizedSabreLexicon];
     for (const lexicon of candidates) {
       const resolved = resolveLexiconTermLabel(lexicon, token, type);
       if (resolved && resolved !== token) return resolved;

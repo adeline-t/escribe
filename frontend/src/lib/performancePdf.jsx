@@ -14,6 +14,20 @@ import {
 } from "./performers.js";
 import { resolveSequenceName } from "../../../shared/sequenceModel.js";
 
+function buildLexiconNameById(lexicon) {
+  const out = new Map();
+  function walk(node) {
+    if (!node || typeof node !== "object") return;
+    const id = String(node.id ?? "").trim();
+    const name = String(node.nom ?? node.name ?? "").trim();
+    if (id && name && !out.has(id)) out.set(id, name);
+    const children = Array.isArray(node.children) ? node.children : [];
+    for (const child of children) walk(child);
+  }
+  walk(lexicon);
+  return out;
+}
+
 function sanitizeFileName(value) {
   return String(value ?? "")
     .replace(/[\\/:*?"<>|]/g, "-")
@@ -262,13 +276,23 @@ function createStyles(theme) {
   });
 }
 
-function createHelpers(styles) {
+function createHelpers(styles, { lexicon } = {}) {
+  const lexiconNameById = buildLexiconNameById(lexicon);
+
+  function resolveTerm(value) {
+    const token = String(value ?? "").trim();
+    if (!token) return "";
+    if (lexiconNameById.has(token)) return lexiconNameById.get(token);
+    return token;
+  }
+
   function formatDelimitedBits(value) {
     if (!value) return "";
     return value
       .split(" · ")
       .map((entry) => entry.trim())
       .filter(Boolean)
+      .map((entry) => resolveTerm(entry))
       .join(" · ");
   }
 
@@ -278,17 +302,30 @@ function createHelpers(styles) {
       : [];
     const actionFromDetails = actionDetails
       .map((detail) =>
-        [detail?.action, detail?.attribute].filter(Boolean).join(" "),
+        [resolveTerm(detail?.action), resolveTerm(detail?.attribute)]
+          .filter(Boolean)
+          .join(" "),
       )
       .filter(Boolean)
       .join(" · ");
     const attackAttribute = item.attackAttribute?.length
-      ? item.attackAttribute.join(", ")
+      ? item.attackAttribute.map((entry) => resolveTerm(entry)).join(", ")
       : "";
-    const actionFallback = [item.action, attackAttribute]
+    const actionFallback = [resolveTerm(item.action), attackAttribute]
       .filter(Boolean)
       .join(" ");
     return actionFromDetails || actionFallback;
+  }
+
+  function getMovementLabel(item, { attack = false } = {}) {
+    const moveBase = resolveTerm(item?.move ?? "");
+    const moveDetails = Array.isArray(item?.moveDetails)
+      ? item.moveDetails.map((entry) => resolveTerm(entry)).filter(Boolean)
+      : [];
+    if (moveBase || moveDetails.length) {
+      return [moveBase, ...moveDetails].filter(Boolean).join(" · ");
+    }
+    return formatDelimitedBits(attack ? item?.attackMove : item?.defendMove);
   }
 
   function getPrimaryDefenseDetail(item) {
@@ -302,14 +339,14 @@ function createHelpers(styles) {
     if (firstFilled) {
       return {
         defense: firstFilled.defense ?? "",
-        position: firstFilled.position ?? "",
-        attribute: firstFilled.attribute ?? "",
+        position: resolveTerm(firstFilled.position ?? ""),
+        attribute: formatDelimitedBits(firstFilled.attribute ?? ""),
       };
     }
     return {
-      defense: item.defense ?? item.defensive ?? "",
-      position: item.paradeNumber ?? "",
-      attribute: item.paradeAttribute ?? "",
+      defense: resolveTerm(item.defense ?? item.defensive ?? ""),
+      position: resolveTerm(item.paradeNumber ?? ""),
+      attribute: formatDelimitedBits(item.paradeAttribute ?? ""),
     };
   }
 
@@ -324,7 +361,8 @@ function createHelpers(styles) {
     if (!item) return null;
 
     if (item.mode === "note") {
-      return <Text style={styles.cardText}>{item.note || "à compléter"}</Text>;
+      if (!item.note) return null;
+      return <Text style={styles.cardText}>{item.note}</Text>;
     }
 
     if (item.mode === "choreography") {
@@ -347,21 +385,21 @@ function createHelpers(styles) {
 
     if (item.role === "attack") {
       const actionBits = getActionLabel(item);
-      const attackMoveLabel = formatDelimitedBits(item.attackMove);
+      const attackMoveLabel = getMovementLabel(item, { attack: true });
       return (
         <View style={styles.cardStack}>
           <View style={styles.cardLine}>
-            <Badge label={item.offensive} variant="Action" />
+            <Badge label={resolveTerm(item.offensive)} variant="Action" />
             {actionBits ? (
               <>
                 <Text style={styles.cardText}>en</Text>
                 <Badge label={actionBits} variant="Action" />
               </>
             ) : null}
-            {item.target ? (
+            {resolveTerm(item.target) ? (
               <>
                 <Text style={styles.cardText}>sur</Text>
-                <Badge label={item.target} variant="Target" />
+                <Badge label={resolveTerm(item.target)} variant="Target" />
               </>
             ) : null}
             {attackMoveLabel ? (
@@ -387,13 +425,16 @@ function createHelpers(styles) {
           .map((detail) => detail?.action)
           .filter(Boolean)
           .join(" · ") ||
-        item.action ||
+        resolveTerm(item.preparationAction || item.action) ||
         "";
-      const position =
+      const position = resolveTerm(
         actionDetails[0]?.attribute ??
-        (item.attackAttribute?.length ? item.attackAttribute[0] : "");
+          (item.attackAttribute?.length ? item.attackAttribute[0] : ""),
+      );
       const complements = item.attackAttribute?.length
-        ? item.attackAttribute.filter((entry) => entry !== position)
+        ? item.attackAttribute
+            .map((entry) => resolveTerm(entry))
+            .filter((entry) => entry !== position)
         : [];
       const positionLabel = [position, ...complements]
         .filter(Boolean)
@@ -407,10 +448,10 @@ function createHelpers(styles) {
                 <Text style={styles.cardText}>{actionLabel}</Text>
               </>
             ) : null}
-            {item.target ? (
+            {resolveTerm(item.target) ? (
               <>
                 <Text style={styles.cardText}>sur</Text>
-                <Badge label={item.target} variant="Target" />
+                <Badge label={resolveTerm(item.target)} variant="Target" />
               </>
             ) : null}
             {positionLabel ? (
@@ -429,11 +470,11 @@ function createHelpers(styles) {
 
     if (item.role === "defense") {
       const primaryDefense = getPrimaryDefenseDetail(item);
-      const defenseLabel = primaryDefense.defense;
+      const defenseLabel = resolveTerm(primaryDefense.defense);
       const paradeLabel = [primaryDefense.position, primaryDefense.attribute]
         .filter(Boolean)
         .join(" ");
-      const defendMoveLabel = formatDelimitedBits(item.defendMove);
+      const defendMoveLabel = getMovementLabel(item, { attack: false });
       return (
         <View style={styles.cardStack}>
           <View style={styles.cardLine}>
@@ -462,16 +503,16 @@ function createHelpers(styles) {
       return <Text style={styles.cardNote}>({item.note})</Text>;
     }
 
-    const fallback = buildSummaryLine(item);
+    const fallback = buildSummaryLine(item, (_, value) => resolveTerm(value));
     return <Text style={styles.cardText}>{fallback}</Text>;
   }
 
   return { renderCardContent };
 }
 
-function PerformanceDocument({ performance, theme }) {
+function PerformanceDocument({ performance, theme, lexicon = null }) {
   const styles = createStyles(theme);
-  const { renderCardContent } = createHelpers(styles);
+  const { renderCardContent } = createHelpers(styles, { lexicon });
   const performers = Array.isArray(performance.performers)
     ? performance.performers
     : Array.isArray(performance.participants)
@@ -497,7 +538,7 @@ function PerformanceDocument({ performance, theme }) {
         <View style={styles.summaryBlock}>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryItem}>
-              {performers.length} performer
+              {performers.length} combattant
               {performers.length > 1 ? "s" : ""}
             </Text>
             <Text style={styles.summaryItem}>
@@ -614,7 +655,13 @@ function PerformanceDocument({ performance, theme }) {
 
 export async function exportPerformancePdf(performance, options = {}) {
   const theme = options.theme === "bw" ? "bw" : "color";
-  const doc = <PerformanceDocument performance={performance} theme={theme} />;
+  const doc = (
+    <PerformanceDocument
+      performance={performance}
+      theme={theme}
+      lexicon={options.lexicon ?? null}
+    />
+  );
   const blob = await pdf(doc).toBlob();
   const fileName = sanitizeFileName(
     `${performance.name || "combat"} - ${new Date().toISOString().slice(0, 10)}.pdf`,

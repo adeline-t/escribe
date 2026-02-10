@@ -36,7 +36,7 @@ export default function PerformanceListPage({
   const [shareRole, setShareRole] = useState("read");
   const [exportingPerformanceId, setExportingPerformanceId] = useState(null);
   const [pendingPerformanceDelete, setPendingPerformanceDelete] = useState(null);
-  const { performances: performanceService } = useWorkerServices(
+  const { performances: performanceService, lexicon: lexiconService } = useWorkerServices(
     apiBase,
     authToken,
   );
@@ -240,6 +240,13 @@ export default function PerformanceListPage({
         return;
       }
       const state = result.state;
+      const lexiconKey =
+        (state.performanceType ?? performance.type ?? "classic") === "sabre-laser"
+          ? "sabre-laser"
+          : "classic-v2";
+      const lexiconResult = await lexiconService.getLexicon({
+        lexicon: lexiconKey,
+      });
       const { exportPerformancePdf } = await import("../lib/performancePdf.jsx");
       const { blob, fileName } = await exportPerformancePdf(
         {
@@ -248,7 +255,10 @@ export default function PerformanceListPage({
           performers: state.performers ?? state.participants ?? [],
           sequences: state.sequences ?? [],
         },
-        options,
+        {
+          ...options,
+          lexicon: lexiconResult.ok ? lexiconResult.lexicon : null,
+        },
       );
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");

@@ -169,8 +169,13 @@ export default function PerformanceReading({
         (detail) => detail?.action || detail?.attribute,
       );
       return Boolean(
-        item.action ||
+        item.preparationAction ||
+          item.action ||
           item.target ||
+          item.move ||
+          (Array.isArray(item.moveDetails) && item.moveDetails.length) ||
+          item.attackMove ||
+          item.defendMove ||
           hasActionDetails ||
           (Array.isArray(item.attackAttribute) && item.attackAttribute.length),
       );
@@ -246,6 +251,7 @@ export default function PerformanceReading({
 
   function getEditCardType(item) {
     if (!item || typeof item !== "object") return null;
+    if (!hasItemDisplayContent(item)) return null;
     if (item.role === "attack") return "action";
     if (item.role === "preparation") return "preparation";
     if (item.role === "defense") return "reaction";
@@ -338,14 +344,16 @@ export default function PerformanceReading({
     stepIndex,
     performerIndex,
   }) {
+    const hasDisplayContent = hasItemDisplayContent(item);
     const role = item.role;
     const hasCard =
-      role === "attack" ||
-      role === "defense" ||
-      role === "preparation" ||
-      (role === "none" && item.note);
+      hasDisplayContent &&
+      (role === "attack" ||
+        role === "defense" ||
+        role === "preparation" ||
+        (role === "none" && item.note));
 
-    if (role === "attack") {
+    if (role === "attack" && hasDisplayContent) {
       return (
         <StepSummaryCard
           type="action"
@@ -360,7 +368,7 @@ export default function PerformanceReading({
       );
     }
 
-    if (role === "preparation") {
+    if (role === "preparation" && hasDisplayContent) {
       return (
         <StepSummaryCard
           type="preparation"
@@ -375,7 +383,7 @@ export default function PerformanceReading({
       );
     }
 
-    if (role === "defense") {
+    if (role === "defense" && hasDisplayContent) {
       return (
         <StepSummaryCard
           type="reaction"
@@ -390,7 +398,7 @@ export default function PerformanceReading({
       );
     }
 
-    if (role === "none" && item.note) {
+    if (role === "none" && item.note && hasDisplayContent) {
       return (
         <StepCard
           type="neutral"
@@ -411,7 +419,9 @@ export default function PerformanceReading({
           onClick={() =>
             onEditCard(stepId, performerIndex, {
               ...emptyPerformerState(),
-              ...(item ?? {}),
+              mode: "combat",
+              role: "attack",
+              noteOverrides: false,
             })
           }
           disabled={readOnly}

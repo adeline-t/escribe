@@ -49,6 +49,7 @@ const INLINE_INDEX = 0;
  * @property {string} attackMoveComplement
  * @property {string} defendMoveComplement
  * @property {string} paradeComplement
+ * @property {string} defenseActionComplement
  * @property {string} defenseType
  * @property {string} prepType
  * @property {string} prepTargetMode
@@ -71,11 +72,14 @@ const EMPTY_BUILDER_SELECTION = {
   attackMoveComplement: "",
   defendMoveComplement: "",
   paradeComplement: "",
+  defenseActionComplement: "",
   defenseType: "",
   prepType: "",
   prepTargetMode: "position",
   prepPositionComplement: "",
 };
+
+export const PREPARATION_TIMINGS = Object.freeze(["before", "after"]);
 
 /**
  * Crée une copie d'un état UI de sélection "builder".
@@ -188,6 +192,7 @@ function getDefenseDetails(item) {
  */
 function getV2Mode(item) {
   // Le rôle explicite reste prioritaire.
+  if (item.role === "attack") return "attack";
   if (item.role === "defense") return "defense";
   if (item.role === "none") return "note";
   if (item.role === "preparation") return "preparation";
@@ -203,6 +208,26 @@ function getV2Mode(item) {
     return "preparation";
   }
   return "attack";
+}
+
+function getPreparationAction(item) {
+  const safe = item && typeof item === "object" ? item : {};
+  const direct = String(safe.preparationAction ?? "").trim();
+  if (direct) return direct;
+  if (safe.role === "preparation") {
+    return String(safe.action ?? "").trim();
+  }
+  return "";
+}
+
+function getPreparationTiming(item) {
+  const safe = item && typeof item === "object" ? item : {};
+  const timing = String(safe.preparationTiming ?? "").trim().toLowerCase();
+  return PREPARATION_TIMINGS.includes(timing) ? timing : "before";
+}
+
+function hasPreparationAction(item) {
+  return Boolean(getPreparationAction(item));
 }
 
 /**
@@ -430,7 +455,12 @@ function useSharedCombatStepLogic({
    * Écrit une liste tokenisée dans un champ string du modèle.
    */
   function updateTokenList(index, key, nextList) {
-    patchItem(index, { [key]: joinTokens(nextList) });
+    const patch = { [key]: joinTokens(nextList) };
+    if (key === "attackMove" || key === "defendMove") {
+      patch.move = nextList[0] ?? "";
+      patch.moveDetails = nextList.slice(1);
+    }
+    patchItem(index, patch);
   }
 
   /**
@@ -485,6 +515,26 @@ function useSharedCombatStepLogic({
   }
 
   /**
+   * Lit les attributs de l'action de défense.
+   * Convention: defenseDetails[1..n].defense contient un attribut.
+   */
+  function getDefenseActionAttributeTokens(itemOrIndex) {
+    const item =
+      typeof itemOrIndex === "number" ? readItem(itemOrIndex) : itemOrIndex;
+    const details = getDefenseDetails(item);
+    if (details.length <= 1) return [];
+    const out = [];
+    const seen = new Set();
+    for (const detail of details.slice(1)) {
+      const token = String(detail?.defense ?? "").trim();
+      if (!token || seen.has(token)) continue;
+      seen.add(token);
+      out.push(token);
+    }
+    return out;
+  }
+
+  /**
    * Écrit defenseDetails et synchronise les champs racine legacy.
    */
   function updateDefenseDetails(index, nextDetails) {
@@ -507,6 +557,33 @@ function useSharedCombatStepLogic({
     const next = [
       { ...first, attribute: joinTokens(tokens) },
       ...list.slice(1),
+    ];
+    updateDefenseDetails(index, next);
+  }
+
+  /**
+   * Réécrit les attributs de l'action de défense.
+   * Convention: defenseDetails[0] = action/position principale,
+   * defenseDetails[1..n] = attributs d'action.
+   */
+  function setDefenseActionAttributeTokens(index, tokens) {
+    const list = getDefenseDetails(readItem(index));
+    const first = list[0] ?? { defense: "", position: "", attribute: "" };
+    const cleaned = [];
+    const seen = new Set();
+    for (const token of tokens ?? []) {
+      const value = String(token ?? "").trim();
+      if (!value || seen.has(value)) continue;
+      seen.add(value);
+      cleaned.push(value);
+    }
+    const next = [
+      first,
+      ...cleaned.map((value) => ({
+        defense: value,
+        position: "",
+        attribute: "",
+      })),
     ];
     updateDefenseDetails(index, next);
   }
@@ -545,13 +622,32 @@ function useSharedCombatStepLogic({
   }
 
   /**
-   * Met à jour les infos de préparation via actionDetails[0] + action racine.
+   * Met à jour la préparation (action dédiée) sans imposer un rôle.
+   * Le rôle est injecté par le formulaire appelant (attack/defense/preparation).
    */
-  function updatePrepDetails(index, action, attribute) {
+  function updatePrepDetails(index, action, { role = "preparation" } = {}) {
+    const nextAction = String(action ?? "").trim();
+    const nextRole = role || "preparation";
+    if (nextRole === "preparation") {
+      patchItem(index, {
+        role: nextRole,
+        preparationAction: nextAction,
+        action: nextAction,
+        actionDetails: nextAction ? [{ action: nextAction, attribute: "" }] : [],
+      });
+      return;
+    }
+    // Linked preparation (inside attack/defense) must not override attack/defense action fields.
     patchItem(index, {
-      role: "preparation",
-      actionDetails: [{ action, attribute }],
-      action,
+      role: nextRole,
+      preparationAction: nextAction,
+    });
+  }
+
+  function clearPrepDetails(index) {
+    patchItem(index, {
+      preparationAction: "",
+      preparationTiming: "before",
     });
   }
 
@@ -608,11 +704,13 @@ function useSharedCombatStepLogic({
     const offensive = String(item?.offensive ?? "").trim();
     const detailAction = String(getActionDetails(item ?? {})[0]?.action ?? "").trim();
     const legacyAction = String(item?.action ?? "").trim();
+    const hasLinkedPreparation =
+      item?.role !== "preparation" && hasPreparationAction(item);
 
     const preferred = [];
     if (offensive && !isGenericAttackMarker(offensive)) preferred.push(offensive);
-    if (detailAction) preferred.push(detailAction);
-    if (legacyAction) preferred.push(legacyAction);
+    if (!hasLinkedPreparation && detailAction) preferred.push(detailAction);
+    if (!hasLinkedPreparation && legacyAction) preferred.push(legacyAction);
     if (offensive) preferred.push(offensive);
 
     for (const candidate of preferred) {
@@ -692,17 +790,23 @@ function useSharedCombatStepLogic({
     addMoveComplement,
     removeMoveComplement,
     getDefenseAttributeTokens,
+    getDefenseActionAttributeTokens,
     setDefenseAttributeTokens,
+    setDefenseActionAttributeTokens,
     updateDefenseDetails,
     addDefenseDetail,
     updateDefenseDetail,
     removeDefenseDetail,
     updatePrepDetails,
+    clearPrepDetails,
     addAttackComplement,
     removeAttackComplement,
     resolveDefenseType,
     getAttackActionValue,
     getDefenseActionValue,
+    getPreparationAction,
+    getPreparationTiming,
+    hasPreparationAction,
     withCurrentOption,
     ...options,
   };
@@ -833,9 +937,14 @@ function useCombatStepFormLogic({
     () =>
       form.map((item, index) => ({
         name: performerLabels?.[index] ?? performers?.[index],
-        text: buildSummaryLine?.(item, performers?.[index], index),
+        text: buildSummaryLine?.(
+          item,
+          (type, value) => core.resolveLabel(type, value),
+          performers?.[index],
+          index,
+        ),
       })),
-    [form, performerLabels, performers, buildSummaryLine],
+    [form, performerLabels, performers, buildSummaryLine, core],
   );
   const hasAnySummary = useMemo(
     () => summaryLines.some((line) => line.text && line.text !== "inactif"),
@@ -936,8 +1045,12 @@ function useInlineStepFormLogic({
       core.removeMoveComplement(INLINE_INDEX, key, value, baseOptions),
     getDefenseAttributeTokens: () =>
       core.getDefenseAttributeTokens(inlineItem),
+    getDefenseActionAttributeTokens: () =>
+      core.getDefenseActionAttributeTokens(inlineItem),
     setDefenseAttributeTokens: (tokens) =>
       core.setDefenseAttributeTokens(INLINE_INDEX, tokens),
+    setDefenseActionAttributeTokens: (tokens) =>
+      core.setDefenseActionAttributeTokens(INLINE_INDEX, tokens),
     updateDefenseDetails: (nextDetails) =>
       core.updateDefenseDetails(INLINE_INDEX, nextDetails),
     addDefenseDetail: () => core.addDefenseDetail(INLINE_INDEX),
@@ -945,8 +1058,9 @@ function useInlineStepFormLogic({
       core.updateDefenseDetail(INLINE_INDEX, detailIndex, patch),
     removeDefenseDetail: (detailIndex) =>
       core.removeDefenseDetail(INLINE_INDEX, detailIndex),
-    updatePrepDetails: (action, attribute) =>
-      core.updatePrepDetails(INLINE_INDEX, action, attribute),
+    updatePrepDetails: (action, options) =>
+      core.updatePrepDetails(INLINE_INDEX, action, options),
+    clearPrepDetails: () => core.clearPrepDetails(INLINE_INDEX),
     addAttackComplement: (value) =>
       core.addAttackComplement(INLINE_INDEX, value),
     removeAttackComplement: (value) =>

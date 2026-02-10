@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import {
-  DEFAULT_LEXICON,
   DEFAULT_SABRE_LEXICON,
 } from "../lib/lexicon.js";
 import { useWorkerServices } from "./useWorkerServices.js";
@@ -16,12 +15,10 @@ export function useAppBootstrap({ apiBase, tokenKey }) {
   });
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState("");
-  const [lexiconData, setLexiconData] = useState(() => DEFAULT_LEXICON);
   const [newLexiconData, setNewLexiconData] = useState(() => ({}));
   const [sabreLexiconData, setSabreLexiconData] = useState(
     () => DEFAULT_SABRE_LEXICON,
   );
-  const [favorites, setFavorites] = useState({});
   const [newFavorites, setNewFavorites] = useState({});
   const [sabreFavorites, setSabreFavorites] = useState({});
   const [backendVersion, setBackendVersion] = useState(null);
@@ -75,16 +72,11 @@ export function useAppBootstrap({ apiBase, tokenKey }) {
     let isMounted = true;
     async function loadLexiconsAndFavorites() {
       try {
-        const [classicLexiconResult, sabreLexiconResult, newLexiconResult] =
-          await Promise.all([
-            lexicon.getLexicon(),
-            lexicon.getLexicon({ lexicon: "sabre-laser" }),
-            lexicon.getLexicon({ lexicon: "classic-v2" }),
-          ]);
+        const [sabreLexiconResult, newLexiconResult] = await Promise.all([
+          lexicon.getLexicon({ lexicon: "sabre-laser" }),
+          lexicon.getLexicon({ lexicon: "classic-v2" }),
+        ]);
 
-        if (isMounted && classicLexiconResult.ok && classicLexiconResult.lexicon) {
-          setLexiconData(classicLexiconResult.lexicon);
-        }
         if (isMounted && sabreLexiconResult.ok && sabreLexiconResult.lexicon) {
           setSabreLexiconData(sabreLexiconResult.lexicon);
         }
@@ -93,16 +85,10 @@ export function useAppBootstrap({ apiBase, tokenKey }) {
         }
 
         if (!authUser) return;
-        const [favoritesResult, sabreFavoritesResult, newFavoritesResult] =
-          await Promise.all([
-            lexicon.getFavorites(),
-            lexicon.getFavorites({ lexicon: "sabre-laser" }),
-            lexicon.getFavorites({ lexicon: "classic-v2" }),
-          ]);
-
-        if (isMounted && favoritesResult.ok) {
-          setFavorites(favoritesResult.favorites);
-        }
+        const [sabreFavoritesResult, newFavoritesResult] = await Promise.all([
+          lexicon.getFavorites({ lexicon: "sabre-laser" }),
+          lexicon.getFavorites({ lexicon: "classic-v2" }),
+        ]);
         if (isMounted && sabreFavoritesResult.ok) {
           setSabreFavorites(sabreFavoritesResult.favorites);
         }
@@ -198,10 +184,12 @@ export function useAppBootstrap({ apiBase, tokenKey }) {
     authLoading,
     authError,
     setAuthError,
-    lexiconData,
+    // Keep this alias for backward compatibility in App, but it is now v2 only.
+    lexiconData: newLexiconData,
     newLexiconData,
     sabreLexiconData,
-    favorites,
+    // Keep this alias for backward compatibility in App, but it is now v2 only.
+    favorites: newFavorites,
     newFavorites,
     sabreFavorites,
     setNewFavorites,

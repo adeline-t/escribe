@@ -175,7 +175,7 @@ export function toggleAttribute(current, value) {
 }
 
 function buildNoteSummary(item) {
-  return item.note ? `${item.note}` : "note à compléter";
+  return item.note ? `${item.note}` : "";
 }
 
 function formatDelimitedBits(value) {
@@ -187,6 +187,43 @@ function formatDelimitedBits(value) {
     .join(" · ");
 }
 
+function resolveTerm(type, value, resolveTermLabel) {
+  const token = String(value ?? "").trim();
+  if (!token) return "";
+  if (typeof resolveTermLabel !== "function") return token;
+  return resolveTermLabel(type, token) || token;
+}
+
+function resolveDelimitedBits(value, type, resolveTermLabel) {
+  return formatDelimitedBits(value)
+    .split(" · ")
+    .map((entry) => resolveTerm(type, entry, resolveTermLabel))
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function resolveMoveBits(item, resolveTermLabel) {
+  const base = String(item?.move ?? "").trim();
+  const details = Array.isArray(item?.moveDetails)
+    ? item.moveDetails.map((entry) => String(entry ?? "").trim()).filter(Boolean)
+    : [];
+  if (base || details.length) {
+    return [base, ...details]
+      .filter(Boolean)
+      .map((entry) => resolveTerm("deplacement", entry, resolveTermLabel))
+      .join(" · ");
+  }
+  const fallback =
+    String(item?.attackMove ?? "").trim() || String(item?.defendMove ?? "").trim();
+  return resolveDelimitedBits(fallback, "deplacement", resolveTermLabel);
+}
+
+function buildPreparationPrefix(item, resolveTermLabel) {
+  const action = String(item?.preparationAction ?? "").trim();
+  if (!action) return "";
+  return `${resolveTerm("action", action, resolveTermLabel)}`;
+}
+
 function buildChoreographySummary(item, { includeNoteWhenEmpty }) {
   const note = item.note ? ` (${item.note})` : "";
   if (item.chorePhase) return `${item.chorePhase}${note}`;
@@ -194,115 +231,139 @@ function buildChoreographySummary(item, { includeNoteWhenEmpty }) {
   return "chorégraphie";
 }
 
-function buildAttackSummary(item) {
-  const actionDetails = Array.isArray(item.actionDetails)
+function buildAttackSummary(item, resolveTermLabel) {
+  const preparationPrefix = buildPreparationPrefix(item, resolveTermLabel);
+  const preparationTiming =
+    String(item?.preparationTiming ?? "").trim().toLowerCase() === "after"
+      ? "after"
+      : "before";
+  const actionDetails =
+    Array.isArray(item.actionDetails) && !preparationPrefix
     ? item.actionDetails
     : [];
   const actionBitsFromDetails = actionDetails
     .map((detail) =>
-      [detail?.action, detail?.attribute].filter(Boolean).join(" "),
+      [
+        resolveTerm("action", detail?.action, resolveTermLabel),
+        resolveTerm("attaque_attribut", detail?.attribute, resolveTermLabel),
+      ]
+        .filter(Boolean)
+        .join(" "),
     )
     .filter(Boolean)
     .join(" · ");
   const actionBitsFallback = [
-    item.action,
-    item.attackAttribute?.length ? item.attackAttribute.join(", ") : "",
+    preparationPrefix ? "" : resolveTerm("action", item.action, resolveTermLabel),
+    item.attackAttribute?.length
+      ? item.attackAttribute
+          .map((entry) => resolveTerm("attaque_attribut", entry, resolveTermLabel))
+          .join(", ")
+      : "",
   ]
     .filter(Boolean)
     .join(" ");
   const actionBits = actionBitsFromDetails || actionBitsFallback;
-  const moveBits = formatDelimitedBits(item.attackMove);
+  const moveBits = resolveMoveBits(item, resolveTermLabel);
   const pieces = [
-    item.offensive,
-    actionBits ? `en ${actionBits}` : "",
-    item.target ? `sur ${item.target}` : "",
+    preparationPrefix && preparationTiming === "before" ? `${preparationPrefix} ·` : "",
+    resolveTerm("offensive", item.offensive, resolveTermLabel),
+    actionBits ? `${actionBits}` : "",
+    item.target ? `sur ${resolveTerm("target", item.target, resolveTermLabel)}` : "",
     moveBits ? `avec ${moveBits}` : "",
+    preparationPrefix && preparationTiming === "after" ? `· ${preparationPrefix}` : "",
     item.note ? `(${item.note})` : "",
   ];
   return pieces.filter(Boolean).join(" ");
 }
 
-function buildPreparationSummary(item) {
-  const actionDetails = Array.isArray(item.actionDetails)
-    ? item.actionDetails
-    : [];
-  const actionBitsFromDetails = actionDetails
-    .map((detail) => detail?.action)
-    .filter(Boolean)
-    .join(" · ");
-  const actionBitsFallback = [item.action].filter(Boolean).join(" ");
-  const actionBits = actionBitsFromDetails || actionBitsFallback;
-  const position = actionDetails[0]?.attribute ?? "";
-  const complements = Array.isArray(item.attackAttribute)
-    ? item.attackAttribute
-    : [];
-  const positionBits = [position, ...complements.filter((entry) => entry !== position)]
-    .filter(Boolean)
-    .join(" · ");
+function buildPreparationSummary(item, resolveTermLabel) {
+  const moveBits = resolveMoveBits(item, resolveTermLabel);
   const pieces = [
-    "préparation",
-    actionBits ? actionBits : "",
-    item.target ? `sur ${item.target}` : "",
-    positionBits ? `en ${positionBits}` : "",
-    item.note ? `(${item.note})` : "",
-  ];
-  return pieces.filter(Boolean).join(" ");
-}
-
-function buildDefenseSummary(item) {
-  const defenseDetails = Array.isArray(item.defenseDetails)
-    ? item.defenseDetails
-    : [];
-  const defenseBitsFromDetails = defenseDetails
-    .map((detail) => {
-      const parts = [];
-      if (detail?.defense) parts.push(detail.defense);
-      if (detail?.position) parts.push(`de ${detail.position}`);
-      if (detail?.attribute) parts.push(detail.attribute);
-      return parts.join(" ");
-    })
-    .filter(Boolean)
-    .join(" · ");
-  const paradeBits = [item.paradeNumber, item.paradeAttribute]
-    .filter(Boolean)
-    .join(" ");
-  const defenseBitsFallback = [
-    item.defense,
-    paradeBits ? `de ${paradeBits}` : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
-  const defenseBits = defenseBitsFromDetails || defenseBitsFallback;
-  const moveBits = formatDelimitedBits(item.defendMove);
-  const pieces = [
-    defenseBits,
+    "déplacement",
     moveBits ? `en ${moveBits}` : "",
     item.note ? `(${item.note})` : "",
   ];
   return pieces.filter(Boolean).join(" ");
 }
 
-function buildCombatSummary(item) {
+function buildDefenseSummary(item, resolveTermLabel) {
+  const preparationPrefix = buildPreparationPrefix(item, resolveTermLabel);
+  const preparationTiming =
+    String(item?.preparationTiming ?? "").trim().toLowerCase() === "after"
+      ? "after"
+      : "before";
+  const defenseDetails = Array.isArray(item.defenseDetails)
+    ? item.defenseDetails
+    : [];
+  const defenseBitsFromDetails = defenseDetails
+    .map((detail) => {
+      const parts = [];
+      if (detail?.defense) {
+        parts.push(resolveTerm("defensive", detail.defense, resolveTermLabel));
+      }
+      if (detail?.position) {
+        parts.push(
+          `de ${resolveTerm("parade_numero", detail.position, resolveTermLabel)}`,
+        );
+      }
+      if (detail?.attribute) {
+        parts.push(
+          resolveDelimitedBits(
+            detail.attribute,
+            "parade_attribut",
+            resolveTermLabel,
+          ),
+        );
+      }
+      return parts.join(" ");
+    })
+    .filter(Boolean)
+    .join(" · ");
+  const paradeBits = [
+    resolveTerm("parade_numero", item.paradeNumber, resolveTermLabel),
+    resolveDelimitedBits(item.paradeAttribute, "parade_attribut", resolveTermLabel),
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const defenseBitsFallback = [
+    resolveTerm("defensive", item.defense, resolveTermLabel),
+    paradeBits ? `de ${paradeBits}` : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const defenseBits = defenseBitsFromDetails || defenseBitsFallback;
+  const moveBits = resolveMoveBits(item, resolveTermLabel);
+  const pieces = [
+    preparationPrefix && preparationTiming === "before" ? `${preparationPrefix} ·` : "",
+    defenseBits,
+    moveBits ? `en ${moveBits}` : "",
+    preparationPrefix && preparationTiming === "after" ? `· ${preparationPrefix}` : "",
+    item.note ? `(${item.note})` : "",
+  ];
+  return pieces.filter(Boolean).join(" ");
+}
+
+function buildCombatSummary(item, resolveTermLabel) {
   if (item.role === "attack") {
     if (item.noteOverrides) return buildNoteSummary(item);
-    return buildAttackSummary(item);
+    return buildAttackSummary(item, resolveTermLabel);
   }
 
   if (item.role === "preparation") {
     if (item.noteOverrides) return buildNoteSummary(item);
-    return buildPreparationSummary(item);
+    return buildPreparationSummary(item, resolveTermLabel);
   }
 
   if (item.role === "defense") {
     if (item.noteOverrides) return buildNoteSummary(item);
-    return buildDefenseSummary(item);
+    return buildDefenseSummary(item, resolveTermLabel);
   }
 
   if (item.note) return `${item.note}`;
-  return "inactif";
+  return "";
 }
 
-export function buildSummaryLine(item) {
+export function buildSummaryLine(item, resolveTermLabel = null) {
   if (item.mode === "choreography") {
     return buildChoreographySummary(item, { includeNoteWhenEmpty: true });
   }
@@ -311,17 +372,17 @@ export function buildSummaryLine(item) {
     return buildNoteSummary(item);
   }
 
-  return buildCombatSummary(item);
+  return buildCombatSummary(item, resolveTermLabel);
 }
 
-export function buildSummaryLines(item) {
+export function buildSummaryLines(item, resolveTermLabel = null) {
   if (item.mode === "choreography") {
     return [buildChoreographySummary(item, { includeNoteWhenEmpty: false })];
   }
 
   if (item.mode === "note") {
-    return [buildNoteSummary(item)];
+    return [buildNoteSummary(item)].filter(Boolean);
   }
 
-  return [buildCombatSummary(item)].filter(Boolean);
+  return [buildCombatSummary(item, resolveTermLabel)].filter(Boolean);
 }

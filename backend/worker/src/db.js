@@ -43,8 +43,6 @@ export function buildCorsHeaders(request, env) {
   };
 }
 
-import seedLexicon from "./lexicon.seed.json";
-import seedNewLexicon from "./lexicon-new.seed.json";
 import seedSabreLexicon from "./lexicon-sabre-laser.seed.json";
 import seedRecursiveLexicon from "./lexicon-recursive.seed.json";
 import {
@@ -116,6 +114,25 @@ const CLASSIC_V2_TREE_BUCKET_MARKERS = {
     "parade-attribut",
   ]),
   "attaque-attribut": new Set(["attack_complements", "attaque-attribut"]),
+};
+
+const CLASSIC_V2_EDIT_PARENT_BY_TYPE = {
+  offensive: "attack_types",
+  action: "preparations",
+  defensive: "defensive_actions",
+  cible: "target_zones",
+  target: "target_zones",
+  deplacement: "movements",
+  movement: "movements",
+  deplacement_complement: "movement_complements",
+  movement_complement: "movement_complements",
+  "movement-complement": "movement_complements",
+  "parade-numero": "positions",
+  "guard-number": "positions",
+  "parade-attribut": "position_complements",
+  "guard-attribute": "position_complements",
+  "attaque-attribut": "attack_complements",
+  "attack-attribute": "attack_complements",
 };
 
 const CLASSIC_V2_COMPAT_ID_ALIASES = {
@@ -291,11 +308,14 @@ function legacyPerformerToStoragePerformer(performer, lexiconReferenceIndex) {
     !isGenericAttackLabel(safe.offensive)
       ? String(safe.offensive).trim()
       : "";
-  const preparationName = String(safe.action ?? "").trim();
-  const hasPreparation =
-    safe.role === "preparation" || Boolean(preparationName) || mode === "note"
-      ? Boolean(preparationName)
-      : false;
+  const rawPreparationName = String(
+    safe.preparationAction ?? safe.action ?? "",
+  ).trim();
+  const preparationTiming =
+    String(safe.preparationTiming ?? "").trim().toLowerCase() === "after"
+      ? "after"
+      : "before";
+  const hasPreparation = Boolean(preparationName);
   const hasAttack = Boolean(attackName);
 
   const prepAttributes = dedupeLexiconTerms(
@@ -385,14 +405,42 @@ function legacyPerformerToStoragePerformer(performer, lexiconReferenceIndex) {
       .filter(Boolean),
   );
 
+  const explicitMoveBase = String(safe.move ?? "").trim();
+  const explicitMoveDetails = Array.isArray(safe.moveDetails)
+    ? safe.moveDetails.map((entry) => String(entry ?? "").trim()).filter(Boolean)
+    : [];
+  const explicitMoveTokens = explicitMoveBase
+    ? [explicitMoveBase, ...explicitMoveDetails]
+    : [...explicitMoveDetails];
   const attackMoveTokens = splitDelimitedValue(safe.attackMove);
   const defendMoveTokens = splitDelimitedValue(safe.defendMove);
+  const mergedAttackMoveTokens =
+    attackMoveTokens.length > 0
+      ? attackMoveTokens
+      : safe.role === "defense"
+        ? []
+        : explicitMoveTokens;
+  const mergedDefendMoveTokens =
+    defendMoveTokens.length > 0
+      ? defendMoveTokens
+      : safe.role === "defense"
+        ? explicitMoveTokens
+        : [];
+  const hasMovementPayload =
+    explicitMoveTokens.length > 0 ||
+    mergedAttackMoveTokens.length > 0 ||
+    mergedDefendMoveTokens.length > 0;
+  const preparationName =
+    rawPreparationName ||
+    (safe.role === "preparation" && hasMovementPayload
+      ? "displacements_prep"
+      : "");
   const movementBaseName =
-    attackMoveTokens[0] ?? defendMoveTokens[0] ?? "";
+    mergedAttackMoveTokens[0] ?? mergedDefendMoveTokens[0] ?? "";
   const movementAttributes = dedupeLexiconTerms(
     [
-      ...(attackMoveTokens.length > 1
-        ? attackMoveTokens.slice(1).map((token) =>
+      ...(mergedAttackMoveTokens.length > 1
+        ? mergedAttackMoveTokens.slice(1).map((token) =>
             resolveLexiconTerm(
               lexiconReferenceIndex,
               ["deplacement_complement", "parade-attribut", "attaque-attribut"],
@@ -400,8 +448,8 @@ function legacyPerformerToStoragePerformer(performer, lexiconReferenceIndex) {
             ),
           )
         : []),
-      ...(defendMoveTokens.length > 1
-        ? defendMoveTokens.slice(1).map((token) =>
+      ...(mergedDefendMoveTokens.length > 1
+        ? mergedDefendMoveTokens.slice(1).map((token) =>
             resolveLexiconTerm(
               lexiconReferenceIndex,
               ["deplacement_complement", "parade-attribut", "attaque-attribut"],
@@ -409,11 +457,13 @@ function legacyPerformerToStoragePerformer(performer, lexiconReferenceIndex) {
             ),
           )
         : []),
-      attackMoveTokens[0] && defendMoveTokens[0] && attackMoveTokens[0] !== defendMoveTokens[0]
+      mergedAttackMoveTokens[0] &&
+      mergedDefendMoveTokens[0] &&
+      mergedAttackMoveTokens[0] !== mergedDefendMoveTokens[0]
         ? resolveLexiconTerm(
             lexiconReferenceIndex,
             ["deplacement", "deplacement_complement"],
-            defendMoveTokens[0],
+            mergedDefendMoveTokens[0],
           )
         : null,
     ].filter(Boolean),
@@ -423,6 +473,7 @@ function legacyPerformerToStoragePerformer(performer, lexiconReferenceIndex) {
     ? {
         ...resolveLexiconTerm(lexiconReferenceIndex, ["action"], preparationName),
         attributes: prepAttributes,
+        timing: preparationTiming,
       }
     : null;
 
@@ -545,18 +596,17 @@ function inferLegacyRoleFromStoragePerformer({
   hasPreparation = false,
   hasAttack = false,
   hasDefense = false,
+  hasMovement = false,
 }) {
-  if (mode === "note" && !hasPreparation && !hasAttack && !hasDefense) {
-    return "none";
-  }
-  if (!hasPreparation && !hasAttack && !hasDefense) return "none";
-  if (!hasAttack && !hasPreparation && hasDefense) return "defense";
-  if (!hasDefense && !hasPreparation && hasAttack) return "attack";
-  if (!hasAttack && !hasDefense && hasPreparation) return "preparation";
-  if (hasDefense && !hasAttack) return "defense";
-  if (!hasDefense && hasPreparation) return "preparation";
+  // Backend role rules:
+  // - `attack` when attack action exists.
+  // - `defense` when defense action exists and no attack action.
+  // - `preparation` when there is only a preparation or movement payload.
+  // - otherwise `inactive`.
   if (hasAttack) return "attack";
-  return "none";
+  if (hasDefense) return "defense";
+  if (hasPreparation || hasMovement) return "preparation";
+  return "inactive";
 }
 
 function storagePerformerToLegacyPerformer(storagePerformer, lexiconNameById = null) {
@@ -576,6 +626,10 @@ function storagePerformerToLegacyPerformer(storagePerformer, lexiconNameById = n
     safe.movement && typeof safe.movement === "object" ? safe.movement : null;
 
   const preparationRef = resolveStorageTermRef(preparation, lexiconNameById);
+  const preparationTiming =
+    String(preparation?.timing ?? "").trim().toLowerCase() === "after"
+      ? "after"
+      : "before";
   const preparationTargetRef = resolveStorageTermRef(
     preparation?.target,
     lexiconNameById,
@@ -645,11 +699,13 @@ function storagePerformerToLegacyPerformer(storagePerformer, lexiconNameById = n
     preparationPositionAttributes.length > 0;
   const hasAttack = hasStorageTerm(attack);
   const hasDefense = hasStorageTerm(defense);
+  const hasMovement = hasStorageTerm(movement) || movementAttributes.length > 0;
   const role = inferLegacyRoleFromStoragePerformer({
     mode,
     hasPreparation,
     hasAttack,
     hasDefense,
+    hasMovement,
   });
 
   const movementLabel = [movementName, ...movementAttributes]
@@ -658,6 +714,8 @@ function storagePerformerToLegacyPerformer(storagePerformer, lexiconNameById = n
     movementRef?.lexicon_id || movementRef?.name || "",
     ...movementAttributeRefs.map((entry) => entry.lexicon_id || entry.name),
   ].filter(Boolean);
+  const move = movementValueParts[0] ?? "";
+  const moveDetails = movementValueParts.slice(1);
   const preparationPositionAttribute = [
     ...preparationPositionAttributes,
     ...preparationAttributes.filter(
@@ -697,6 +755,11 @@ function storagePerformerToLegacyPerformer(storagePerformer, lexiconNameById = n
   return {
     mode,
     role,
+    preparationAction:
+      preparationRef?.lexicon_id ||
+      preparationName ||
+      (role === "preparation" && hasMovement ? "displacements_prep" : ""),
+    preparationTiming,
     offensive: hasAttack
       ? attackRef?.lexicon_id || attackName
       : hasPreparation
@@ -704,6 +767,8 @@ function storagePerformerToLegacyPerformer(storagePerformer, lexiconNameById = n
         : "",
     action: hasPreparation
       ? preparationRef?.lexicon_id || preparationName
+      : role === "preparation" && hasMovement
+        ? "displacements_prep"
       : attackAttributeRefs[0]?.lexicon_id || attackAttributes[0] || "",
     actionDetails: hasPreparation
       ? preparationActionDetails
@@ -715,6 +780,8 @@ function storagePerformerToLegacyPerformer(storagePerformer, lexiconNameById = n
       ? attackTargetRef?.lexicon_id || attackTargetName
       : preparationTargetRef?.lexicon_id || preparationTargetName,
     attackMove: hasDefense ? "" : movementValueParts.join(" · "),
+    move,
+    moveDetails,
     attackAttribute: hasPreparation
       ? [
           ...preparationPositionAttributeRefs.map(
@@ -787,9 +854,7 @@ function resolveHiddenPerformerIndexesFromMetadata(
   }
   const hiddenIndexes = Array.isArray(metadata?.hiddenPerformerIndexes)
     ? metadata.hiddenPerformerIndexes
-    : Array.isArray(metadata?.hiddenParticipantIndexes)
-      ? metadata.hiddenParticipantIndexes
-      : [];
+    : [];
   return hiddenIndexes
     .map((value) => Number(value))
     .filter(
@@ -804,7 +869,7 @@ function convertStorageStepToLegacyStep(
 ) {
   const performerEntries =
     stepPayload && typeof stepPayload === "object"
-      ? stepPayload.performers ?? stepPayload.participants ?? null
+      ? stepPayload.performers ?? null
       : null;
   const performerIndexById = new Map(
     performerOrder.map((performerId, index) => [performerId, index]),
@@ -868,9 +933,7 @@ function buildSequencePayload(
 
   const hiddenIndexes = Array.isArray(sequence?.hiddenPerformerIndexes)
     ? sequence.hiddenPerformerIndexes
-    : Array.isArray(sequence?.hiddenParticipantIndexes)
-      ? sequence.hiddenParticipantIndexes
-      : [];
+    : [];
   const hiddenPerformers = hiddenIndexes
     .map((index) => performers[index]?.id ?? null)
     .filter(Boolean);
@@ -923,23 +986,6 @@ export async function ensureSchema(env) {
 export async function ensureLexiconSchema(env) {
   if (lexiconReady) return;
   const required = [
-    "offensive",
-    "action",
-    "defensive",
-    "target",
-    "movement",
-    "guard_number",
-    "guard_attribute",
-    "attack_attribute",
-    "nl_offensive",
-    "nl_action",
-    "nl_defensive",
-    "nl_target",
-    "nl_movement",
-    "nl_movement_complement",
-    "nl_guard_number",
-    "nl_guard_attribute",
-    "nl_attack_attribute",
     "sl_weapons",
     "sl_choreography_phases",
     "sl_targets",
@@ -950,14 +996,6 @@ export async function ensureLexiconSchema(env) {
     "sl_preparations",
     "sl_movements",
     "lexicon",
-    "user_offensive",
-    "user_action",
-    "user_defensive",
-    "user_target",
-    "user_movement",
-    "user_guard_number",
-    "user_guard_attribute",
-    "user_attack_attribute",
     "user_nl_offensive",
     "user_nl_action",
     "user_nl_defensive",
@@ -994,11 +1032,6 @@ export async function ensureLexiconSchema(env) {
 async function ensureLexiconSeeded(env) {
   if (lexiconSeeded) return;
   await ensureLexiconSchema(env);
-  const row = await env.DB.prepare("SELECT COUNT(*) AS count FROM offensive").first();
-  const count = Number(row?.count ?? 0);
-  if (count === 0) {
-    await replaceLexicon(env, seedLexicon);
-  }
   const sabreRow = await env.DB
     .prepare("SELECT COUNT(*) AS count FROM sl_weapons")
     .first();
@@ -1006,23 +1039,12 @@ async function ensureLexiconSeeded(env) {
   if (sabreCount === 0) {
     await replaceLexiconByKey(env, "sabre-laser", seedSabreLexicon);
   }
-  const newRow = await env.DB.prepare("SELECT COUNT(*) AS count FROM nl_offensive").first();
-  const newCount = Number(newRow?.count ?? 0);
-  const newMovementComplementRow = await env.DB
-    .prepare("SELECT COUNT(*) AS count FROM nl_movement_complement")
-    .first();
-  const newMovementComplementCount = Number(
-    newMovementComplementRow?.count ?? 0
-  );
-  if (newCount === 0 || newMovementComplementCount === 0) {
-    await replaceLexiconByKey(env, "classic-v2", seedNewLexicon);
-  }
   const recursiveRow = await env.DB
     .prepare("SELECT COUNT(*) AS count FROM lexicon")
     .first();
   const recursiveCount = Number(recursiveRow?.count ?? 0);
   if (recursiveCount === 0) {
-    await replaceRecursiveLexicon(env, seedRecursiveLexicon);
+    await replaceLexiconByKey(env, "classic-v2", seedRecursiveLexicon);
   }
   lexiconSeeded = true;
 }
@@ -1137,7 +1159,7 @@ export async function getPerformanceState(
           }),
         });
       }
-      if (payload?.performers || payload?.participants) {
+      if (payload?.performers) {
         const hydratedPayload = lexiconNameById
           ? hydrateStepLabelsFromLexiconRefs(payload, lexiconNameById)
           : payload;
@@ -1298,7 +1320,7 @@ async function detectLegacyLexiconByPerformance(env, performanceIds) {
 
         const steps = Array.isArray(payload?.steps)
           ? payload.steps
-          : payload?.performers || payload?.participants
+          : payload?.performers
             ? [payload]
             : [];
         for (const step of steps) {
@@ -1332,9 +1354,7 @@ export async function createPerformance(env, userId, data) {
   const performers =
     Array.isArray(data?.performers) && data.performers.length
       ? data.performers
-      : Array.isArray(data?.participants) && data.participants.length
-        ? data.participants
-        : createDefaultPerformancePerformers();
+      : createDefaultPerformancePerformers();
   const normalizedPerformers = normalizePerformerIdentityList(performers);
   const result = await env.DB
     .prepare(
@@ -1365,9 +1385,7 @@ export async function updatePerformance(env, userId, performanceId, data) {
     typeof data?.description === "string" ? data.description.trim() : "";
   const performers = Array.isArray(data?.performers)
     ? data.performers
-    : Array.isArray(data?.participants)
-      ? data.participants
-      : [];
+    : [];
   const normalizedPerformers = normalizePerformerIdentityList(performers);
   await env.DB
     .prepare(
@@ -1512,9 +1530,7 @@ export async function saveState(env, userId, state, isSuperAdmin = false) {
   const performanceType = normalizePerformanceType(state.performanceType);
   const performers = Array.isArray(state.performers)
     ? state.performers
-    : Array.isArray(state.participants)
-      ? state.participants
-      : [];
+    : [];
   const normalizedPerformers = normalizePerformerIdentityList(performers);
   const draft = Array.isArray(state.form) ? state.form : null;
   const sequences = Array.isArray(state.sequences)
@@ -1631,6 +1647,114 @@ async function getLabels(env, table) {
   return rows?.results?.map((row) => row.label) ?? [];
 }
 
+function resolveClassicV2Type(type) {
+  const normalized = String(type ?? "").trim();
+  if (normalized === "target") return "cible";
+  if (normalized === "movement") return "deplacement";
+  if (normalized === "movement_complement" || normalized === "movement-complement") {
+    return "deplacement_complement";
+  }
+  if (normalized === "guard-number") return "parade-numero";
+  if (normalized === "guard-attribute") return "parade-attribut";
+  if (normalized === "attack-attribute") return "attaque-attribut";
+  return normalized;
+}
+
+function normalizeClassicV2EditType(type) {
+  const resolved = resolveClassicV2Type(type);
+  return CLASSIC_V2_EDIT_PARENT_BY_TYPE[resolved] ? resolved : "";
+}
+
+export async function getClassicV2LexiconItems(env, type) {
+  const resolvedType = resolveClassicV2Type(type);
+  if (!resolvedType) return [];
+  const rows = await getRecursiveLexiconRows(env);
+  const buckets = buildClassicV2LexiconBucketsFromRecursiveRows(rows);
+  return (buckets[resolvedType] ?? []).map((entry, index) => ({
+    id: index + 1,
+    lexicon_id: entry.lexicon_id ?? null,
+    label: entry.name ?? "",
+  }));
+}
+
+export async function hasClassicV2LexiconLabel(env, type, label) {
+  const normalized = normalizeLexiconLabel(label);
+  if (!normalized) return false;
+  const items = await getClassicV2LexiconItems(env, type);
+  return items.some((item) => normalizeLexiconLabel(item.label) === normalized);
+}
+
+export async function addClassicV2LexiconItem(env, type, label) {
+  await ensureLexiconSeeded(env);
+  const resolvedType = normalizeClassicV2EditType(type);
+  const normalizedLabel = String(label ?? "").trim();
+  if (!resolvedType || !normalizedLabel) return null;
+  const parentLexiconId = CLASSIC_V2_EDIT_PARENT_BY_TYPE[resolvedType];
+
+  const exists = await hasClassicV2LexiconLabel(env, resolvedType, normalizedLabel);
+  if (exists) return null;
+
+  const parent = await env.DB
+    .prepare(`SELECT id FROM lexicon WHERE lexicon_id = ?1 LIMIT 1`)
+    .bind(parentLexiconId)
+    .first();
+  if (!parent?.id) {
+    throw new Error(`Missing lexicon parent node: ${parentLexiconId}`);
+  }
+
+  const baseId = normalizeLexiconLabel(normalizedLabel)
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "") || "term";
+  let candidateId = `${resolvedType}_${baseId}`;
+  let suffix = 2;
+  // Ensure lexicon_id uniqueness for user-added entries.
+  while (true) {
+    // eslint-disable-next-line no-await-in-loop
+    const row = await env.DB
+      .prepare(`SELECT id FROM lexicon WHERE lexicon_id = ?1 LIMIT 1`)
+      .bind(candidateId)
+      .first();
+    if (!row?.id) break;
+    candidateId = `${resolvedType}_${baseId}_${suffix}`;
+    suffix += 1;
+  }
+
+  const created = await env.DB
+    .prepare(
+      `INSERT INTO lexicon (lexicon_id, parent_id, name, description)
+       VALUES (?1, ?2, ?3, NULL)
+       RETURNING id, lexicon_id, name`,
+    )
+    .bind(candidateId, parent.id, normalizedLabel)
+    .first();
+
+  return {
+    id: created?.id ?? null,
+    lexicon_id: created?.lexicon_id ?? candidateId,
+    label: created?.name ?? normalizedLabel,
+  };
+}
+
+export async function deleteClassicV2LexiconItem(env, type, id) {
+  await ensureLexiconSeeded(env);
+  const resolvedType = normalizeClassicV2EditType(type);
+  if (!resolvedType) return;
+
+  // UI currently sends lexical list index (`id`), not DB row id.
+  const items = await getClassicV2LexiconItems(env, resolvedType);
+  const index = Number(id);
+  const target = items.find((item) => Number(item.id) === index);
+  if (!target?.lexicon_id) return;
+
+  const targetRow = await env.DB
+    .prepare(`SELECT id FROM lexicon WHERE lexicon_id = ?1 LIMIT 1`)
+    .bind(target.lexicon_id)
+    .first();
+  if (!targetRow?.id) return;
+
+  await env.DB.prepare(`DELETE FROM lexicon WHERE id = ?1`).bind(targetRow.id).run();
+}
+
 export async function getLexiconItems(env, table) {
   await ensureLexiconSeeded(env);
   const rows = await env.DB.prepare(`SELECT id, label FROM ${table} ORDER BY id`).all();
@@ -1736,31 +1860,10 @@ export async function isFavorite(env, userId, type, label) {
 }
 
 export async function replaceLexicon(env, lexicon) {
-  await replaceLexiconByKey(env, "classic", lexicon);
+  await replaceLexiconByKey(env, "classic-v2", lexicon);
 }
 
 const LEXICON_TABLES = {
-  classic: {
-    offensive: "offensive",
-    action: "action",
-    defensive: "defensive",
-    cible: "target",
-    deplacement: "movement",
-    "parade-numero": "guard_number",
-    "parade-attribut": "guard_attribute",
-    "attaque-attribut": "attack_attribute"
-  },
-  "classic-v2": {
-    offensive: "nl_offensive",
-    action: "nl_action",
-    defensive: "nl_defensive",
-    cible: "nl_target",
-    deplacement: "nl_movement",
-    deplacement_complement: "nl_movement_complement",
-    "parade-numero": "nl_guard_number",
-    "parade-attribut": "nl_guard_attribute",
-    "attaque-attribut": "nl_attack_attribute"
-  },
   "sabre-laser": {
     armes: "sl_weapons",
     phases_choregraphie: "sl_choreography_phases",
@@ -1781,111 +1884,6 @@ function normalizeLexiconLabel(value) {
     .replace(/\s+/g, " ")
     .trim()
     .toLowerCase();
-}
-
-function mergeUniqueLabels(...lists) {
-  const seen = new Set();
-  const out = [];
-  for (const list of lists) {
-    if (!Array.isArray(list)) continue;
-    for (const value of list) {
-      const label = typeof value === "string" ? value.trim() : "";
-      if (!label || seen.has(label)) continue;
-      seen.add(label);
-      out.push(label);
-    }
-  }
-  return out;
-}
-
-function normalizeLexiconTermEntry(value, bucket = "") {
-  if (!value || typeof value !== "object") return null;
-  const name = String(value.name ?? value.nom ?? value.label ?? "").trim();
-  if (!name) return null;
-  const lexiconId = String(value.lexicon_id ?? value.id ?? "").trim();
-  return {
-    lexicon_id:
-      lexiconId || `legacy:${bucket || "term"}:${normalizeLexiconLabel(name)}`,
-    name,
-  };
-}
-
-function mergeUniqueLexiconTerms(...lists) {
-  const out = [];
-  const seen = new Set();
-  for (const list of lists) {
-    if (!Array.isArray(list)) continue;
-    for (const item of list) {
-      const entry = normalizeLexiconTermEntry(item);
-      if (!entry) continue;
-      const key = normalizeLexiconLabel(entry.name);
-      if (!key || seen.has(key)) continue;
-      seen.add(key);
-      out.push(entry);
-    }
-  }
-  return out;
-}
-
-function toLexiconTermEntries(values, bucket) {
-  const entries = [];
-  for (const value of values ?? []) {
-    const name = typeof value === "string" ? value.trim() : "";
-    if (!name) continue;
-    entries.push({
-      lexicon_id: `legacy:${bucket}:${normalizeLexiconLabel(name)}`,
-      name,
-    });
-  }
-  return mergeUniqueLexiconTerms(entries);
-}
-
-function splitNewMovementLabels(values, complementValues) {
-  const complementLookup = new Set(
-    mergeUniqueLabels(complementValues).map(normalizeLexiconLabel)
-  );
-  const base = [];
-  const complement = [];
-  for (const value of values ?? []) {
-    if (complementLookup.has(normalizeLexiconLabel(value))) {
-      complement.push(value);
-      continue;
-    }
-    base.push(value);
-  }
-  return {
-    base: mergeUniqueLabels(base),
-    complement: mergeUniqueLabels(complementValues, complement)
-  };
-}
-
-function splitNewMovementTerms(values, complementValues) {
-  const normalizedComplements = mergeUniqueLexiconTerms(complementValues);
-  const complementLookup = new Set(
-    normalizedComplements.map((entry) => normalizeLexiconLabel(entry.name)),
-  );
-  const base = [];
-  const complement = [...normalizedComplements];
-  const complementSeen = new Set(
-    normalizedComplements.map((entry) => normalizeLexiconLabel(entry.name)),
-  );
-  for (const value of values ?? []) {
-    const entry = normalizeLexiconTermEntry(value, "deplacement");
-    if (!entry) continue;
-    const key = normalizeLexiconLabel(entry.name);
-    if (complementLookup.has(key)) {
-      if (!complementSeen.has(key)) {
-        complementSeen.add(key);
-        complement.push(entry);
-      }
-      continue;
-    }
-    base.push(entry);
-  }
-  return {
-    base: mergeUniqueLexiconTerms(base),
-    complement: mergeUniqueLexiconTerms(complement),
-  };
 }
 
 function isRecursiveLexiconPayload(lexicon) {
@@ -2067,22 +2065,6 @@ function buildClassicV2LexiconBucketsFromRecursiveRows(rows) {
   return buckets;
 }
 
-function buildClassicV2LexiconFromBucketEntries(bucketEntries) {
-  return {
-    offensive: bucketEntries.offensive.map((entry) => entry.name),
-    action: bucketEntries.action.map((entry) => entry.name),
-    defensive: bucketEntries.defensive.map((entry) => entry.name),
-    cible: bucketEntries.cible.map((entry) => entry.name),
-    deplacement: bucketEntries.deplacement.map((entry) => entry.name),
-    deplacement_complement: bucketEntries.deplacement_complement.map(
-      (entry) => entry.name,
-    ),
-    "parade-numero": bucketEntries["parade-numero"].map((entry) => entry.name),
-    "parade-attribut": bucketEntries["parade-attribut"].map((entry) => entry.name),
-    "attaque-attribut": bucketEntries["attaque-attribut"].map((entry) => entry.name),
-  };
-}
-
 function buildRecursiveLexiconFromRows(rows) {
   const byNumericId = new Map();
   for (const row of rows ?? []) {
@@ -2139,63 +2121,6 @@ function buildClassicV2LexiconReferenceIndexFromBuckets(bucketEntries) {
     referencesByBucket.set(bucket, bucketMap);
   }
   return { referencesByBucket, referencesByLexiconId };
-}
-
-function buildClassicV2BucketEntriesFromFlatLexicon(lexicon) {
-  const buckets = {
-    offensive: [],
-    action: [],
-    defensive: [],
-    cible: [],
-    deplacement: [],
-    deplacement_complement: [],
-    "parade-numero": [],
-    "parade-attribut": [],
-    "attaque-attribut": [],
-  };
-
-  for (const bucket of Object.keys(buckets)) {
-    const labels = Array.isArray(lexicon?.[bucket]) ? lexicon[bucket] : [];
-    for (const label of labels) {
-      const name = typeof label === "string" ? label.trim() : "";
-      if (!name) continue;
-      const normalized = normalizeLexiconLabel(name);
-      buckets[bucket].push({
-        lexicon_id: `legacy:${bucket}:${normalized}`,
-        name,
-      });
-    }
-  }
-
-  return buckets;
-}
-
-function mergeClassicV2BucketEntries(primary, secondary) {
-  const merged = {};
-  const allBuckets = new Set([
-    ...Object.keys(primary ?? {}),
-    ...Object.keys(secondary ?? {}),
-  ]);
-
-  for (const bucket of allBuckets) {
-    const list = [];
-    const seen = new Set();
-    for (const entries of [primary?.[bucket] ?? [], secondary?.[bucket] ?? []]) {
-      for (const entry of entries) {
-        const name = String(entry?.name ?? "").trim();
-        const normalized = normalizeLexiconLabel(name);
-        if (!normalized || seen.has(normalized)) continue;
-        seen.add(normalized);
-        list.push({
-          lexicon_id: entry?.lexicon_id ?? null,
-          name,
-        });
-      }
-    }
-    merged[bucket] = list;
-  }
-
-  return merged;
 }
 
 function resolveClassicV2LexiconReference(index, bucket, name) {
@@ -2486,9 +2411,7 @@ function hydrateStepLabelsFromLexiconRefs(step, lexiconNameById) {
 
   const performers = Array.isArray(step.performers)
     ? step.performers
-    : Array.isArray(step.participants)
-      ? step.participants
-      : null;
+    : null;
   if (!performers) return step;
 
   const nextPerformers = performers.map((performer) =>
@@ -2498,64 +2421,27 @@ function hydrateStepLabelsFromLexiconRefs(step, lexiconNameById) {
   return {
     ...step,
     performers: nextPerformers,
-    // Backward compatibility during participant -> performer migration.
-    participants: nextPerformers,
   };
 }
 
 async function getClassicV2LexiconReferenceIndex(env) {
   const recursiveRows = await getRecursiveLexiconRows(env);
-  const recursiveBuckets = recursiveRows.length
-    ? buildClassicV2LexiconBucketsFromRecursiveRows(recursiveRows)
-    : null;
-
-  const legacyTables = LEXICON_TABLES["classic-v2"];
-  const legacyEntries = await Promise.all(
-    Object.entries(legacyTables).map(async ([key, table]) => [key, await getLabels(env, table)]),
+  const recursiveBuckets = buildClassicV2LexiconBucketsFromRecursiveRows(
+    recursiveRows,
   );
-  const legacyLexicon = Object.fromEntries(legacyEntries);
-  const legacyBuckets = buildClassicV2BucketEntriesFromFlatLexicon(legacyLexicon);
-
-  const mergedBuckets = recursiveBuckets
-    ? mergeClassicV2BucketEntries(recursiveBuckets, legacyBuckets)
-    : legacyBuckets;
-
-  return buildClassicV2LexiconReferenceIndexFromBuckets(mergedBuckets);
+  return buildClassicV2LexiconReferenceIndexFromBuckets(recursiveBuckets);
 }
 
 export async function replaceLexiconByKey(env, lexiconKey, lexicon) {
   await ensureLexiconSchema(env);
-  if (lexiconKey === "classic-v2" && isRecursiveLexiconPayload(lexicon)) {
+  const resolvedLexiconKey = lexiconKey === "classic" ? "classic-v2" : lexiconKey;
+  if (resolvedLexiconKey === "classic-v2" && isRecursiveLexiconPayload(lexicon)) {
     await replaceRecursiveLexicon(env, lexicon);
-    const rows = await env.DB
-      .prepare(
-        `SELECT id, lexicon_id, parent_id, name, description
-         FROM lexicon
-         ORDER BY id`,
-      )
-      .all();
-    const bucketEntries = buildClassicV2LexiconBucketsFromRecursiveRows(
-      rows?.results ?? [],
-    );
-    const flatLexicon = buildClassicV2LexiconFromBucketEntries(bucketEntries);
-    const tables = LEXICON_TABLES["classic-v2"];
-    for (const [key, table] of Object.entries(tables)) {
-      const values = flatLexicon?.[key];
-      if (!Array.isArray(values)) continue;
-      await env.DB.prepare(`DELETE FROM ${table}`).run();
-      for (const value of values) {
-        const label = typeof value === "string" ? value.trim() : "";
-        if (!label) continue;
-        await env.DB
-          .prepare(`INSERT INTO ${table} (label) VALUES (?1)`)
-          .bind(label)
-          .run();
-      }
-    }
     return;
   }
 
-  const tables = LEXICON_TABLES[lexiconKey] || LEXICON_TABLES.classic;
+  const tables = LEXICON_TABLES[resolvedLexiconKey];
+  if (!tables) return;
   for (const [key, table] of Object.entries(tables)) {
     const values = lexicon?.[key];
     if (!Array.isArray(values)) continue;
@@ -2570,70 +2456,27 @@ export async function replaceLexiconByKey(env, lexiconKey, lexicon) {
 
 export async function getLexiconByKey(env, lexiconKey) {
   await ensureLexiconSeeded(env);
+  const resolvedLexiconKey = lexiconKey === "classic" ? "classic-v2" : lexiconKey;
   let lexicon = null;
-  const tables = LEXICON_TABLES[lexiconKey] || LEXICON_TABLES.classic;
+  const tables = LEXICON_TABLES[resolvedLexiconKey];
 
-  if (lexiconKey === "classic-v2") {
+  if (resolvedLexiconKey === "classic-v2") {
     const recursiveRows = await getRecursiveLexiconRows(env);
-    if (recursiveRows.length > 0) {
-      return buildRecursiveLexiconFromRows(recursiveRows);
-    }
-
-    const legacyEntries = await Promise.all(
-      Object.entries(tables).map(async ([key, table]) => [key, await getLabels(env, table)]),
-    );
-    const legacyLexicon = Object.fromEntries(legacyEntries);
-    const legacyTermBuckets = {
-      offensive: toLexiconTermEntries(legacyLexicon.offensive, "offensive"),
-      action: toLexiconTermEntries(legacyLexicon.action, "action"),
-      defensive: toLexiconTermEntries(legacyLexicon.defensive, "defensive"),
-      cible: toLexiconTermEntries(legacyLexicon.cible, "cible"),
-      deplacement: toLexiconTermEntries(legacyLexicon.deplacement, "deplacement"),
-      deplacement_complement: toLexiconTermEntries(
-        legacyLexicon.deplacement_complement,
-        "deplacement_complement",
-      ),
-      "parade-numero": toLexiconTermEntries(
-        legacyLexicon["parade-numero"],
-        "parade-numero",
-      ),
-      "parade-attribut": toLexiconTermEntries(
-        legacyLexicon["parade-attribut"],
-        "parade-attribut",
-      ),
-      "attaque-attribut": toLexiconTermEntries(
-        legacyLexicon["attaque-attribut"],
-        "attaque-attribut",
-      ),
-    };
-
-    lexicon = legacyTermBuckets;
+    return buildRecursiveLexiconFromRows(recursiveRows);
   }
 
-  if (!lexicon) {
+  if (!lexicon && tables) {
     const entries = await Promise.all(
       Object.entries(tables).map(async ([key, table]) => [key, await getLabels(env, table)]),
     );
     lexicon = Object.fromEntries(entries);
   }
 
-  if (lexiconKey === "classic-v2") {
-    const firstMovement = Array.isArray(lexicon.deplacement)
-      ? lexicon.deplacement[0]
-      : null;
-    const usesStringEntries = typeof firstMovement === "string";
-    const { base, complement } = usesStringEntries
-      ? splitNewMovementLabels(lexicon.deplacement, lexicon.deplacement_complement)
-      : splitNewMovementTerms(lexicon.deplacement, lexicon.deplacement_complement);
-    lexicon.deplacement_base = base;
-    lexicon.deplacement_complement = complement;
-    lexicon.deplacement = usesStringEntries
-      ? mergeUniqueLabels(base, complement)
-      : mergeUniqueLexiconTerms(base, complement);
-  }
+  if (!lexicon) return {};
+
   return lexicon;
 }
 
 export async function getLexicon(env) {
-  return getLexiconByKey(env, "classic");
+  return getLexiconByKey(env, "classic-v2");
 }

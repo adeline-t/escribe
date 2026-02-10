@@ -2629,6 +2629,43 @@ select {
   gap: var(--space-3);
 }
 
+.preparation-toggle-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px dashed var(--border-cream-2);
+  border-radius: var(--radius-3);
+  background: var(--surface-cream-1);
+}
+
+.preparation-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 600;
+}
+
+.preparation-switch input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
+
+.preparation-timing-segmented {
+  width: auto;
+}
+
+.preparation-info-block {
+  padding: var(--space-2);
+  border: 1px dashed var(--border-cream-2);
+  border-radius: var(--radius-3);
+  background: var(--surface-cream-1);
+  display: grid;
+  gap: var(--space-1);
+}
+
 .form-section--soft {
   padding: var(--space-2);
   border-radius: var(--radius-3);
@@ -2918,6 +2955,14 @@ select {
   }
 
   .performer-card-header .segmented {
+    width: 100%;
+  }
+
+  .preparation-toggle-row {
+    align-items: stretch;
+  }
+
+  .preparation-timing-segmented {
     width: 100%;
   }
 

@@ -51,8 +51,7 @@ export const SABRE_FAVORITE_TYPE_KEYS = {
 };
 
 export const CLASSIC_LEXICON_OPTIONS = [
-  { key: "classic", label: "Lexique obsolète" },
-  { key: "classic-v2", label: "Lexique nouveau" },
+  { key: "classic-v2", label: "Lexique" },
 ];
 
 export const PERFORMANCE_STEP_LABELS = {
@@ -80,6 +79,10 @@ export const PERFORMANCE_STEP_LABELS = {
   attributeLabel: "attributs",
   positionComplement: "attributs",
   preparationType: "préparation",
+  addPreparation: "ajouter une préparation",
+  preparationBefore: "avant",
+  preparationAfter: "après",
+  preparationTiming: "position",
   position: "position",
   target: "cible",
   columnVisibility: "colonnes",

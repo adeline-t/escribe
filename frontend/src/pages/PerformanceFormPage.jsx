@@ -154,7 +154,7 @@ export default function PerformanceFormPage({
     const stepKey =
       typeof step?.lexicon === "string"
         ? step.lexicon
-        : (activeLexiconKey ?? "classic");
+        : (activeLexiconKey ?? "classic-v2");
     setInlineEdit({ stepId, performerIndex, lexiconKey: stepKey });
     setInlineLexiconKey(stepKey);
     setInlineItem({

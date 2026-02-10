@@ -9,6 +9,10 @@ import {
   deleteUserLexiconItem,
   hasLexiconLabel,
   hasUserLexiconLabel,
+  getClassicV2LexiconItems,
+  hasClassicV2LexiconLabel,
+  addClassicV2LexiconItem,
+  deleteClassicV2LexiconItem,
   replaceLexiconByKey,
   getFavorites,
   addFavorite,
@@ -19,38 +23,6 @@ import {
 } from "../db.js";
 import { requireAuth, requireRole } from "../auth.js";
 import { logAudit } from "../audit.js";
-
-const CLASSIC_TYPE_MAP = {
-  offensive: "offensive",
-  action: "action",
-  defensive: "defensive",
-  cible: "target",
-  target: "target",
-  deplacement: "movement",
-  movement: "movement",
-  "parade-numero": "guard_number",
-  "guard-number": "guard_number",
-  "parade-attribut": "guard_attribute",
-  "guard-attribute": "guard_attribute",
-  "attaque-attribut": "attack_attribute",
-  "attack-attribute": "attack_attribute"
-};
-
-const CLASSIC_USER_TYPE_MAP = {
-  offensive: "user_offensive",
-  action: "user_action",
-  defensive: "user_defensive",
-  cible: "user_target",
-  target: "user_target",
-  deplacement: "user_movement",
-  movement: "user_movement",
-  "parade-numero": "user_guard_number",
-  "guard-number": "user_guard_number",
-  "parade-attribut": "user_guard_attribute",
-  "guard-attribute": "user_guard_attribute",
-  "attaque-attribut": "user_attack_attribute",
-  "attack-attribute": "user_attack_attribute"
-};
 
 const NEW_TYPE_MAP = {
   offensive: "nl_offensive",
@@ -141,33 +113,37 @@ const SABRE_USER_TYPE_MAP = {
 };
 
 const FAVORITE_TYPES = {
-  classic: new Set(Object.keys(CLASSIC_TYPE_MAP)),
+  classic: new Set(Object.keys(NEW_TYPE_MAP)),
   "classic-v2": new Set(Object.keys(NEW_TYPE_MAP)),
   "sabre-laser": new Set(Object.keys(SABRE_TYPE_MAP))
 };
 
 function getLexiconKey(request, body = null) {
   const url = new URL(request.url);
-  return body?.lexicon || url.searchParams.get("lexicon") || "classic";
+  const lexiconKey =
+    body?.lexicon || url.searchParams.get("lexicon") || "classic-v2";
+  // Backward compatibility: map legacy key to v2.
+  return lexiconKey === "classic" ? "classic-v2" : lexiconKey;
 }
 
 function getTypeMaps(lexiconKey) {
-  if (lexiconKey === "classic-v2") {
+  if (lexiconKey === "classic-v2" || lexiconKey === "classic") {
     return { typeMap: NEW_TYPE_MAP, userTypeMap: NEW_USER_TYPE_MAP };
   }
   if (lexiconKey === "sabre-laser") {
     return { typeMap: SABRE_TYPE_MAP, userTypeMap: SABRE_USER_TYPE_MAP };
   }
-  return { typeMap: CLASSIC_TYPE_MAP, userTypeMap: CLASSIC_USER_TYPE_MAP };
+  return { typeMap: NEW_TYPE_MAP, userTypeMap: NEW_USER_TYPE_MAP };
 }
 
 export async function handleLexicon(request, env) {
   const corsHeaders = buildCorsHeaders(request, env);
   if (request.method === "GET") {
     const lexiconKey = getLexiconKey(request);
-    const lexicon = lexiconKey === "classic"
-      ? await getLexicon(env)
-      : await getLexiconByKey(env, lexiconKey);
+    const lexicon =
+      lexiconKey === "classic-v2"
+        ? await getLexicon(env)
+        : await getLexiconByKey(env, lexiconKey);
     return jsonResponse({ lexicon }, 200, corsHeaders);
   }
 
@@ -201,7 +177,10 @@ export async function handleLexiconType(request, env, params) {
   }
 
   if (request.method === "GET") {
-    const items = await getLexiconItems(env, table);
+    const items =
+      lexiconKey === "classic-v2"
+        ? await getClassicV2LexiconItems(env, type)
+        : await getLexiconItems(env, table);
     return jsonResponse({ items }, 200, corsHeaders);
   }
 
@@ -215,11 +194,17 @@ export async function handleLexiconType(request, env, params) {
     if (!label) {
       return jsonResponse({ error: "invalid_label" }, 400, corsHeaders);
     }
-    const exists = await hasLexiconLabel(env, table, label);
+    const exists =
+      lexiconKey === "classic-v2"
+        ? await hasClassicV2LexiconLabel(env, type, label)
+        : await hasLexiconLabel(env, table, label);
     if (exists) {
       return jsonResponse({ error: "duplicate" }, 409, corsHeaders);
     }
-    const item = await addLexiconItem(env, table, label);
+    const item =
+      lexiconKey === "classic-v2"
+        ? await addClassicV2LexiconItem(env, type, label)
+        : await addLexiconItem(env, table, label);
     await logAudit(env, "lexicon.add", session.user.id, null, { type, label, lexicon: lexiconKey });
     return jsonResponse({ item }, 201, corsHeaders);
   }
@@ -234,7 +219,11 @@ export async function handleLexiconType(request, env, params) {
     if (!Number.isFinite(id)) {
       return jsonResponse({ error: "invalid_id" }, 400, corsHeaders);
     }
-    await deleteLexiconItem(env, table, id);
+    if (lexiconKey === "classic-v2") {
+      await deleteClassicV2LexiconItem(env, type, id);
+    } else {
+      await deleteLexiconItem(env, table, id);
+    }
     await logAudit(env, "lexicon.delete", session.user.id, null, { type, id, lexicon: lexiconKey });
     return jsonResponse({ ok: true }, 200, corsHeaders);
   }

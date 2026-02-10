@@ -36,6 +36,35 @@ export default function StepSummaryLine({
       .join(" ");
   }
 
+  function resolveMoveBadges(rawItem) {
+    const base = String(rawItem?.move ?? "").trim();
+    const details = Array.isArray(rawItem?.moveDetails)
+      ? rawItem.moveDetails
+          .map((entry) => String(entry ?? "").trim())
+          .filter(Boolean)
+      : [];
+    if (base || details.length) {
+      return [base, ...details]
+        .filter(Boolean)
+        .map((entry) => resolve("deplacement", entry))
+        .join(" ");
+    }
+    return joinDelimitedLabel(
+      rawItem?.attackMove || rawItem?.defendMove || "",
+      "deplacement",
+    );
+  }
+
+  const preparationAction = String(
+    item?.preparationAction ?? (item?.role === "preparation" ? item?.action : ""),
+  ).trim();
+  const preparationTiming =
+    String(item?.preparationTiming ?? "").trim().toLowerCase() === "after"
+      ? "after"
+      : "before";
+  const hasLinkedPreparation =
+    item?.role !== "preparation" && Boolean(preparationAction);
+
   if (item.mode === "choreography") {
     return (
       <span>
@@ -56,11 +85,8 @@ export default function StepSummaryLine({
   }
 
   if (item.mode === "note") {
-    return (
-      <span>
-        <span className="note-inline">{item.note || "à compléter"}</span>
-      </span>
-    );
+    if (!item.note) return null;
+    return <span><span className="note-inline">{item.note}</span></span>;
   }
 
   if (item.role === "attack") {
@@ -71,9 +97,10 @@ export default function StepSummaryLine({
         </span>
       );
     }
-    const actionDetails = Array.isArray(item.actionDetails)
-      ? item.actionDetails
-      : [];
+    const actionDetails =
+      Array.isArray(item.actionDetails) && !hasLinkedPreparation
+        ? item.actionDetails
+        : [];
     const actionBitsFromDetails = actionDetails
       .map((detail) =>
         [
@@ -85,7 +112,7 @@ export default function StepSummaryLine({
       )
       .filter(Boolean);
     const actionBitsFallback = [
-      resolve("action", item.action),
+      !hasLinkedPreparation ? resolve("action", item.action) : "",
       item.attackAttribute?.length
         ? item.attackAttribute
             .map((entry) => resolve("attaque_attribut", entry))
@@ -99,12 +126,17 @@ export default function StepSummaryLine({
       : actionBitsFallback
         ? [actionBitsFallback]
         : [];
-    const moveLabel = joinDelimitedLabel(item.attackMove, "deplacement");
+    const moveLabel = resolveMoveBadges(item);
     return (
       <span>
+        {hasLinkedPreparation && preparationTiming === "before" ? (
+          <span>
+            {badge(resolve("action", preparationAction), "action", "prep")} ·{" "}
+          </span>
+        ) : null}
         {badge(resolve("offensive", item.offensive), "offensive", "offensive")}
         {actionBits.length ? (
-          <span> en {badgeList(actionBits, "action", "action")}</span>
+          <span> {badgeList(actionBits, "action", "action")}</span>
         ) : null}
         {item.target ? (
           <span>
@@ -114,6 +146,12 @@ export default function StepSummaryLine({
         ) : null}
         {moveLabel ? (
           <span> avec {badge(moveLabel, "move", "move")}</span>
+        ) : null}
+        {hasLinkedPreparation && preparationTiming === "after" ? (
+          <span>
+            {" "}
+            · {badge(resolve("action", preparationAction), "action", "prep")}
+          </span>
         ) : null}
         {item.note ? (
           <span>
@@ -133,51 +171,11 @@ export default function StepSummaryLine({
         </span>
       );
     }
-    const actionDetails = Array.isArray(item.actionDetails)
-      ? item.actionDetails
-      : [];
-    const actionBitsFromDetails = actionDetails
-      .map((detail) => [resolve("action", detail?.action)].filter(Boolean).join(" "))
-      .filter(Boolean);
-    const actionBitsFallback = [resolve("action", item.action)]
-      .filter(Boolean)
-      .join(" ");
-    const actionBits = actionBitsFromDetails.length
-      ? actionBitsFromDetails
-      : actionBitsFallback
-        ? [actionBitsFallback]
-        : [];
-    const position =
-      resolve("parade_numero", actionDetails[0]?.attribute) ??
-      (Array.isArray(item.attackAttribute) && item.attackAttribute.length
-        ? resolve("parade_attribut", item.attackAttribute[0])
-        : "");
-    const positionComplements =
-      Array.isArray(item.attackAttribute) && item.attackAttribute.length > 0
-        ? item.attackAttribute.map((entry) =>
-            resolve("parade_attribut", entry),
-          )
-        : [];
-    const positionBits = position
-      ? [position, ...positionComplements.filter((entry) => entry !== position)]
-      : positionComplements;
-    const positionLabel = positionBits.join(" ");
+    const moveLabel = resolveMoveBadges(item);
     return (
       <span>
-        {actionBits.length ? (
-          <span>préparation {badgeList(actionBits, "action", "action")}</span>
-        ) : (
-          <span>préparation</span>
-        )}
-        {item.target ? (
-          <span>
-            {" "}
-            sur {badge(resolve("target", item.target), "target", "target")}
-          </span>
-        ) : null}
-        {positionLabel ? (
-          <span> en {badge(positionLabel, "move", "position")}</span>
-        ) : null}
+        <span>déplacement</span>
+        {moveLabel ? <span> en {badge(moveLabel, "move", "move")}</span> : null}
         {item.note ? (
           <span>
             {" "}
@@ -240,14 +238,25 @@ export default function StepSummaryLine({
                 .join(" "),
             ]
           : [];
-    const moveLabel = joinDelimitedLabel(item.defendMove, "deplacement");
+    const moveLabel = resolveMoveBadges(item);
     return (
       <span>
+        {hasLinkedPreparation && preparationTiming === "before" ? (
+          <span>
+            {badge(resolve("action", preparationAction), "action", "prep")} ·{" "}
+          </span>
+        ) : null}
         {defenseBits.length ? (
           badgeList(defenseBits, "defensive", "defensive")
         ) : null}
         {moveLabel ? (
           <span> en {badge(moveLabel, "move", "move")}</span>
+        ) : null}
+        {hasLinkedPreparation && preparationTiming === "after" ? (
+          <span>
+            {" "}
+            · {badge(resolve("action", preparationAction), "action", "prep")}
+          </span>
         ) : null}
         {item.note ? (
           <span>
@@ -267,9 +276,5 @@ export default function StepSummaryLine({
     );
   }
 
-  return (
-    <span>
-      {inactiveLabel}
-    </span>
-  );
+  return null;
 }

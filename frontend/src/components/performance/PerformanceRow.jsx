@@ -77,9 +77,6 @@ export default function PerformanceRow({
         <div className="meta combat-id">#{performance.id}</div>
         <div className="inline-center">
           <div className="text-strong">{performance.name}</div>
-          {performance.hasLegacyLexicon ? (
-            <span className="chip chip--danger">Lexique obsolète</span>
-          ) : null}
         </div>
       </div>
       <div className="combat-row-meta stack-1">

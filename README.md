@@ -171,16 +171,16 @@ Vérifier le statut:
 npm run db:migrate:status:dev
 ```
 
-5. Alimenter le lexique (1 table par type):
+5. Alimenter le lexique:
 
 ```bash
-npm run db:seed:dev
+npm run db:seed:recursive:dev
 ```
 
 ou en prod:
 
 ```bash
-npm run db:seed:prod
+npm run db:seed:recursive:prod
 ```
 
 6. Déployer:
