@@ -1,0 +1,54 @@
+;Tireur 1;;;;;;;Tireur 2;;;;;;;
+;Offensive;;Cible;Défensive;Position;;Déplacement;;Offensive;;Cible;Défensive;Position;;Déplacement
+Invite;;;;;;;Garde à gauche;;;;;;;;
+;;;;Parade;4;;Changement de garde arrière;;;;;;;;
+;;;;Parade;4;Contre;Retraite;;;;;;;;
+;;;;Parade;8;Parade 6;Passe arrière;;;;;;;;
+Attaque;Coup de pointe;;;;;Demi-marche;;;;;;;;
+Attaque;Dégagement + pointe;;;;;Fente diagonale gauche;;;;;;;;
+
+;Tireur 1;;;;;;;Tireur 2;;;;;;;
+;Offensive;;Cible;Défensive;Position;;Déplacement;;Offensive;;Cible;Défensive;Position;;Déplacement
+;;;;Parade;2;;Changement de garde arrière;;;;;;;;
+;;;;Parade;2;Contre;Changement de garde arrière;;;;;;;;
+Prise de fer;Croisé;;;9;;Esquive du buste;;;;;;;;
+Attaque;Moulinet pointe;Visage;;;;Déséquilibre arrière;;;;;;;;
+Menace;;;;;;;Passe avant;;;;;;;;
+
+;Tireur 1;;;;;;;Tireur 2;;;;;;;
+;Offensive;;Cible;Défensive;Position;;Déplacement;;Offensive;;Cible;Défensive;Position;;Déplacement
+;;;;Parade;6;;Demi-volte arrière;;;;;;;;
+;;;;Parade;7;Contre 3;Retraite;;;;;;;;
+Prise de fer;Liement;;;1;;Passe à droite;;;;;;;;
+Attaque;Coup de pointe;;;;;Bras mélangé fente;;;;;;;;
+
+;Tireur 1;;;;;;;Tireur 2;;;;;;;
+;Offensive;;Cible;Défensive;Position;;Déplacement;;Offensive;;Cible;Défensive;Position;;Déplacement
+Attaque;Coup de pointe;Poitrine;;;;Fente;;;;;;;;
+;;;;Parade;3;;Reprise de garde;;;;;;;;
+;;;;Parade;4;;Reprise de garde;;;;;;;;
+;;;;Parade;4;Contre 4 terrassé 5 basse;;;;;;;;;;
+Attaque;Coup de pointe;Visage;;;;Quart de volte;;;;;;;;
+Attaque;Dégagement;;;;;Coup de piston remise en garde;;;;;;;;
+;;;;Parade;8;;;;;;;;;;;;
+;;;;Parade;1;;Demi-passe arrière;;;;;;;;
+;;;;Parade;8;;Passe arrière;;;;;;;;
+Menace;Coup de pointe;;;;;Déplacement avant;;;;;;;;
+
+;Tireur 1;;;;;;;Tireur 2;;;;;;;
+;Offensive;;Cible;Défensive;Position;;Déplacement;;Offensive;;Cible;Défensive;Position;;Déplacement
+Menace;;;;;;;Garde inverse;;Menace;;;;;;Garde inverse
+Attaque;Coup de pointe;;;;;;→;;;;Parade;4;;
+Attaque;Coupé;;;;;Changement de garde;→;;;;Parade;3;;Changement de garde
+Attaque;Dégagement;;;;;Petite marche;→;;;;Parade;4;;Retraite
+;;;;Parade;9;En cédant;Retraite;←;Prise de fer;Croisé;Flanc;;;;Fente
+Attaque;Couronné inversé;;;;;Fente;→;;;;Esquive;;;Fente arrière
+;;;;Esquive;;;Fente arrière;←;Attaque;Coup de pointe;;;;Fente
+
+;Tireur 1;;;;;;;Tireur 2;;;;;;;
+;Offensive;;Cible;Défensive;Position;;Déplacement;;Offensive;;Cible;Défensive;Position;;Déplacement
+Attaque;Battement + pointe;Épaule;;;;Fente arrière;→;;;;Parade;3;;
+;;;;Parade;4;Contre;Fente arrière;←;Attaque;Riposte;Épaule;;;;
+Prise de fer;Liement;;;2;;Fente arrière;;;;;;;;
+Attaque;Coup de pointe;Ventre;;;;Fente;→;;;;Parade;4;;Retour en garde avant quart de volte
+;;;;Esquive;;;Retraite;←;Menace;Coup de pointe;;;;Volte

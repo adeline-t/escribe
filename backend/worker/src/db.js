@@ -376,15 +376,9 @@ function legacyPerformerToStoragePerformer(performer, lexiconReferenceIndex) {
       : safe.role === "defense"
         ? explicitMoveTokens
         : [];
-  const hasMovementPayload =
-    explicitMoveTokens.length > 0 ||
-    mergedAttackMoveTokens.length > 0 ||
-    mergedDefendMoveTokens.length > 0;
-  const preparationName =
-    rawPreparationName ||
-    (safe.role === "movement" && hasMovementPayload
-      ? "displacements_prep"
-      : "");
+  // Do not auto-inject "displacements_prep": keep only explicit preparation input.
+  // This prevents overwriting a user-selected preparation label during edits.
+  const preparationName = rawPreparationName;
   const hasPreparation = Boolean(preparationName);
   const movementBaseName =
     mergedAttackMoveTokens[0] ?? mergedDefendMoveTokens[0] ?? "";

@@ -329,6 +329,11 @@ export default function PerformanceStepForm({
             defenseActionValue,
             "defensive",
           );
+          const paradeNumberSelectOptions = withCurrentOption(
+            paradeNumberOptions,
+            defenseDetail?.position ?? "",
+            "parade_numero",
+          );
           const targetSelectOptions = withCurrentOption(
             targetOptions,
             item.target,
@@ -930,7 +935,7 @@ export default function PerformanceStepForm({
                                 }
                               >
                                 <option value="">—</option>
-                                {paradeNumberOptions.map((option) => (
+                                {paradeNumberSelectOptions.map((option) => (
                                   <option key={option.value} value={option.value}>
                                     {option.label}
                                   </option>

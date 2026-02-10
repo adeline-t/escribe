@@ -1,0 +1,22 @@
+[
+  {
+    "results": [
+      {
+        "id": 50,
+        "name": "Jeux d'enfant",
+        "description": "Mouvement d'ensemble",
+        "participants": "[{\"id\":\"8897162c-5ffd-453c-9810-3d828ca83fe4\",\"name\":\"Tireur 1\",\"weapon\":\"\"},{\"id\":\"1c894376-5745-4e7c-b908-12fbfc8b8578\",\"name\":\"Tireur 2\",\"weapon\":\"\"}]",
+        "form_draft": "[{\"mode\":\"combat\",\"role\":\"attack\",\"preparationAction\":\"\",\"preparationTiming\":\"before\",\"offensive\":\"\",\"action\":\"\",\"actionDetails\":[],\"target\":\"\",\"attackMove\":\"\",\"move\":\"\",\"moveDetails\":[],\"attackAttribute\":[],\"defense\":\"\",\"defenseDetails\":[],\"paradeNumber\":\"\",\"paradeAttribute\":\"\",\"defendMove\":\"\",\"chorePhase\":\"\",\"note\":\"\",\"noteOverrides\":false,\"lexiconRefs\":[]},{\"mode\":\"combat\",\"role\":\"attack\",\"preparationAction\":\"\",\"preparationTiming\":\"before\",\"offensive\":\"\",\"action\":\"\",\"actionDetails\":[],\"target\":\"\",\"attackMove\":\"\",\"move\":\"\",\"moveDetails\":[],\"attackAttribute\":[],\"defense\":\"\",\"defenseDetails\":[],\"paradeNumber\":\"\",\"paradeAttribute\":\"\",\"defendMove\":\"\",\"chorePhase\":\"\",\"note\":\"\",\"noteOverrides\":false,\"lexiconRefs\":[]}]",
+        "type": "classic",
+        "created_at": "2026-02-10T17:47:52.596Z",
+        "updated_at": "2026-02-10T19:03:07.057Z",
+        "archived": 0,
+        "is_demo": 0
+      }
+    ],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  }
+]

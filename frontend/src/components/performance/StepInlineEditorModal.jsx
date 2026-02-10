@@ -118,6 +118,11 @@ export default function StepInlineEditorModal({
     position: "",
     attribute: "",
   };
+  const paradeNumberSelectOptions = withCurrentOption(
+    paradeNumberOptions,
+    defenseDetail?.position ?? "",
+    "parade_numero",
+  );
   const defenseActionAttributeTokens = getDefenseActionAttributeTokens();
 
   return (
@@ -182,7 +187,7 @@ export default function StepInlineEditorModal({
             ) : null}
           </div>
 
-          {inlineItem.mode === "combat" ? (
+          {inlineItem.mode !== "choreography" ? (
             <div className="performer-fields">
               <>
                 <div
@@ -198,6 +203,7 @@ export default function StepInlineEditorModal({
                     aria-pressed={v2Mode === "attack"}
                     onClick={() =>
                       updateInlineItem({
+                        mode: "combat",
                         role: "attack",
                         noteOverrides: false,
                       })
@@ -214,6 +220,7 @@ export default function StepInlineEditorModal({
                     aria-pressed={v2Mode === "defense"}
                     onClick={() =>
                       updateInlineItem({
+                        mode: "combat",
                         role: "defense",
                         noteOverrides: false,
                       })
@@ -230,6 +237,7 @@ export default function StepInlineEditorModal({
                     aria-pressed={v2Mode === "movement"}
                     onClick={() =>
                       updateInlineItem({
+                        mode: "combat",
                         role: "movement",
                         noteOverrides: false,
                         offensive: "",
@@ -257,7 +265,7 @@ export default function StepInlineEditorModal({
                       v2Mode === "note" ? "is-active" : ""
                     }`}
                     aria-pressed={v2Mode === "note"}
-                    onClick={() => updateInlineItem({ role: "none" })}
+                    onClick={() => updateInlineItem({ mode: "note", role: "none" })}
                     disabled={isReadOnly}
                   >
                     {PERFORMANCE_STEP_LABELS.roleNote}
@@ -707,7 +715,7 @@ export default function StepInlineEditorModal({
                             }
                           >
                             <option value="">—</option>
-                            {paradeNumberOptions.map((option) => (
+                            {paradeNumberSelectOptions.map((option) => (
                               <option key={option.value} value={option.value}>
                                 {option.label}
                               </option>
