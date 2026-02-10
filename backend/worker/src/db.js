@@ -62,6 +62,7 @@ import {
 let schemaReady = false;
 let lexiconReady = false;
 let lexiconSeeded = false;
+let lexiconSoftDeleteSupport = null;
 
 const CLASSIC_V2_TREE_BUCKET_MARKERS = {
   offensive: new Set(["attack_types", "attaques"]),
@@ -298,7 +299,18 @@ function legacyPerformerToStoragePerformer(performer, lexiconReferenceIndex) {
   const safe = performer && typeof performer === "object" ? performer : {};
   const mode = normalizeStepMode(safe.mode) || "combat";
 
-  const actionDetails = Array.isArray(safe.actionDetails) ? safe.actionDetails : [];
+  const allowDisplacementsPrepInActionDetails =
+    safe.role === "movement" ||
+    safe.role === "preparation" ||
+    Boolean(String(safe.preparationAction ?? "").trim());
+  const actionDetails = (Array.isArray(safe.actionDetails) ? safe.actionDetails : [])
+    .filter((detail) => {
+      if (allowDisplacementsPrepInActionDetails) return true;
+      const token = normalizeLexiconLabel(String(detail?.action ?? ""))
+        .replace(/_/g, " ")
+        .trim();
+      return token !== "displacements prep" && token !== "deplacements prep";
+    });
   const defenseDetails = Array.isArray(safe.defenseDetails)
     ? safe.defenseDetails
     : [];
@@ -315,7 +327,6 @@ function legacyPerformerToStoragePerformer(performer, lexiconReferenceIndex) {
     String(safe.preparationTiming ?? "").trim().toLowerCase() === "after"
       ? "after"
       : "before";
-  const hasPreparation = Boolean(preparationName);
   const hasAttack = Boolean(attackName);
 
   const prepAttributes = dedupeLexiconTerms(
@@ -432,9 +443,10 @@ function legacyPerformerToStoragePerformer(performer, lexiconReferenceIndex) {
     mergedDefendMoveTokens.length > 0;
   const preparationName =
     rawPreparationName ||
-    (safe.role === "preparation" && hasMovementPayload
+    (safe.role === "movement" && hasMovementPayload
       ? "displacements_prep"
       : "");
+  const hasPreparation = Boolean(preparationName);
   const movementBaseName =
     mergedAttackMoveTokens[0] ?? mergedDefendMoveTokens[0] ?? "";
   const movementAttributes = dedupeLexiconTerms(
@@ -601,12 +613,15 @@ function inferLegacyRoleFromStoragePerformer({
   // Backend role rules:
   // - `attack` when attack action exists.
   // - `defense` when defense action exists and no attack action.
-  // - `preparation` when there is only a preparation or movement payload.
-  // - otherwise `inactive`.
+  // - `movement` when there is only a movement payload.
+  // - otherwise `none`.
   if (hasAttack) return "attack";
   if (hasDefense) return "defense";
-  if (hasPreparation || hasMovement) return "preparation";
-  return "inactive";
+  // Preparation is now linked to attack/defense in UI. When only preparation exists
+  // (legacy data), map to attack to keep content visible and editable.
+  if (hasPreparation) return "attack";
+  if (hasMovement) return "movement";
+  return "none";
 }
 
 function storagePerformerToLegacyPerformer(storagePerformer, lexiconNameById = null) {
@@ -756,19 +771,17 @@ function storagePerformerToLegacyPerformer(storagePerformer, lexiconNameById = n
     mode,
     role,
     preparationAction:
-      preparationRef?.lexicon_id ||
-      preparationName ||
-      (role === "preparation" && hasMovement ? "displacements_prep" : ""),
+      role === "movement"
+        ? ""
+        : (preparationRef?.lexicon_id || preparationName),
     preparationTiming,
     offensive: hasAttack
       ? attackRef?.lexicon_id || attackName
-      : hasPreparation
-        ? "preparation"
-        : "",
+      : "",
     action: hasPreparation
       ? preparationRef?.lexicon_id || preparationName
-      : role === "preparation" && hasMovement
-        ? "displacements_prep"
+      : role === "movement" && hasMovement
+        ? ""
       : attackAttributeRefs[0]?.lexicon_id || attackAttributes[0] || "",
     actionDetails: hasPreparation
       ? preparationActionDetails
@@ -1029,6 +1042,17 @@ export async function ensureLexiconSchema(env) {
   lexiconReady = true;
 }
 
+async function hasLexiconSoftDeleteSupport(env) {
+  if (lexiconSoftDeleteSupport != null) return lexiconSoftDeleteSupport;
+  const columns = await env.DB.prepare("PRAGMA table_info(lexicon)").all();
+  const names = new Set(
+    (columns?.results ?? []).map((row) => String(row?.name ?? "").trim()),
+  );
+  lexiconSoftDeleteSupport =
+    names.has("deleted_at") && names.has("source");
+  return lexiconSoftDeleteSupport;
+}
+
 async function ensureLexiconSeeded(env) {
   if (lexiconSeeded) return;
   await ensureLexiconSchema(env);
@@ -1039,8 +1063,13 @@ async function ensureLexiconSeeded(env) {
   if (sabreCount === 0) {
     await replaceLexiconByKey(env, "sabre-laser", seedSabreLexicon);
   }
+  const softDeleteEnabled = await hasLexiconSoftDeleteSupport(env);
   const recursiveRow = await env.DB
-    .prepare("SELECT COUNT(*) AS count FROM lexicon")
+    .prepare(
+      softDeleteEnabled
+        ? "SELECT COUNT(*) AS count FROM lexicon WHERE deleted_at IS NULL"
+        : "SELECT COUNT(*) AS count FROM lexicon",
+    )
     .first();
   const recursiveCount = Number(recursiveRow?.count ?? 0);
   if (recursiveCount === 0) {
@@ -1533,11 +1562,13 @@ export async function saveState(env, userId, state, isSuperAdmin = false) {
     : [];
   const normalizedPerformers = normalizePerformerIdentityList(performers);
   const draft = Array.isArray(state.form) ? state.form : null;
-  const sequences = Array.isArray(state.sequences)
+  const hasExplicitSequencesPayload =
+    Array.isArray(state?.sequences) || Array.isArray(state?.phrases);
+  const sequences = Array.isArray(state?.sequences)
     ? state.sequences
-    : Array.isArray(state.phrases)
+    : Array.isArray(state?.phrases)
       ? state.phrases
-      : [];
+      : null;
   const requestedId = Number(state.performanceId);
 
   let performanceId = Number.isFinite(requestedId) ? requestedId : null;
@@ -1608,12 +1639,28 @@ export async function saveState(env, userId, state, isSuperAdmin = false) {
       .run();
   }
 
-  if (performanceId) {
-    await env.DB
-      .prepare(`DELETE FROM performance_sequences WHERE performance_id = ?1`)
+  if (performanceId && hasExplicitSequencesPayload) {
+    const currentRow = await env.DB
+      .prepare(
+        "SELECT COUNT(*) AS count FROM performance_sequences WHERE performance_id = ?1",
+      )
       .bind(performanceId)
-      .run();
-    if (sequences.length > 0) {
+      .first();
+    const currentCount = Number(currentRow?.count ?? 0);
+    const nextCount = Array.isArray(sequences) ? sequences.length : 0;
+    const allowEmptySequences = state?.allowEmptySequences === true;
+    const shouldReplaceSequences =
+      Array.isArray(sequences) &&
+      (nextCount > 0 || allowEmptySequences);
+
+    if (shouldReplaceSequences) {
+      await env.DB
+        .prepare(`DELETE FROM performance_sequences WHERE performance_id = ?1`)
+        .bind(performanceId)
+        .run();
+    }
+
+    if (shouldReplaceSequences && nextCount > 0) {
       const lexiconReferenceIndex =
         performanceType === "classic"
           ? await getClassicV2LexiconReferenceIndex(env)
@@ -1674,6 +1721,7 @@ export async function getClassicV2LexiconItems(env, type) {
     id: index + 1,
     lexicon_id: entry.lexicon_id ?? null,
     label: entry.name ?? "",
+    description: entry.description ?? "",
   }));
 }
 
@@ -1686,6 +1734,7 @@ export async function hasClassicV2LexiconLabel(env, type, label) {
 
 export async function addClassicV2LexiconItem(env, type, label) {
   await ensureLexiconSeeded(env);
+  const softDeleteEnabled = await hasLexiconSoftDeleteSupport(env);
   const resolvedType = normalizeClassicV2EditType(type);
   const normalizedLabel = String(label ?? "").trim();
   if (!resolvedType || !normalizedLabel) return null;
@@ -1719,14 +1768,23 @@ export async function addClassicV2LexiconItem(env, type, label) {
     suffix += 1;
   }
 
-  const created = await env.DB
-    .prepare(
-      `INSERT INTO lexicon (lexicon_id, parent_id, name, description)
-       VALUES (?1, ?2, ?3, NULL)
-       RETURNING id, lexicon_id, name`,
-    )
-    .bind(candidateId, parent.id, normalizedLabel)
-    .first();
+  const created = softDeleteEnabled
+    ? await env.DB
+      .prepare(
+        `INSERT INTO lexicon (lexicon_id, parent_id, name, description, deleted_at, source)
+         VALUES (?1, ?2, ?3, NULL, NULL, 'user')
+         RETURNING id, lexicon_id, name`,
+      )
+      .bind(candidateId, parent.id, normalizedLabel)
+      .first()
+    : await env.DB
+      .prepare(
+        `INSERT INTO lexicon (lexicon_id, parent_id, name, description)
+         VALUES (?1, ?2, ?3, NULL)
+         RETURNING id, lexicon_id, name`,
+      )
+      .bind(candidateId, parent.id, normalizedLabel)
+      .first();
 
   return {
     id: created?.id ?? null,
@@ -1969,34 +2027,128 @@ async function replaceRecursiveLexicon(env, recursiveLexicon) {
   await ensureLexiconSchema(env);
   const normalizedTree = normalizeRecursiveLexiconSeed(recursiveLexicon);
   if (!normalizedTree) return;
-  await env.DB.prepare("DELETE FROM lexicon").run();
+  const softDeleteEnabled = await hasLexiconSoftDeleteSupport(env);
 
-  async function insertNode(node, parentId = null) {
+  if (!softDeleteEnabled) {
+    await env.DB.prepare("DELETE FROM lexicon").run();
+
+    async function insertNode(node, parentId = null) {
+      const inserted = await env.DB
+        .prepare(
+          `INSERT INTO lexicon (lexicon_id, parent_id, name, description)
+           VALUES (?1, ?2, ?3, ?4)
+           RETURNING id`,
+        )
+        .bind(node.lexiconId, parentId, node.name, node.description || null)
+        .first();
+      const nodeId = inserted?.id;
+      if (!nodeId || !Array.isArray(node.children)) return;
+      for (const child of node.children) {
+        // eslint-disable-next-line no-await-in-loop
+        await insertNode(child, nodeId);
+      }
+    }
+
+    await insertNode(normalizedTree, null);
+    return;
+  }
+
+  const seedEntries = [];
+  function walk(node, parentLexiconId = null) {
+    seedEntries.push({
+      lexiconId: node.lexiconId,
+      parentLexiconId,
+      name: node.name,
+      description: node.description || null,
+    });
+    for (const child of node.children ?? []) {
+      walk(child, node.lexiconId);
+    }
+  }
+  walk(normalizedTree, null);
+
+  const knownSeedIds = new Set(seedEntries.map((entry) => entry.lexiconId));
+  const dbIdByLexiconId = new Map();
+
+  for (const entry of seedEntries) {
+    // eslint-disable-next-line no-await-in-loop
+    const existing = await env.DB
+      .prepare(`SELECT id FROM lexicon WHERE lexicon_id = ?1 LIMIT 1`)
+      .bind(entry.lexiconId)
+      .first();
+
+    let parentId = null;
+    if (entry.parentLexiconId) {
+      parentId = dbIdByLexiconId.get(entry.parentLexiconId) ?? null;
+      if (!parentId) {
+        // eslint-disable-next-line no-await-in-loop
+        const parent = await env.DB
+          .prepare(`SELECT id FROM lexicon WHERE lexicon_id = ?1 LIMIT 1`)
+          .bind(entry.parentLexiconId)
+          .first();
+        parentId = parent?.id ?? null;
+      }
+    }
+
+    if (existing?.id) {
+      // eslint-disable-next-line no-await-in-loop
+      await env.DB
+        .prepare(
+          `UPDATE lexicon
+           SET parent_id = ?1,
+               name = ?2,
+               description = ?3,
+               deleted_at = NULL,
+               source = 'seed'
+           WHERE id = ?4`,
+        )
+        .bind(parentId, entry.name, entry.description, existing.id)
+        .run();
+      dbIdByLexiconId.set(entry.lexiconId, existing.id);
+      continue;
+    }
+
+    // eslint-disable-next-line no-await-in-loop
     const inserted = await env.DB
       .prepare(
-        `INSERT INTO lexicon (lexicon_id, parent_id, name, description)
-         VALUES (?1, ?2, ?3, ?4)
+        `INSERT INTO lexicon (lexicon_id, parent_id, name, description, deleted_at, source)
+         VALUES (?1, ?2, ?3, ?4, NULL, 'seed')
          RETURNING id`,
       )
-      .bind(node.lexiconId, parentId, node.name, node.description || null)
+      .bind(entry.lexiconId, parentId, entry.name, entry.description)
       .first();
-    const nodeId = inserted?.id;
-    if (!nodeId || !Array.isArray(node.children)) return;
-    for (const child of node.children) {
-      // eslint-disable-next-line no-await-in-loop
-      await insertNode(child, nodeId);
+    if (inserted?.id) {
+      dbIdByLexiconId.set(entry.lexiconId, inserted.id);
     }
   }
 
-  await insertNode(normalizedTree, null);
+  const allRows = await env.DB
+    .prepare(`SELECT id, lexicon_id, source, deleted_at FROM lexicon`)
+    .all();
+  for (const row of allRows?.results ?? []) {
+    const lexiconId = String(row?.lexicon_id ?? "").trim();
+    if (!lexiconId) continue;
+    if (knownSeedIds.has(lexiconId)) continue;
+    if (String(row?.source ?? "seed") !== "seed") continue;
+    if (row?.deleted_at) continue;
+    // eslint-disable-next-line no-await-in-loop
+    await env.DB
+      .prepare(`UPDATE lexicon SET deleted_at = ?1 WHERE id = ?2`)
+      .bind(new Date().toISOString(), row.id)
+      .run();
+  }
 }
 
-async function getRecursiveLexiconRows(env) {
+async function getRecursiveLexiconRows(env, { includeDeleted = false } = {}) {
   await ensureLexiconSeeded(env);
+  const softDeleteEnabled = await hasLexiconSoftDeleteSupport(env);
+  const where =
+    includeDeleted || !softDeleteEnabled ? "" : "WHERE deleted_at IS NULL";
   const rows = await env.DB
     .prepare(
       `SELECT id, lexicon_id, parent_id, name, description
        FROM lexicon
+       ${where}
        ORDER BY id`,
     )
     .all();
@@ -2059,6 +2211,7 @@ function buildClassicV2LexiconBucketsFromRecursiveRows(rows) {
     buckets[targetBucket].push({
       lexicon_id: String(row.lexicon_id ?? ""),
       name,
+      description: row?.description == null ? "" : String(row.description).trim(),
     });
   }
 
@@ -2260,7 +2413,7 @@ function addStepPerformerLexiconRefs(performer, index) {
 }
 
 async function getLexiconNameByIdMap(env) {
-  const rows = await getRecursiveLexiconRows(env);
+  const rows = await getRecursiveLexiconRows(env, { includeDeleted: true });
   const map = new Map();
   for (const row of rows ?? []) {
     const lexiconId = String(row?.lexicon_id ?? "").trim();

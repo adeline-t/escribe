@@ -35,9 +35,60 @@ export async function handleState(request, env) {
     if (!state || typeof state !== "object") {
       return jsonResponse({ error: "invalid_state" }, 400, corsHeaders);
     }
+    const requestedPerformanceId = Number(state.performanceId);
+    const hasExplicitSequencesPayload =
+      Array.isArray(state?.sequences) || Array.isArray(state?.phrases);
+    const incomingSequences = Array.isArray(state?.sequences)
+      ? state.sequences
+      : Array.isArray(state?.phrases)
+        ? state.phrases
+        : null;
+    const incomingSequenceCount = Array.isArray(incomingSequences)
+      ? incomingSequences.length
+      : null;
+
+    let sequenceCountBefore = null;
+    if (Number.isFinite(requestedPerformanceId)) {
+      try {
+        const beforeRow = await env.DB
+          .prepare(
+            "SELECT COUNT(*) AS count FROM performance_sequences WHERE performance_id = ?1",
+          )
+          .bind(requestedPerformanceId)
+          .first();
+        sequenceCountBefore = Number(beforeRow?.count ?? 0);
+      } catch {
+        sequenceCountBefore = null;
+      }
+    }
+
     const isSuperAdmin = requireRole(session, ["superadmin"]);
     const performanceId = await saveState(env, session.user.id, state, isSuperAdmin);
-    await logAudit(env, "state.save", session.user.id, performanceId, {});
+
+    let sequenceCountAfter = null;
+    if (Number.isFinite(Number(performanceId))) {
+      try {
+        const afterRow = await env.DB
+          .prepare(
+            "SELECT COUNT(*) AS count FROM performance_sequences WHERE performance_id = ?1",
+          )
+          .bind(performanceId)
+          .first();
+        sequenceCountAfter = Number(afterRow?.count ?? 0);
+      } catch {
+        sequenceCountAfter = null;
+      }
+    }
+
+    await logAudit(env, "state.save", session.user.id, performanceId, {
+      requestedPerformanceId: Number.isFinite(requestedPerformanceId)
+        ? requestedPerformanceId
+        : null,
+      hasExplicitSequencesPayload,
+      incomingSequenceCount,
+      sequenceCountBefore,
+      sequenceCountAfter,
+    });
     return jsonResponse({ ok: true, performanceId }, 200, corsHeaders);
   }
 

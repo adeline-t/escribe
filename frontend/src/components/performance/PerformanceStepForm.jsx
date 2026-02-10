@@ -1,58 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { FaXmark } from "react-icons/fa6";
 import { PERFORMANCE_STEP_LABELS } from "../../lib/performances.js";
+import { hasPerformerStepContent } from "../../lib/stepContent.js";
 import {
   useClassicCombatStepFormLogic,
   useSabreCombatStepFormLogic,
 } from "../../hooks/usePerformanceFormLogic.js";
-
-function hasStepFormContent(item) {
-  if (!item || typeof item !== "object") return false;
-  const note = typeof item.note === "string" ? item.note.trim() : "";
-  if (item.mode === "note") return Boolean(note);
-  if (item.mode === "choreography") return Boolean(item.chorePhase || note);
-  if (note) return true;
-  if (item.role === "attack") {
-    return Boolean(
-      item.preparationAction ||
-      item.offensive ||
-      item.action ||
-        item.target ||
-        item.attackMove ||
-        item.move ||
-        (Array.isArray(item.moveDetails) && item.moveDetails.length) ||
-        (Array.isArray(item.attackAttribute) && item.attackAttribute.length) ||
-        (Array.isArray(item.actionDetails) && item.actionDetails.length),
-    );
-  }
-  if (item.role === "preparation") {
-    return Boolean(
-      item.preparationAction ||
-      item.action ||
-        item.target ||
-        item.move ||
-        (Array.isArray(item.moveDetails) && item.moveDetails.length) ||
-        item.attackMove ||
-        item.defendMove ||
-        (Array.isArray(item.attackAttribute) && item.attackAttribute.length) ||
-        (Array.isArray(item.actionDetails) && item.actionDetails.length),
-    );
-  }
-  if (item.role === "defense") {
-    return Boolean(
-      item.preparationAction ||
-      item.defense ||
-        item.defensive ||
-        item.paradeNumber ||
-        item.paradeAttribute ||
-        item.defendMove ||
-        item.move ||
-        (Array.isArray(item.moveDetails) && item.moveDetails.length) ||
-        (Array.isArray(item.defenseDetails) && item.defenseDetails.length),
-    );
-  }
-  return false;
-}
 
 export default function PerformanceStepForm({
   form,
@@ -156,7 +109,8 @@ export default function PerformanceStepForm({
         .map((_, index) => index)
         .filter(
           (index) =>
-            index !== activePerformerIndex && !hasStepFormContent(form[index]),
+            index !== activePerformerIndex &&
+            !hasPerformerStepContent(form[index]),
         ),
     [performers, activePerformerIndex, form],
   );
@@ -470,11 +424,11 @@ export default function PerformanceStepForm({
                       </button>
                       <button
                         type="button"
-                        className={`segmented-button ${v2Mode === "preparation" ? "is-active" : ""}`}
-                        aria-pressed={v2Mode === "preparation"}
+                        className={`segmented-button ${v2Mode === "movement" ? "is-active" : ""}`}
+                        aria-pressed={v2Mode === "movement"}
                         onClick={() =>
                           onFormChange(index, {
-                            role: "preparation",
+                            role: "movement",
                             noteOverrides: false,
                             offensive: "",
                             target: "",
@@ -485,15 +439,15 @@ export default function PerformanceStepForm({
                             paradeNumber: "",
                             paradeAttribute: "",
                             defendMove: "",
-                            actionDetails: [{ action: "", attribute: "" }],
-                            preparationAction: "displacements_prep",
-                            action: "displacements_prep",
+                            actionDetails: [],
+                            preparationAction: "",
+                            action: "",
                             preparationTiming: "before",
                           })
                         }
                         disabled={isReadOnly}
                       >
-                          {PERFORMANCE_STEP_LABELS.rolePreparation}
+                          {PERFORMANCE_STEP_LABELS.roleMovement}
                       </button>
                       <button
                         type="button"
@@ -1153,14 +1107,12 @@ export default function PerformanceStepForm({
                         </div>
                     ) : null}
 
-                    {!item.noteOverrides && v2Mode === "preparation" ? (
+                    {!item.noteOverrides && v2Mode === "movement" ? (
                       <div className="form-section">
                         <div className="preparation-info-block">
-                          <div className="text-strong">
-                            préparation de déplacement
-                          </div>
+                          <div className="text-strong">déplacement</div>
                           <div className="meta text-muted">
-                            les autres préparations sont à ajouter avec l'attaque ou la défense
+                            utilisez attaque/défense pour ajouter une préparation liée
                           </div>
                         </div>
                         <div className="action-row action-row--two">

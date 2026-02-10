@@ -67,7 +67,7 @@ export const PERFORMANCE_STEP_LABELS = {
   roleLabelInline: "rôle",
   roleAttack: "attaque",
   roleDefense: "défense",
-  rolePreparation: "préparation",
+  roleMovement: "déplacement",
   roleNote: "note",
   defenseType: "type",
   defenseParade: "parade",

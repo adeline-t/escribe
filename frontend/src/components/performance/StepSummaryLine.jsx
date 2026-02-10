@@ -3,6 +3,19 @@ export default function StepSummaryLine({
   inactiveLabel = "inactif",
   resolveTermLabel = null,
 }) {
+  function isDisplacementPreparationToken(value) {
+    const normalized = String(value ?? "")
+      .toLowerCase()
+      .replace(/_/g, " ")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    return (
+      normalized === "displacements prep" || normalized === "deplacements prep"
+    );
+  }
+
   function resolve(type, value) {
     if (typeof resolveTermLabel !== "function") return value;
     return resolveTermLabel(type, value);
@@ -56,14 +69,19 @@ export default function StepSummaryLine({
   }
 
   const preparationAction = String(
-    item?.preparationAction ?? (item?.role === "preparation" ? item?.action : ""),
+    item?.preparationAction ??
+      (item?.role === "movement" || item?.role === "preparation"
+        ? item?.action
+        : ""),
   ).trim();
   const preparationTiming =
     String(item?.preparationTiming ?? "").trim().toLowerCase() === "after"
       ? "after"
       : "before";
   const hasLinkedPreparation =
-    item?.role !== "preparation" && Boolean(preparationAction);
+    item?.role !== "movement" &&
+    item?.role !== "preparation" &&
+    Boolean(preparationAction);
 
   if (item.mode === "choreography") {
     return (
@@ -111,8 +129,13 @@ export default function StepSummaryLine({
           .join(" "),
       )
       .filter(Boolean);
+    const filteredActionBitsFromDetails = actionBitsFromDetails.filter(
+      (entry) => !isDisplacementPreparationToken(entry),
+    );
     const actionBitsFallback = [
-      !hasLinkedPreparation ? resolve("action", item.action) : "",
+      !hasLinkedPreparation && !isDisplacementPreparationToken(item.action)
+        ? resolve("action", item.action)
+        : "",
       item.attackAttribute?.length
         ? item.attackAttribute
             .map((entry) => resolve("attaque_attribut", entry))
@@ -121,8 +144,8 @@ export default function StepSummaryLine({
     ]
       .filter(Boolean)
       .join(" ");
-    const actionBits = actionBitsFromDetails.length
-      ? actionBitsFromDetails
+    const actionBits = filteredActionBitsFromDetails.length
+      ? filteredActionBitsFromDetails
       : actionBitsFallback
         ? [actionBitsFallback]
         : [];
@@ -163,7 +186,7 @@ export default function StepSummaryLine({
     );
   }
 
-  if (item.role === "preparation") {
+  if (item.role === "movement" || item.role === "preparation") {
     if (item.noteOverrides) {
       return (
         <span>

@@ -225,12 +225,12 @@ export default function StepInlineEditorModal({
                   <button
                     type="button"
                     className={`segmented-button ${
-                      v2Mode === "preparation" ? "is-active" : ""
+                      v2Mode === "movement" ? "is-active" : ""
                     }`}
-                    aria-pressed={v2Mode === "preparation"}
+                    aria-pressed={v2Mode === "movement"}
                     onClick={() =>
                       updateInlineItem({
-                        role: "preparation",
+                        role: "movement",
                         noteOverrides: false,
                         offensive: "",
                         target: "",
@@ -241,15 +241,15 @@ export default function StepInlineEditorModal({
                         paradeNumber: "",
                         paradeAttribute: "",
                         defendMove: "",
-                        actionDetails: [{ action: "", attribute: "" }],
-                        preparationAction: "displacements_prep",
-                        action: "displacements_prep",
+                        actionDetails: [],
+                        preparationAction: "",
+                        action: "",
                         preparationTiming: "before",
                       })
                     }
                     disabled={isReadOnly}
                   >
-                    {PERFORMANCE_STEP_LABELS.rolePreparation}
+                    {PERFORMANCE_STEP_LABELS.roleMovement}
                   </button>
                   <button
                     type="button"
@@ -869,12 +869,12 @@ export default function StepInlineEditorModal({
                   </div>
                 ) : null}
 
-                {!inlineItem.noteOverrides && v2Mode === "preparation" ? (
+                {!inlineItem.noteOverrides && v2Mode === "movement" ? (
                   <div className="form-section">
                     <div className="preparation-info-block">
-                      <div className="text-strong">préparation de déplacement</div>
+                      <div className="text-strong">déplacement</div>
                       <div className="meta text-muted">
-                        les autres préparations sont à ajouter avec l'attaque ou la défense
+                        utilisez attaque/défense pour ajouter une préparation liée
                       </div>
                     </div>
                     <div className="action-row action-row--two">

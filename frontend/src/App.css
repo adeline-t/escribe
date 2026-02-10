@@ -467,6 +467,16 @@
   padding: var(--space-1) var(--space-3);
 }
 
+.lexicon-row-main {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.lexicon-row-description {
+  white-space: pre-wrap;
+}
+
 .lexicon-row-actions {
   display: inline-flex;
   align-items: center;
@@ -3060,6 +3070,10 @@ select {
   }
 
   .lexicon-row .text-strong {
+    overflow-wrap: anywhere;
+  }
+
+  .lexicon-row-description {
     overflow-wrap: anywhere;
   }
 

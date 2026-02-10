@@ -4,6 +4,7 @@ import {
   labelForPerformer,
 } from "../lib/performers.js";
 import { useDebouncedStateSave } from "./useDebouncedStateSave.js";
+import { hasPerformerStepContent } from "../lib/stepContent.js";
 import {
   createPerformerIdentity,
   DEFAULT_PERFORMANCE_NAME,
@@ -134,7 +135,16 @@ export function usePerformanceStateManager({ isSaveEnabled, saveState } = {}) {
     },
     delay: 400,
     // Automatic persistence of the performance draft.
-    onSave: (state) => saveState(state),
+    onSave: (state) => {
+      const hasExistingPerformance = Number.isFinite(Number(state?.performanceId));
+      const hasEmptySequences =
+        Array.isArray(state?.sequences) && state.sequences.length === 0;
+      // Guardrail: avoid wiping existing sequences when local state is temporarily empty.
+      if (hasExistingPerformance && hasEmptySequences) {
+        return { performanceId: state.performanceId, skipped: true };
+      }
+      return saveState(state);
+    },
     onSaved: (result) => {
       const savedId = result?.performanceId ?? null;
       if (savedId) {
@@ -258,18 +268,7 @@ export function usePerformanceStateManager({ isSaveEnabled, saveState } = {}) {
   }
 
   function addStep() {
-    const hasContent = form.some((item) => {
-      if (item.mode === "combat") {
-        return item.role !== "none";
-      }
-      if (item.mode === "choreography") {
-        return Boolean(item.chorePhase) || Boolean(item.note);
-      }
-      if (item.mode === "note") {
-        return Boolean(item.note);
-      }
-      return false;
-    });
+    const hasContent = form.some((item) => hasPerformerStepContent(item));
     if (!hasContent || !activeSequenceId) return;
 
     if (editingStepId) {

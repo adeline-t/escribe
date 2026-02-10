@@ -202,6 +202,17 @@ function resolveDelimitedBits(value, type, resolveTermLabel) {
     .join(" · ");
 }
 
+function isDisplacementPreparationToken(value) {
+  const normalized = String(value ?? "")
+    .toLowerCase()
+    .replace(/_/g, " ")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return normalized === "displacements prep" || normalized === "deplacements prep";
+}
+
 function resolveMoveBits(item, resolveTermLabel) {
   const base = String(item?.move ?? "").trim();
   const details = Array.isArray(item?.moveDetails)
@@ -251,9 +262,12 @@ function buildAttackSummary(item, resolveTermLabel) {
         .join(" "),
     )
     .filter(Boolean)
+    .filter((entry) => !isDisplacementPreparationToken(entry))
     .join(" · ");
   const actionBitsFallback = [
-    preparationPrefix ? "" : resolveTerm("action", item.action, resolveTermLabel),
+    preparationPrefix || isDisplacementPreparationToken(item.action)
+      ? ""
+      : resolveTerm("action", item.action, resolveTermLabel),
     item.attackAttribute?.length
       ? item.attackAttribute
           .map((entry) => resolveTerm("attaque_attribut", entry, resolveTermLabel))
@@ -349,7 +363,7 @@ function buildCombatSummary(item, resolveTermLabel) {
     return buildAttackSummary(item, resolveTermLabel);
   }
 
-  if (item.role === "preparation") {
+  if (item.role === "movement" || item.role === "preparation") {
     if (item.noteOverrides) return buildNoteSummary(item);
     return buildPreparationSummary(item, resolveTermLabel);
   }

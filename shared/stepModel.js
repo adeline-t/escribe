@@ -1,7 +1,7 @@
 export const DEFAULT_STEP_LEXICON_KEY = "classic-v2";
 export const LEGACY_STEP_LEXICON_KEY = "classic";
 export const STEP_PERFORMER_MODES = ["combat", "note", "choreography"];
-export const STEP_PERFORMER_ROLES = ["none", "attack", "defense", "preparation"];
+export const STEP_PERFORMER_ROLES = ["none", "attack", "defense", "movement"];
 
 // Canonical structure for one performer inside a step.
 export const DEFAULT_STEP_PERFORMER = Object.freeze({
@@ -72,13 +72,21 @@ function normalizeStepMode(mode) {
   return mode;
 }
 
+function normalizeStepRole(role) {
+  const nextRole = String(role ?? "").trim().toLowerCase();
+  if (nextRole === "preparation") return "movement";
+  if (nextRole === "inactive") return "none";
+  return nextRole;
+}
+
 export function createStepPerformerModel(overrides = {}) {
   const normalizedMode = normalizeStepMode(overrides?.mode);
   const mode = STEP_PERFORMER_MODES.includes(normalizedMode)
     ? normalizedMode
     : DEFAULT_STEP_PERFORMER.mode;
-  const role = STEP_PERFORMER_ROLES.includes(overrides?.role)
-    ? overrides.role
+  const normalizedRole = normalizeStepRole(overrides?.role);
+  const role = STEP_PERFORMER_ROLES.includes(normalizedRole)
+    ? normalizedRole
     : DEFAULT_STEP_PERFORMER.role;
 
   return {

@@ -40,7 +40,7 @@ function getCardVariant(item) {
   if (item.mode === "note") return "neutral";
   if (item.mode === "choreography") return "neutral";
   if (item.role === "attack") return "action";
-  if (item.role === "preparation") return "preparation";
+  if (item.role === "movement" || item.role === "preparation") return "preparation";
   if (item.role === "defense") return "reaction";
   if (item.note) return "neutral";
   return "empty";
@@ -416,48 +416,18 @@ function createHelpers(styles, { lexicon } = {}) {
       );
     }
 
-    if (item.role === "preparation") {
-      const actionDetails = Array.isArray(item.actionDetails)
-        ? item.actionDetails
-        : [];
-      const actionLabel =
-        actionDetails
-          .map((detail) => detail?.action)
-          .filter(Boolean)
-          .join(" · ") ||
-        resolveTerm(item.preparationAction || item.action) ||
-        "";
-      const position = resolveTerm(
-        actionDetails[0]?.attribute ??
-          (item.attackAttribute?.length ? item.attackAttribute[0] : ""),
-      );
-      const complements = item.attackAttribute?.length
-        ? item.attackAttribute
-            .map((entry) => resolveTerm(entry))
-            .filter((entry) => entry !== position)
-        : [];
-      const positionLabel = [position, ...complements]
-        .filter(Boolean)
-        .join(" · ");
+    if (item.role === "movement" || item.role === "preparation") {
+      const movementLabel =
+        getMovementLabel(item, { attack: true }) ||
+        getMovementLabel(item, { attack: false });
       return (
         <View style={styles.cardStack}>
           <View style={styles.cardLine}>
-            <Badge label="Préparation" variant="Preparation" />
-            {actionLabel ? (
-              <>
-                <Text style={styles.cardText}>{actionLabel}</Text>
-              </>
-            ) : null}
-            {resolveTerm(item.target) ? (
-              <>
-                <Text style={styles.cardText}>sur</Text>
-                <Badge label={resolveTerm(item.target)} variant="Target" />
-              </>
-            ) : null}
-            {positionLabel ? (
+            <Badge label="Déplacement" variant="Preparation" />
+            {movementLabel ? (
               <>
                 <Text style={styles.cardText}>en</Text>
-                <Badge label={positionLabel} variant="Move" />
+                <Badge label={movementLabel} variant="Move" />
               </>
             ) : null}
           </View>

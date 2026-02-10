@@ -36,7 +36,6 @@ function getNodeChildren(node) {
   return children;
 }
 
-
 function normalizeRoot(seed) {
   const rootId = getNodeId(seed) || "classic_v2_root";
   const rootName = getNodeName(seed) || "Escrime historique française - Lexique complet";
@@ -50,25 +49,28 @@ function normalizeRoot(seed) {
   };
 }
 
-function buildInsertStatement(node, parentLexiconId = null) {
+function flattenTree(node, parentLexiconId = null, out = []) {
   const lexiconId = getNodeId(node);
   const name = getNodeName(node);
   const description = getNodeDescription(node);
-  if (!lexiconId || !name) return null;
-
-  const parentExpr = parentLexiconId
-    ? `(SELECT id FROM lexicon WHERE lexicon_id='${sqlQuote(parentLexiconId)}' LIMIT 1)`
-    : "NULL";
-  const descriptionExpr = description ? `'${sqlQuote(description)}'` : "NULL";
-
-  return `INSERT INTO lexicon (lexicon_id, parent_id, name, description) VALUES ('${sqlQuote(
-    lexiconId,
-  )}', ${parentExpr}, '${sqlQuote(name)}', ${descriptionExpr});`;
+  if (lexiconId && name) {
+    out.push({
+      lexiconId,
+      parentLexiconId,
+      name,
+      description,
+    });
+  }
+  for (const child of getNodeChildren(node)) {
+    flattenTree(child, lexiconId, out);
+  }
+  return out;
 }
 
 const raw = await readFile(srcPath, "utf-8");
 const seed = JSON.parse(raw);
 const normalizedRoot = normalizeRoot(seed);
+const entries = flattenTree(normalizedRoot, null, []);
 
 const sqlLines = [
   "CREATE TABLE IF NOT EXISTS lexicon (",
@@ -77,29 +79,53 @@ const sqlLines = [
   "  parent_id INTEGER,",
   "  name TEXT NOT NULL,",
   "  description TEXT,",
+  "  deleted_at TEXT,",
+  "  source TEXT NOT NULL DEFAULT 'seed',",
   "  FOREIGN KEY(parent_id) REFERENCES lexicon(id)",
   ");",
   "",
-  "DELETE FROM lexicon;",
-  "",
 ];
 
-const rootInsert = buildInsertStatement(normalizedRoot, null);
-if (!rootInsert) {
-  throw new Error("Invalid recursive lexicon root: missing id or name.");
-}
-sqlLines.push(rootInsert);
-
-function visit(node, parentLexiconId) {
-  for (const child of getNodeChildren(node)) {
-    const statement = buildInsertStatement(child, parentLexiconId);
-    if (statement) sqlLines.push(statement);
-    const childId = getNodeId(child);
-    if (childId) visit(child, childId);
-  }
+if (!entries.length) {
+  throw new Error("Invalid recursive lexicon seed: empty tree.");
 }
 
-visit(normalizedRoot, normalizedRoot.id);
+for (const entry of entries) {
+  const descriptionValue = entry.description
+    ? `'${sqlQuote(entry.description)}'`
+    : "NULL";
+  const parentJoinCondition = entry.parentLexiconId
+    ? `p.lexicon_id = '${sqlQuote(entry.parentLexiconId)}'`
+    : "1 = 0";
+  sqlLines.push(
+    "INSERT INTO lexicon (lexicon_id, parent_id, name, description, deleted_at, source)",
+    "SELECT",
+    `  '${sqlQuote(entry.lexiconId)}',`,
+    "  p.id,",
+    `  '${sqlQuote(entry.name)}',`,
+    `  ${descriptionValue},`,
+    "  NULL,",
+    "  'seed'",
+    "FROM (SELECT 1) AS _",
+    `LEFT JOIN lexicon p ON ${parentJoinCondition}`,
+    "ON CONFLICT(lexicon_id) DO UPDATE SET",
+    "  parent_id = excluded.parent_id,",
+    "  name = excluded.name,",
+    "  description = excluded.description,",
+    "  deleted_at = NULL,",
+    "  source = 'seed';",
+    "",
+  );
+}
+
+const seedIdList = entries.map((entry) => `'${sqlQuote(entry.lexiconId)}'`).join(", ");
+sqlLines.push(
+  "UPDATE lexicon",
+  "SET deleted_at = COALESCE(deleted_at, CURRENT_TIMESTAMP)",
+  "WHERE source = 'seed'",
+  "  AND deleted_at IS NULL",
+  `  AND lexicon_id NOT IN (${seedIdList});`,
+);
 
 await writeFile(sqlPath, `${sqlLines.join("\n")}\n`, "utf-8");
 console.log("Recursive lexicon synced to:");

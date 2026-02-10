@@ -140,16 +140,34 @@ function getMoveParts(value, baseOptions) {
  * @returns {Array<{action: string, attribute: string}>}
  */
 function getActionDetails(item) {
+  const hasLinkedPreparation =
+    item?.role !== "movement" &&
+    item?.role !== "preparation" &&
+    Boolean(String(item?.preparationAction ?? "").trim());
+  const allowMovementPreparationToken =
+    item?.role === "movement" ||
+    item?.role === "preparation" ||
+    hasLinkedPreparation;
+
   if (Array.isArray(item.actionDetails) && item.actionDetails.length) {
-    return item.actionDetails.map((detail) => ({
-      action: detail?.action ?? "",
-      attribute: detail?.attribute ?? "",
-    }));
+    return item.actionDetails
+      .map((detail) => ({
+        action: detail?.action ?? "",
+        attribute: detail?.attribute ?? "",
+      }))
+      .filter((detail) =>
+        allowMovementPreparationToken
+          ? true
+          : !isDisplacementPreparationToken(detail.action),
+      );
   }
-  if (item.action || (item.attackAttribute && item.attackAttribute.length)) {
+  const fallbackAction = isDisplacementPreparationToken(item?.action)
+    ? ""
+    : (item?.action ?? "");
+  if (fallbackAction || (item.attackAttribute && item.attackAttribute.length)) {
     return [
       {
-        action: item.action ?? "",
+        action: fallbackAction,
         attribute: item.attackAttribute?.[0] ?? "",
       },
     ];
@@ -184,18 +202,20 @@ function getDefenseDetails(item) {
 }
 
 /**
- * Déduit le "mode v2" (attack/defense/preparation/note) à partir du role
+ * Déduit le "mode v2" (attack/defense/movement/note) à partir du role
  * et des champs métiers, pour rester compatible avec les anciennes données.
  *
  * @param {StepItem} item
- * @returns {"attack"|"defense"|"preparation"|"note"}
+ * @returns {"attack"|"defense"|"movement"|"note"}
  */
 function getV2Mode(item) {
   // Le rôle explicite reste prioritaire.
   if (item.role === "attack") return "attack";
   if (item.role === "defense") return "defense";
   if (item.role === "none") return "note";
-  if (item.role === "preparation") return "preparation";
+  if (item.role === "movement") return "movement";
+  if (item.role === "preparation") return "movement";
+  if (item.role === "inactive") return "note";
   const hasAttackBits =
     Boolean(item.offensive) ||
     Boolean(item.target) ||
@@ -204,8 +224,8 @@ function getV2Mode(item) {
   const actionDetails = getActionDetails(item);
   const hasPrepBits = actionDetails.some((detail) => detail.action);
   if (!hasAttackBits && (hasPrepBits || actionDetails.length > 0)) {
-    // Legacy compatibility: old records may not define role=preparation.
-    return "preparation";
+    // Legacy compatibility: old records may not define role=movement.
+    return "movement";
   }
   return "attack";
 }
@@ -214,7 +234,7 @@ function getPreparationAction(item) {
   const safe = item && typeof item === "object" ? item : {};
   const direct = String(safe.preparationAction ?? "").trim();
   if (direct) return direct;
-  if (safe.role === "preparation") {
+  if (safe.role === "movement") {
     return String(safe.action ?? "").trim();
   }
   return "";
@@ -276,10 +296,19 @@ const GENERIC_ATTACK_MARKERS = new Set([
   "preparation",
   "préparation",
 ]);
+const DISPLACEMENT_PREPARATION_MARKERS = new Set([
+  "displacements prep",
+  "deplacements prep",
+]);
 
 function isGenericAttackMarker(value) {
   const normalized = normalizeLooseLabel(value);
   return GENERIC_ATTACK_MARKERS.has(normalized);
+}
+
+function isDisplacementPreparationToken(value) {
+  const normalized = normalizeLooseLabel(value).replace(/_/g, " ");
+  return DISPLACEMENT_PREPARATION_MARKERS.has(normalized);
 }
 
 /**
@@ -622,21 +651,12 @@ function useSharedCombatStepLogic({
   }
 
   /**
-   * Met à jour la préparation (action dédiée) sans imposer un rôle.
-   * Le rôle est injecté par le formulaire appelant (attack/defense/preparation).
+   * Met à jour la préparation liée (action dédiée) sans imposer un rôle.
+   * Le rôle est injecté par le formulaire appelant (attack/defense).
    */
-  function updatePrepDetails(index, action, { role = "preparation" } = {}) {
+  function updatePrepDetails(index, action, { role = "attack" } = {}) {
     const nextAction = String(action ?? "").trim();
-    const nextRole = role || "preparation";
-    if (nextRole === "preparation") {
-      patchItem(index, {
-        role: nextRole,
-        preparationAction: nextAction,
-        action: nextAction,
-        actionDetails: nextAction ? [{ action: nextAction, attribute: "" }] : [],
-      });
-      return;
-    }
+    const nextRole = role || "attack";
     // Linked preparation (inside attack/defense) must not override attack/defense action fields.
     patchItem(index, {
       role: nextRole,
@@ -705,7 +725,7 @@ function useSharedCombatStepLogic({
     const detailAction = String(getActionDetails(item ?? {})[0]?.action ?? "").trim();
     const legacyAction = String(item?.action ?? "").trim();
     const hasLinkedPreparation =
-      item?.role !== "preparation" && hasPreparationAction(item);
+      item?.role !== "movement" && hasPreparationAction(item);
 
     const preferred = [];
     if (offensive && !isGenericAttackMarker(offensive)) preferred.push(offensive);

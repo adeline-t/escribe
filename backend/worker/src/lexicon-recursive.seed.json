@@ -5,172 +5,512 @@
       "id": "target_zones",
       "nom": "zones de touche (cibles)",
       "elements": [
-        { "id": "zone_head", "nom": "tête" },
-        { "id": "zone_face", "nom": "visage" },
-        { "id": "zone_figure", "nom": "figure" },
-        { "id": "zone_front_shoulder", "nom": "épaule avant" },
-        { "id": "zone_back_shoulder", "nom": "épaule arrière" },
-        { "id": "zone_chest", "nom": "poitrine" },
-        { "id": "zone_arm", "nom": "bras armé" },
-        { "id": "zone_front_leg", "nom": "jambe avant" },
-        { "id": "zone_back_leg", "nom": "jambe arrière" },
-        { "id": "zone_flank", "nom": "flanc" },
-        { "id": "zone_belly", "nom": "ventre" },
-        { "id": "above", "nom": "dessus" },
-        { "id": "below", "nom": "dessous" },
-        { "id": "inside", "nom": "dedans" },
-        { "id": "outside", "nom": "dehors" }
+        { "id": "zone_head", "nom": "tête", "description": "" },
+        { "id": "zone_face", "nom": "visage", "description": "" },
+        {
+          "id": "zone_figure",
+          "nom": "figure",
+          "description": "Figure : cible se situant du côté droit ou du côté gauche de la tête(figure à droite et figure à gauche)"
+        },
+        {
+          "id": "zone_front_shoulder",
+          "nom": "épaule avant",
+          "description": "Épaule du côté de la jambe avant"
+        },
+        {
+          "id": "zone_back_shoulder",
+          "nom": "épaule arrière",
+          "description": "Épaule du côté de la jambe arrière"
+        },
+        {
+          "id": "zone_chest",
+          "nom": "poitrine",
+          "description": "cible se situant du côté opposé de l'arme et en-dessous du visage"
+        },
+        {
+          "id": "zone_arm",
+          "nom": "bras armé",
+          "description": "bras porteur d'une arme"
+        },
+        { "id": "zone_front_leg", "nom": "jambe avant", "description": "" },
+        { "id": "zone_back_leg", "nom": "jambe arrière", "description": "" },
+        {
+          "id": "zone_flank",
+          "nom": "flanc",
+          "description": "cible se situant sous le bras armé"
+        },
+        {
+          "id": "zone_belly",
+          "nom": "ventre",
+          "description": "cible située du côté opposé de l'arme, sous la poitrine"
+        },
+        { "id": "above", "nom": "dessus", "description": "Ligne haute" },
+        { "id": "below", "nom": "dessous", "description": "Ligne basse" },
+        {
+          "id": "inside",
+          "nom": "dedans",
+          "description": "Ligne intérieure, du côté opposé au bras armé"
+        },
+        {
+          "id": "outside",
+          "nom": "dehors",
+          "description": "Ligne extérieure, du côté du bras armé"
+        }
       ]
     },
     {
       "id": "movements",
       "nom": "déplacements",
       "elements": [
-        { "id": "foot_stamp", "nom": "appel de pied" },
-        { "id": "balestra", "nom": "balestra" },
-        { "id": "jump", "nom": "bond saut" },
-        { "id": "guard_change", "nom": "changement de garde" },
-        { "id": "half_advance", "nom": "demi-marche" },
-        { "id": "half_pass", "nom": "demi-passe" },
-        { "id": "half_retreat", "nom": "demi-retraite" },
-        { "id": "half_volta", "nom": "demi-volte" },
-        { "id": "displacement", "nom": "déplacement" },
-        { "id": "lunge", "nom": "fente" },
-        { "id": "fleche", "nom": "flèche" },
-        { "id": "advance", "nom": "marche" },
-        { "id": "pass", "nom": "passe" },
-        { "id": "lateral_step", "nom": "pas latéral (glissement)" },
-        { "id": "quarter_volta", "nom": "quart de volte" },
-        { "id": "lunge_redoublement", "nom": "redoublement de fente" },
-        { "id": "guard_recovery", "nom": "reprise de garde" },
-        { "id": "return_guard", "nom": "retour en garde" },
-        { "id": "retreat", "nom": "retraite" },
-        { "id": "volta", "nom": "volte" }
+        { "id": "foot_stamp", "nom": "appel de pied", "description": "" },
+        {
+          "id": "balestra",
+          "nom": "balestra",
+          "description": "saut réalisé par une action simultanée de la poussée du pied arrière et du lancement de la jambe avant avec une réception en garde sur les deux pieds et appel du pied avant"
+        },
+        {
+          "id": "jump",
+          "nom": "bond saut",
+          "description": "Bond avant : saut en avant réalisé grâce à la projection du pied avant et la poussée simultanée de la jambe arrière, suivi d'une réception sur les deux jambes. Bond arrière : saut en arrière en gardant la posture de garde et qui permet de se mettre hors de portée si l'on est surpris par une action offensive adverse"
+        },
+        {
+          "id": "guard_change",
+          "nom": "changement de garde",
+          "description": "mouvement en un seul temps permettant de se retrouver dans une position de garde inversée par rapport à celle d'origine, en restant face au partenaire"
+        },
+        {
+          "id": "half_advance",
+          "nom": "demi-marche",
+          "description": "moité d'une marche avant"
+        },
+        {
+          "id": "half_pass",
+          "nom": "demi-passe",
+          "description": "moitié d'une passe"
+        },
+        {
+          "id": "half_retreat",
+          "nom": "demi-retraite",
+          "description": "moitié d'une retraite"
+        },
+        {
+          "id": "half_volta",
+          "nom": "demi-volte",
+          "description": "déplacement à caractère offensif, qui consiste à pivoter sur la pointe du pied avant vers l'intérieur en tournant son dos au partenaire tandis que le pied arrière fait un demi-cercle par l'arrière pour se retrouver à l'avant, aboutissant à un changement de garde (garde inversée). Demi-volte arrière : mouvement qui consiste à pivoter sur le pied arrière en tournant son dos au partenaire tandis que le pied avant fait un demi-cercle vers l'arrière pour se retrouver en arrière, aboutissant à un changement de garde (garde inversée)"
+        },
+        {
+          "id": "lunge",
+          "nom": "fente",
+          "description": "mouvement vers l'avant consistant en une extension de la jambe arrière combinée avec une projection de la jambe avant. Il existe des fentes inversées appelées aussi fentes croisées, des fentes diagonales et latérales gauche et droite et arrières. L'amplitude de la fente est modulable en fonction des cibles visées et de l'intention de l'attaquant : demi-fente, fente maximale"
+        },
+        {
+          "id": "fleche",
+          "nom": "flèche",
+          "description": "allongement du bras coordonné avec un léger déséquilibre du buste vers l'avant, suivi d'une extension horizontale du corps réalisée grâce à la poussée de la jambe avant, en effectuant un pas croisé comparable à un départ de sprint suivi par une reprise d'appuis sur le pied gauche pour un droitier"
+        },
+        {
+          "id": "advance",
+          "nom": "marche",
+          "description": "la progression du pied avant immédiatement suivie du pied arrière, avec toujours la même distance entre les deux pieds. Marche inversée : elle consiste à rapprocher le pied arrière du pied avant, les jambes restant fléchies, le corps immobile et à porter ensuite le pied avant à sa distance. Elle permet de gagner de la mesure"
+        },
+        {
+          "id": "pass",
+          "nom": "passe",
+          "description": "Passe avant : déplacement vers l'avant en passant le pied arrière devant le pied avant, replacer ensuite ce dernier dans la position de garde. Appelé également « pas croisé ». Passe arrière : pas croisé vers l'arrière en passant le pied avant derrière le pied arrière pour replacer ensuite ce dernier dans la position de garde"
+        },
+        {
+          "id": "lateral_step",
+          "nom": "pas latéral (glissement)",
+          "description": "Déplacements latéraux sans croiser les pieds : déplacements alternatifs des appuis vers la droite ou la gauche sans que les pieds ne se croisent. Déplacements latéraux en croisant les pieds : déplacements alternatifs des appuis vers la droite ou la gauche en croisant les pieds"
+        },
+        { "id": "quarter_volta", "nom": "quart de volte", "description": "" },
+        {
+          "id": "lunge_redoublement",
+          "nom": "redoublement de fente",
+          "description": "l'escrimeur étant fendu, il effectue une reprise de garde et réalise une nouvelle action offensive simple ou composée en se fendant"
+        },
+        {
+          "id": "guard_recovery",
+          "nom": "reprise de garde",
+          "description": "action de revenir en garde vers l'avant après une fente. Reprise de garde en passe avant : action de revenir en garde vers l'avant après une fente par une passe avant. Reprise de garde avec changement de garde : action de revenir en garde inversée vers l'avant après une fente"
+        },
+        {
+          "id": "return_guard",
+          "nom": "retour en garde",
+          "description": "action de revenir en garde vers l'arrière après une fente. Retour en garde en passe arrière : action de revenir en garde vers l'arrière, en effectuant une passe arrière. Retour en garde avec changement de garde : action de revenir en garde inversée vers l'arrière après une fente"
+        },
+        {
+          "id": "retreat",
+          "nom": "retraite",
+          "description": "actions alternatives des appuis vers l'arrière sans que les pieds ne se croisent et qui débutent (les actions) par le pied arrière. Retraite inversée : mouvement vers l'arrière en restant en garde, qui débute par une action du pied avant qui recule en glissant sans dépasser le pied arrière, immédiatement suivie d'un retrait du pied arrière pour se replacer en garde"
+        },
+        {
+          "id": "volta",
+          "nom": "volte",
+          "description": "déplacement à caractère offensif qui consiste à effectuer une demi-volte suivie d'un changement de garde en avant, aboutissant à un retour à la garde de départ (garde identique). Contre-volte : déplacement à caractère offensif qui consiste en un changement de garde en avant, suivi d'une demi-volte, aboutissant à un retour à la garde de départ (garde identique). Volte arrière : déplacement à caractère défensif qui consiste à effectuer une demi-volte arrière suivie d'un changement de garde en arrière, aboutissant à un retour à la garde de départ (garde identique). Contre-volte arrière : déplacement à caractère défensif qui consiste en un changement de garde en arrière, suivi d'une demi-volte arrière, aboutissant à un retour à la garde de départ (garde identique)"
+        }
       ]
     },
     {
       "id": "movement_complements",
       "nom": "compléments de déplacement",
       "elements": [
-        { "id": "forward", "nom": "avant" },
-        { "id": "backward", "nom": "arrière" },
-        { "id": "movement_lateral", "nom": "latérale" },
-        { "id": "interior", "nom": "intérieur" },
-        { "id": "exterior", "nom": "extérieur" },
-        { "id": "reverse", "nom": "inverse" }
+        { "id": "forward", "nom": "avant", "description": "Vers l'avant" },
+        { "id": "backward", "nom": "arrière", "description": "Vers l'arrière" },
+        {
+          "id": "movement_lateral",
+          "nom": "latéral",
+          "description": "Sur le côté"
+        },
+        {
+          "id": "interior",
+          "nom": "intérieur",
+          "description": "Vers l'intérieur"
+        },
+        {
+          "id": "exterior",
+          "nom": "extérieur",
+          "description": "Vers l'extérieur"
+        },
+        {
+          "id": "reverse",
+          "nom": "inverse",
+          "description": "dans le sens contraire"
+        },
+        { "id": "mov_diagonal", "nom": "diagonal", "description": "" }
       ]
     },
     {
       "id": "positions",
       "nom": "positions",
       "elements": [
-        { "id": "position_1", "nom": "1" },
-        { "id": "position_2", "nom": "2" },
-        { "id": "position_3", "nom": "3" },
-        { "id": "position_4", "nom": "4" },
-        { "id": "position_5", "nom": "5" },
-        { "id": "position_6", "nom": "6" },
-        { "id": "position_7", "nom": "7" },
-        { "id": "position_8", "nom": "8" },
-        { "id": "position_9", "nom": "9" }
+        {
+          "id": "position_1",
+          "nom": "1",
+          "description": "Prime : parade couvrant l'épaule gauche. La pointe plus basse que la main, le bras horizontal. Le poignet est dans l'axe de l'avant-bras. La main est en pronation"
+        },
+        {
+          "id": "position_2",
+          "nom": "2",
+          "description": "Seconde : parade couvrant la jambe droite. La pointe plus basse que la main. Le poignet est dans l'axe de l'avant-bras. La main est en pronation"
+        },
+        {
+          "id": "position_3",
+          "nom": "3",
+          "description": "Tierce : parade couvrant l'épaule de la main armée. La pointe est plus haute que la main. Le poignet est dans l'axe de l'avant-bras. La main est en semi-pronation"
+        },
+        {
+          "id": "position_4",
+          "nom": "4",
+          "description": "Quarte : parade couvrant l'épaule gauche. La pointe plus haute que la main. Le poignet est dans l'axe de l'avant-bras. La main est en supination"
+        },
+        {
+          "id": "position_5",
+          "nom": "5",
+          "description": "Quinte : dites aussi parade St-Georges. Parade couvrant la tête et les épaules. La lame est horizontale, la paume vers l'avant, le poignet dans l'axe de l'avant-bras. La main est en pronation ou en semi-pronation"
+        },
+        {
+          "id": "position_6",
+          "nom": "6",
+          "description": "Sixte : parade utilisée en escrime sportive moderne"
+        },
+        {
+          "id": "position_7",
+          "nom": "7",
+          "description": "Septime : parade couvrant la jambe gauche. La pointe plus basse que la main. Le poignet est dans l'axe de l'avant-bras. La main en supination"
+        },
+        {
+          "id": "position_8",
+          "nom": "8",
+          "description": "Octave haute : parade couvrant l'épaule de la main armée. La pointe est plus basse que la main. La main est en supination"
+        },
+        {
+          "id": "position_9",
+          "nom": "9",
+          "description": "None : pour les nostalgiques, la neuvième parade créée par Alfred Jarry dans La Dragonne, sa dernière pièce « c'est une quarte relevée ou une tierce avec la main de quarte »"
+        }
       ]
     },
     {
       "id": "position_complements",
       "nom": "compléments de position",
       "elements": [
-        { "id": "position_lateral", "nom": "latérale" },
-        { "id": "circular", "nom": "circulaire" },
-        { "id": "semi_circular", "nom": "semi-circulaire" },
-        { "id": "diagonal", "nom": "diagonale" },
-        { "id": "au_tac", "nom": "au tac" },
-        { "id": "yielding", "nom": "en cédant" },
-        { "id": "high", "nom": "haute" },
-        { "id": "low", "nom": "basse" },
-        { "id": "inverted", "nom": "inversée" },
-        { "id": "free_hand", "nom": "main libre" },
-        { "id": "dagger_buckler", "nom": "dague / bocle" },
-        { "id": "object", "nom": "cape / objet" },
-        { "id": "crossed", "nom": "en croix" },
-        { "id": "double", "nom": "double" },
-        { "id": "gathered", "nom": "ramassé" }
+        {
+          "id": "position_lateral",
+          "nom": "latérale",
+          "description": "Parade latérale ou directe : parade exécutée directement d'une ligne haute vers l'autre ligne haute ou d'une ligne basse vers l'autre ligne basse"
+        },
+        {
+          "id": "circular",
+          "nom": "circulaire",
+          "description": "Parades circulaires ou contres : parades exécutées en faisant un mouvement circulaire avec son arme afin de rejeter la pointe adverse d'une ligne vers une autre. On les appelle communément les contres"
+        },
+        {
+          "id": "semi_circular",
+          "nom": "semi-circulaire",
+          "description": "Parades semi-circulaires : parades exécutées en faisant un demi-cercle de la ligne haute vers la ligne basse correspondante ou inversement"
+        },
+        {
+          "id": "diagonal",
+          "nom": "diagonale",
+          "description": "Parades diagonales : parades exécutées en suivant une trajectoire d'une ligne haute vers une ligne basse opposée ou inversement"
+        },
+        {
+          "id": "au_tac",
+          "nom": "du tac",
+          "description": "Parade du tac : c'est écarter la lame adverse avec un battement"
+        },
+        {
+          "id": "yielding",
+          "nom": "en cédant",
+          "description": "Parades en cédant : elles consistent à détourner la lame adverse en l'entraînant (sans la quitter) dans une ligne autre que celle où devait se terminer l'offensive. Ces parades sont utilisées uniquement contre les offensives précédées de prises de fer"
+        },
+        {
+          "id": "high",
+          "nom": "haute",
+          "description": "Position haute de la parade"
+        },
+        {
+          "id": "low",
+          "nom": "basse",
+          "description": "Position basse de la parade"
+        },
+        {
+          "id": "inverted",
+          "nom": "inversée",
+          "description": "Quinte inversée : parade couvrant la tête et les épaules. La pointe légèrement vers le haut, la lame oblique, la paume vers l'arrière. Le poignet dans l'axe de l'avant-bras. La main est en supination ou semi-supination"
+        },
+        {
+          "id": "free_hand",
+          "nom": "main libre",
+          "description": "Combat avec une seule arme, l'autre main étant libre"
+        },
+        {
+          "id": "dagger_buckler",
+          "nom": "dague / bocle",
+          "description": "Combat avec arme principale et arme ou protection secondaire (dague, petit bouclier rond)"
+        },
+        {
+          "id": "object",
+          "nom": "cape / objet",
+          "description": "Combat utilisant un objet défensif comme une cape en complément de l'arme"
+        },
+        {
+          "id": "crossed",
+          "nom": "en croix",
+          "description": "Parade en croix : action défensive faite avec deux armes formant une croix de Saint-André. Parade double réalisée avec deux armes croisées. Utilisée pour se protéger notamment des coups violents précédés de moulinets et couronnés. Parade en croix haute : action défensive avec deux armes qui se croisent au-dessus de la tête, avec les deux pointes vers le ciel afin de se protéger des coups portés à la tête. Parade en croix basse : action défensive avec deux armes (double seconde) sur un coup d'estoc protégeant le bas ventre, les deux pointes vers le sol"
+        },
+        {
+          "id": "double",
+          "nom": "double",
+          "description": "La parade double : elle s'exécute lorsque la dague vient renforcer la parade de l'arme principale, en se plaçant de côté dans une position parallèle"
+        }
       ]
     },
     {
       "id": "attack_types",
       "nom": "actions offensives",
       "elements": [
-        { "id": "thrust", "nom": "coup de pointe" },
-        { "id": "cut", "nom": "coup de tranché" }
+        {
+          "id": "thrust",
+          "nom": "coup de pointe",
+          "description": "Estoc : coup porté avec la pointe de l'arme"
+        },
+        {
+          "id": "cut",
+          "nom": "coup de tranché",
+          "description": "Taille et contre-taille : coup porté avec le tranchant ou le contre-tranchant de l'arme. Attaque de taille (ou de tranchant) : coup qui nécessite généralement un armé du bras, et porté avec le tranchant sur une cible précise, réalisé en marchant, en passe avant, en se fendant"
+        },
+        {
+          "id": "dagger_buckler_att",
+          "nom": "dague / bocle",
+          "description": "Combat avec arme principale et arme ou protection secondaire (dague, petit bouclier rond)"
+        },
+        {
+          "id": "free_hand_att",
+          "nom": "main libre",
+          "description": "Combat avec une seule arme, l'autre main étant libre"
+        },
+        {
+          "id": "object_att",
+          "nom": "cape / objet",
+          "description": "Combat utilisant un objet défensif comme une cape en complément de l'arme"
+        }
       ]
     },
     {
       "id": "attack_complements",
       "nom": "compléments d'attaques",
       "elements": [
-        { "id": "crown", "nom": "couronné" },
-        { "id": "broken", "nom": "brisé" },
-        { "id": "lifted", "nom": "enlevé" },
-        { "id": "diagonals", "nom": "diagonales" },
-        { "id": "obverse_exterior", "nom": "avers / extérieur" },
-        { "id": "reverse_interior", "nom": "revers / intérieur" },
-        { "id": "emprenation", "nom": "pronation" },
-        { "id": "supination", "nom": "supination" },
-        { "id": "free_hand_att", "nom": "main libre" },
-        { "id": "dagger_buckler_att", "nom": "dague / bocle" },
-        { "id": "object_att", "nom": "cape / objet" },
-        { "id": "streamer", "nom": "banderole" },
-        { "id": "grounded", "nom": "terrassé" }
+        {
+          "id": "crown",
+          "nom": "couronné",
+          "description": "Couronné : action offensive. À partir de la quinte, moulinet semi-circulaire horizontal dirigé vers les épaules. Il se décline en couronné droit ou couronné revers"
+        },
+        {
+          "id": "broken",
+          "nom": "brisé",
+          "description": "Brisé : action offensive. À partir de la tierce, moulinet circulaire vertical dirigé sur la tête. Le sens de rotation du poignet se fait du bas vers le haut. Il se décline en brisé droit ou brisé revers. Technique utilisée à la canne, au bâton, et au sabre au 19e siècle"
+        },
+        {
+          "id": "lifted",
+          "nom": "enlevé",
+          "description": "Enlevé : action offensive. À partir de la tierce, moulinet semi-circulaire vertical dirigé vers l'entrejambe ou le poignet. Le sens de rotation du poignet se fait du haut vers le bas, il se décline en enlevé droit ou enlevé revers. Technique utilisée en canne de combat au 19e siècle"
+        },
+        {
+          "id": "diagonals",
+          "nom": "diagonales",
+          "description": "Trajectoires de coups de taille portés en ligne diagonale (exemple : attaque par coup droit descendant de l'épaule vers la hanche opposée, attaque par revers montant)"
+        },
+        {
+          "id": "obverse_exterior",
+          "nom": "avers / extérieur",
+          "description": "Orientation de la lame côté tranchant vers l'extérieur. Coup droit de taille : coup qui part de la droite pour frapper le côté gauche du partenaire. La main est en supination"
+        },
+        {
+          "id": "reverse_interior",
+          "nom": "revers / intérieur",
+          "description": "Orientation de la lame côté contre-tranchant vers l'intérieur. Coup de revers : coup qui part de la gauche pour frapper le côté droit de l'adversaire. La main est en pronation"
+        },
+        {
+          "id": "emprenation",
+          "nom": "pronation",
+          "description": "Position de main où la paume est tournée vers le bas"
+        },
+        {
+          "id": "supination",
+          "nom": "supination",
+          "description": "Position de main où la paume est tournée vers le haut"
+        },
+        {
+          "id": "streamer",
+          "nom": "banderole",
+          "description": "Banderole : terme spécifique qui définit l'action offensive de taille portée sur la cible haute opposée au bras armé"
+        },
+        {
+          "id": "grounded",
+          "nom": "terrassé",
+          "description": "Position au sol, que ce soit après avoir porté ou reçu un coup"
+        }
       ]
     },
     {
       "id": "defensive_actions",
       "nom": "actions défensives",
       "elements": [
-        { "id": "parry", "nom": "parade" },
-        { "id": "unbalance", "nom": "déséquilibre" },
-        { "id": "evasion_backward", "nom": "esquive arrière" },
-        { "id": "evasion_low", "nom": "esquive basse" },
-        { "id": "evasion_jumping", "nom": "esquive en sautant" }
-      ]
-    },
-    {
-      "id": "defense_complements",
-      "nom": "compléments de défense",
-      "elements": [
-        { "id": "def_lateral", "nom": "latérale" },
-        { "id": "def_circular", "nom": "circulaire" },
-        { "id": "def_semi_circular", "nom": "semi-circulaire" },
-        { "id": "def_diagonal", "nom": "diagonale" },
-        { "id": "def_au_tac", "nom": "du tac" },
-        { "id": "def_yielding", "nom": "en cédant" },
-        { "id": "def_active", "nom": "active" }
+        {
+          "id": "parry",
+          "nom": "parade",
+          "description": "Parades : ce sont les actions qui consistent à se protéger des différentes actions offensives d'estoc et de taille portées par un partenaire, réalisées en écartant un coup de pointe ou en bloquant un coup de tranchant de l'adversaire avec son arme"
+        },
+        { "id": "unbalance", "nom": "déséquilibre", "description": "" },
+        {
+          "id": "evasion_backward",
+          "nom": "esquive arrière",
+          "description": "L'esquive arrière : c'est un mouvement du corps vers l'arrière (retraite, bond) réalisé pour éviter une action offensive"
+        },
+        {
+          "id": "evasion_low",
+          "nom": "esquive basse",
+          "description": "L'esquive en se baissant : déclinée en deux façons ; l'une avec le tronc qui se fléchit latéralement en passant sous la lame de l'adversaire, l'autre grâce à une flexion des deux jambes en restant en garde"
+        },
+        {
+          "id": "evasion_jumping",
+          "nom": "esquive en sautant",
+          "description": "Esquive réalisée en sautant pour éviter un coup bas"
+        }
       ]
     },
     {
       "id": "preparations",
       "nom": "préparations",
       "elements": [
-        { "id": "engagement_simple", "nom": "engagement" },
-        { "id": "engagement_change", "nom": "changement d'engagement" },
-        { "id": "beat", "nom": "battement" },
-        { "id": "pressure", "nom": "pression" },
-        { "id": "froissement", "nom": "froissement" },
-        { "id": "opposition_prep", "nom": "opposition" },
-        { "id": "croise", "nom": "croisé" },
-        { "id": "bind", "nom": "liement" },
-        { "id": "envelopment", "nom": "enveloppement" },
-        { "id": "feint", "nom": "feinte" },
-        { "id": "invitation", "nom": "invite" },
-        { "id": "threat", "nom": "menace" },
-        { "id": "disengagement", "nom": "dégagement" },
-        { "id": "cut_over", "nom": "coupé" },
-        { "id": "derobement", "nom": "dérobement" },
-        { "id": "contre_temps", "nom": "contre-temps" },
-        { "id": "riposte", "nom": "riposte" },
-        { "id": "tac_au_tac", "nom": "du tac-au-tac" },
-        { "id": "counter_attack", "nom": "contre-attaque" },
-        { "id": "displacements_prep", "nom": "déplacements" }
+        {
+          "id": "engagement_simple",
+          "nom": "engagement",
+          "description": "Engagement : situation de deux lames en contact. Prendre l'engagement c'est l'action de joindre le fer adverse"
+        },
+        {
+          "id": "engagement_change",
+          "nom": "changement d'engagement",
+          "description": "Changement d'engagement : c'est prendre l'engagement dans une autre ligne. Double-engagement : c'est la succession de deux engagements ou de deux changements d'engagement"
+        },
+        {
+          "id": "beat",
+          "nom": "battement",
+          "description": "Battement : frappe brève et plus ou moins forte effectuée sur la lame adverse. Le contre-battement est un battement d'autorité qui suit immédiatement un battement. Le changez-battez : il s'agit d'un battement précédé d'un changement de ligne"
+        },
+        {
+          "id": "pressure",
+          "nom": "pression",
+          "description": "Pression : poussée latérale exécutée sur la lame adverse après avoir pris contact avec celle-ci"
+        },
+        {
+          "id": "froissement",
+          "nom": "froissement",
+          "description": "Froissement : action tenant à la fois de la friction et de la pression, exécutée avec la lame sur toute la longueur du fer adverse, permettant souvent le désarmement"
+        },
+        {
+          "id": "opposition_prep",
+          "nom": "opposition",
+          "description": "Opposition : prise de fer où l'on s'empare de la lame adverse dans une ligne en la maitrisant jusqu'à la touche sans changer de ligne. Parade d'opposition : parade exécutée sans choc sur la lame adverse en maintenant le contact"
+        },
+        {
+          "id": "croise",
+          "nom": "croisé",
+          "description": "Croisé : prise de fer verticale où l'on s'empare de la lame adverse dans une ligne haute, pour l'amener dans la ligne basse du même côté. Il peut aussi s'exécuter de ligne basse à ligne haute"
+        },
+        {
+          "id": "bind",
+          "nom": "liement",
+          "description": "Liement : prise de fer diagonale où l'on s'empare de la lame adverse en la maitrisant progressivement d'une ligne haute à une ligne basse diagonalement opposée et inversement d'une ligne basse à une ligne haute. (Exemple : de la quarte vers l'octave, de l'octave vers la quarte)"
+        },
+        {
+          "id": "envelopment",
+          "nom": "enveloppement",
+          "description": "Enveloppement : prise de fer circulaire où l'on s'empare de la lame adverse dans une ligne en la maitrisant progressivement, pour la ramener dans la même ligne par un mouvement enveloppant de la lame"
+        },
+        {
+          "id": "feint",
+          "nom": "feinte",
+          "description": "Feintes : simulacres d'action offensive ou contre-offensive réalisés de pied ferme ou en se déplaçant : feinte d'attaque, feinte de riposte, feinte de contre-attaque. Fausses attaques : feintes d'attaque réalisées avec la demi-fente"
+        },
+        {
+          "id": "invitation",
+          "nom": "invite",
+          "description": "Invites : gestes qui consistent à ouvrir volontairement une ligne à l'adversaire pour le faire attaquer là où on l'attend. L'invite prend le nom de la position de main placée avant l'ouverture de la ligne. Exemple : invite en seconde, invite en quarte, invite en quinte, etc."
+        },
+        { "id": "threat", "nom": "menace", "description": "" },
+        {
+          "id": "disengagement",
+          "nom": "dégagement",
+          "description": "Dégagement : action d'estoc indirectement portée, grâce à un passage sous la lame adverse lorsque les pointes sont hautes et un passage au-dessus de la lame adverse lorsque les pointes sont basses"
+        },
+        {
+          "id": "cut_over",
+          "nom": "coupé",
+          "description": "Coupé : action de pointe indirectement portée, grâce à un passage devant la pointe de l'arme de l'adversaire lorsque les pointes sont hautes et au-dessous de la pointe adverse lorsque les pointes sont basses"
+        },
+        {
+          "id": "derobement",
+          "nom": "dérobement",
+          "description": "Dérobement : action indirecte simple ou composée, à caractère offensif ou contre-offensif, réalisée généralement sur des recherches de fer"
+        },
+        {
+          "id": "contre_temps",
+          "nom": "contre-temps",
+          "description": "Le contre temps : terme qui désigne la parade et la riposte d'une contre-attaque"
+        },
+        {
+          "id": "riposte",
+          "nom": "riposte",
+          "description": "La riposte : action de touche simple directe, indirecte, composée ou par prise de fer, qui suit une parade. Elle est réalisée de pied ferme, en marchant, en se fendant, en marche et fente ou en flèche, et porte le nom du geste offensif, les ripostes peuvent être immédiates ou à temps perdu. La contre-riposte : il s'agit de l'action de pointe ou de taille simple directe, indirecte, composée ou par prise de fer qui suit une parade non initiale dans un échange"
+        },
+        {
+          "id": "counter_attack",
+          "nom": "contre-attaque",
+          "description": "Arrêt : action contre-offensive simple sans le fer. Arrêts avec fer : actions contre-offensives réalisées en prenant le fer adverse, autrefois appelées coup de temps. Coup de temps d'opposition : contre-offensive exécutée en fermant la ligne où doit se terminer l'offensive. Coup de temps d'interception : contre-offensive qui intercepte le passage de l'offensive adverse en cours d'exécution. Contre arrêt : contre-offensive exécutée sur une contre-attaque adverse"
+        }
       ]
     }
   ]

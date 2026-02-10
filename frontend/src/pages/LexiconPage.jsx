@@ -489,7 +489,14 @@ export default function LexiconPage({
             <div className="stack-2 lexicon-list">
               {filteredItems.map((item) => (
                 <div key={item.id} className="row-card lexicon-row">
-                  <div className="text-strong">{item.label}</div>
+                  <div className="lexicon-row-main">
+                    <div className="text-strong">{item.label}</div>
+                    {item.description ? (
+                      <div className="text-sm text-muted lexicon-row-description">
+                        {item.description}
+                      </div>
+                    ) : null}
+                  </div>
                   <div className="lexicon-row-actions">
                     <button
                       type="button"

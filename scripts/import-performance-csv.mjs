@@ -108,17 +108,39 @@ function queryLabelList(tableName) {
   return uniqueValues(rows.map((row) => row?.label));
 }
 
+function queryLexiconNamesByParentLexiconIds(parentLexiconIds) {
+  const ids = uniqueValues(parentLexiconIds);
+  if (!ids.length) return [];
+  const quotedIds = ids.map((id) => sqlQuote(id)).join(", ");
+  const rows = queryLocalD1(
+    `SELECT child.name
+     FROM lexicon child
+     JOIN lexicon parent ON parent.id = child.parent_id
+     WHERE child.deleted_at IS NULL
+       AND parent.deleted_at IS NULL
+       AND parent.lexicon_id IN (${quotedIds})
+     ORDER BY child.name;`,
+  );
+  return uniqueValues(rows.map((row) => row?.name));
+}
+
 function loadLexicon() {
   return {
-    offensive: queryLabelList("nl_offensive"),
-    action: queryLabelList("nl_action"),
-    defensive: queryLabelList("nl_defensive"),
-    target: queryLabelList("nl_target"),
-    movement: queryLabelList("nl_movement"),
-    movementComplement: queryLabelList("nl_movement_complement"),
-    guardNumber: queryLabelList("nl_guard_number"),
-    guardAttribute: queryLabelList("nl_guard_attribute"),
-    attackAttribute: queryLabelList("nl_attack_attribute"),
+    offensive: queryLexiconNamesByParentLexiconIds(["attack_types"]),
+    action: queryLexiconNamesByParentLexiconIds(["preparations"]),
+    defensive: queryLexiconNamesByParentLexiconIds(["defensive_actions"]),
+    target: queryLexiconNamesByParentLexiconIds(["target_zones"]),
+    movement: queryLexiconNamesByParentLexiconIds(["movements"]),
+    movementComplement: queryLexiconNamesByParentLexiconIds([
+      "movement_complements",
+    ]),
+    guardNumber: queryLexiconNamesByParentLexiconIds(["positions"]),
+    guardAttribute: queryLexiconNamesByParentLexiconIds([
+      "position_complements",
+    ]),
+    attackAttribute: queryLexiconNamesByParentLexiconIds([
+      "attack_complements",
+    ]),
   };
 }
 
@@ -757,6 +779,23 @@ function isHeaderRow(columns) {
   );
 }
 
+function getHeaderBlockStarts(columns) {
+  const starts = [];
+  for (let index = 0; index < columns.length; index += 1) {
+    if (normalizeText(columns[index]) === "offensive") starts.push(index);
+  }
+  return starts;
+}
+
+function normalizePerformerNameCell(value, fallbackIndex) {
+  const cleaned = cleanCell(value);
+  const normalized = normalizeText(cleaned);
+  if (!cleaned) return `Tireur ${fallbackIndex + 1}`;
+  if (/^t\d+$/i.test(cleaned)) return `Tireur ${fallbackIndex + 1}`;
+  if (normalized === "offensive") return `Tireur ${fallbackIndex + 1}`;
+  return cleaned;
+}
+
 function parseCsvRows(csvPath) {
   const raw = fs.readFileSync(csvPath, "utf8");
   return raw.split(/\n/).map((line) => line.split(";").map(cleanCell));
@@ -941,8 +980,9 @@ function main() {
     totalSequences: 0,
   };
 
-  let pendingPerformerNames = null;
   let performerNames = null;
+  let currentBlockStarts = [];
+  let maxPerformerCount = 0;
   const sequences = [];
   let currentSequence = null;
   let sequenceCount = 0;
@@ -963,26 +1003,29 @@ function main() {
     currentSequence = null;
   }
 
-  for (const columns of rows) {
+  for (let rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
+    const columns = rows[rowIndex];
     const padded = [...columns];
     while (padded.length < 16) padded.push("");
 
-    if (isNamesRow(padded)) {
-      pendingPerformerNames = [cleanCell(padded[1]), cleanCell(padded[9])];
-      continue;
-    }
-
-    if (isHeaderRow(padded)) {
+    const blockStarts = getHeaderBlockStarts(padded);
+    if (blockStarts.length >= 2) {
       closeSequence();
       openSequence();
-      if (!performerNames && pendingPerformerNames) {
-        performerNames = pendingPerformerNames;
+      currentBlockStarts = blockStarts;
+      maxPerformerCount = Math.max(maxPerformerCount, currentBlockStarts.length);
+      const previousRow = rows[rowIndex - 1] ?? [];
+      const namesFromHeader = currentBlockStarts.map((start, index) =>
+        normalizePerformerNameCell(previousRow[start], index),
+      );
+      if (!performerNames || performerNames.length < namesFromHeader.length) {
+        performerNames = namesFromHeader;
       }
-      pendingPerformerNames = null;
       continue;
     }
 
     if (!currentSequence) continue;
+    if (!currentBlockStarts.length) continue;
 
     const nonEmptyCount = padded.reduce(
       (total, value) => total + (String(value ?? "").trim() ? 1 : 0),
@@ -990,21 +1033,22 @@ function main() {
     );
     if (nonEmptyCount === 0) continue;
 
-    const leftBlock = extractBlock(padded, 1);
-    const rightBlock = extractBlock(padded, 9);
+    const stepPerformers = currentBlockStarts.map((start) =>
+      mapBlockToStepPerformer(extractBlock(padded, start), context, stats),
+    );
+    while (stepPerformers.length < maxPerformerCount) {
+      stepPerformers.push(createEmptyStepPerformer());
+    }
 
-    const leftPerformer = mapBlockToStepPerformer(leftBlock, context, stats);
-    const rightPerformer = mapBlockToStepPerformer(rightBlock, context, stats);
-
-    if (isPerformerEmpty(leftPerformer) && isPerformerEmpty(rightPerformer)) {
+    if (stepPerformers.every((performer) => isPerformerEmpty(performer))) {
       continue;
     }
 
     currentSequence.steps.push({
       id: randomUUID(),
       lexicon: "classic-v2",
-      performers: [leftPerformer, rightPerformer],
-      participants: [leftPerformer, rightPerformer],
+      performers: stepPerformers,
+      participants: stepPerformers,
     });
     stats.totalSteps += 1;
   }
@@ -1016,9 +1060,15 @@ function main() {
   );
   stats.totalSequences = finalSequences.length;
 
-  const resolvedPerformerNames = ensureArray(performerNames).length
-    ? performerNames
-    : ["Tireur 1", "Tireur 2"];
+  const resolvedPerformerCount = Math.max(
+    maxPerformerCount,
+    ensureArray(performerNames).length,
+    2,
+  );
+  const resolvedPerformerNames = Array.from({ length: resolvedPerformerCount }, (_, index) =>
+    String(ensureArray(performerNames)[index] ?? `Tireur ${index + 1}`).trim() ||
+      `Tireur ${index + 1}`,
+  );
   const performers = resolvedPerformerNames.map((name, index) => ({
     name: String(name || `Tireur ${index + 1}`).trim() || `Tireur ${index + 1}`,
     weapon: "",

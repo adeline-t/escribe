@@ -45,6 +45,7 @@
     "db:migrate:status:local": "npx wrangler d1 migrations list escribe-dev --config backend/worker/wrangler.toml --env=local --local",
     "db:migrate:status:dev": "npx wrangler d1 migrations list escribe-dev --config backend/worker/wrangler.toml --env=dev",
     "db:migrate:status:prod": "npx wrangler d1 migrations list escribe --config backend/worker/wrangler.toml --env=\"\" --remote",
+    "test:step-flow": "node scripts/test-step-flow.mjs",
     "build": "node scripts/bump-frontend-version.mjs && vite build",
     "version:front:minor": "node scripts/bump-frontend-version.mjs --minor",
     "version:front:major": "node scripts/bump-frontend-version.mjs --major",

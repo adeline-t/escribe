@@ -15,6 +15,7 @@ import {
   labelForPerformer,
   normalizeHiddenPerformerIndexes,
 } from "../../lib/performers.js";
+import { hasPerformerStepContent } from "../../lib/stepContent.js";
 import { resolveSequenceName } from "../../../../shared/sequenceModel.js";
 
 export default function PerformanceReading({
@@ -135,75 +136,11 @@ export default function PerformanceReading({
     );
   }
 
-  function hasItemDisplayContent(item) {
-    if (!item || typeof item !== "object") return false;
-    const note = typeof item.note === "string" ? item.note.trim() : "";
-    if (item.mode === "note") {
-      return Boolean(note);
-    }
-    if (item.mode === "choreography") {
-      return Boolean(item.chorePhase || note);
-    }
-    if (note) return true;
-    if (item.role === "attack") {
-      const actionDetails = Array.isArray(item.actionDetails)
-        ? item.actionDetails
-        : [];
-      const hasActionDetails = actionDetails.some(
-        (detail) => detail?.action || detail?.attribute,
-      );
-      return Boolean(
-        item.offensive ||
-          item.action ||
-          item.target ||
-          item.attackMove ||
-          hasActionDetails ||
-          (Array.isArray(item.attackAttribute) && item.attackAttribute.length),
-      );
-    }
-    if (item.role === "preparation") {
-      const actionDetails = Array.isArray(item.actionDetails)
-        ? item.actionDetails
-        : [];
-      const hasActionDetails = actionDetails.some(
-        (detail) => detail?.action || detail?.attribute,
-      );
-      return Boolean(
-        item.preparationAction ||
-          item.action ||
-          item.target ||
-          item.move ||
-          (Array.isArray(item.moveDetails) && item.moveDetails.length) ||
-          item.attackMove ||
-          item.defendMove ||
-          hasActionDetails ||
-          (Array.isArray(item.attackAttribute) && item.attackAttribute.length),
-      );
-    }
-    if (item.role === "defense") {
-      const defenseDetails = Array.isArray(item.defenseDetails)
-        ? item.defenseDetails
-        : [];
-      const hasDefenseDetails = defenseDetails.some(
-        (detail) => detail?.defense || detail?.position || detail?.attribute,
-      );
-      return Boolean(
-        item.defense ||
-          item.defensive ||
-          item.paradeNumber ||
-          item.paradeAttribute ||
-          item.defendMove ||
-          hasDefenseDetails,
-      );
-    }
-    return false;
-  }
-
   function getReadCardType(item) {
-    const hasDisplayContent = hasItemDisplayContent(item);
+    const hasDisplayContent = hasPerformerStepContent(item);
     if (!hasDisplayContent) return null;
     if (item.role === "defense") return "reaction";
-    if (item.role === "preparation") return "preparation";
+    if (item.role === "movement" || item.role === "preparation") return "preparation";
     if (
       item.role === "attack" ||
       item.mode === "choreography" ||
@@ -251,9 +188,9 @@ export default function PerformanceReading({
 
   function getEditCardType(item) {
     if (!item || typeof item !== "object") return null;
-    if (!hasItemDisplayContent(item)) return null;
+    if (!hasPerformerStepContent(item)) return null;
     if (item.role === "attack") return "action";
-    if (item.role === "preparation") return "preparation";
+    if (item.role === "movement" || item.role === "preparation") return "preparation";
     if (item.role === "defense") return "reaction";
     if (item.role === "none" && item.note) return "neutral";
     return null;
@@ -344,12 +281,13 @@ export default function PerformanceReading({
     stepIndex,
     performerIndex,
   }) {
-    const hasDisplayContent = hasItemDisplayContent(item);
+    const hasDisplayContent = hasPerformerStepContent(item);
     const role = item.role;
     const hasCard =
       hasDisplayContent &&
       (role === "attack" ||
         role === "defense" ||
+        role === "movement" ||
         role === "preparation" ||
         (role === "none" && item.note));
 
@@ -368,7 +306,7 @@ export default function PerformanceReading({
       );
     }
 
-    if (role === "preparation" && hasDisplayContent) {
+    if ((role === "movement" || role === "preparation") && hasDisplayContent) {
       return (
         <StepSummaryCard
           type="preparation"
