@@ -12,14 +12,14 @@ export default function PerformanceRightPanels({
 
   return (
     <>
-      <div className="fold">
+      <div className="fold performance-right-read-panel">
         <div className="fold-kicker fold-kicker-row">
           {readingProps?.onToggleInsertionMode ? null : null}
         </div>
         <PerformanceReading mode={mode} {...readingProps} />
       </div>
       {!isReadMode ? (
-        <div className="fold">
+        <div className="fold performance-right-form-panel">
           <div className="panel-header fold-kicker">
             <div className="header-with-badge">
               <div
@@ -49,7 +49,7 @@ export default function PerformanceRightPanels({
           <div
             className={`step-form-panel ${sequenceIndex === 0 && nextStepIndex === 0 ? "step-form-panel--accent" : ""}`}
           >
-            {stepForm}
+            <div className="step-form-scroll-shell">{stepForm}</div>
           </div>
         </div>
       ) : null}

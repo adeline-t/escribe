@@ -29,6 +29,7 @@ export async function handlePerformances(request, env) {
   if (request.method === "GET") {
     const url = new URL(request.url);
     const includeArchived = url.searchParams.get("archived") === "1";
+    const includeLegacyLexicon = url.searchParams.get("includeLegacyLexicon") === "1";
     const rawType = url.searchParams.get("type");
     const performanceType =
       rawType === "sabre-laser"
@@ -42,7 +43,8 @@ export async function handlePerformances(request, env) {
       session.user.id,
       includeArchived,
       performanceType,
-      isSuperAdmin
+      isSuperAdmin,
+      includeLegacyLexicon,
     );
     return jsonResponse({ performances }, 200, corsHeaders);
   }

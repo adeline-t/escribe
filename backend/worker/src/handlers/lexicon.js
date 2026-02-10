@@ -19,7 +19,7 @@ import {
   removeFavorite,
   isFavorite,
 } from "../db.js";
-import { jsonResponse, buildCorsHeaders } from "../utils/http.js";
+import { jsonResponse, buildCorsHeaders, getSecurityHeaders } from "../utils/http.js";
 import { requireAuth, requireRole } from "../auth.js";
 import { logAudit } from "../audit.js";
 
@@ -117,6 +117,48 @@ const FAVORITE_TYPES = {
   "sabre-laser": new Set(Object.keys(SABRE_TYPE_MAP))
 };
 
+const LEXICON_CACHE_TTL_SECONDS = 60 * 60 * 24;
+const LEXICON_CACHE_TTL_MS = LEXICON_CACHE_TTL_SECONDS * 1000;
+const lexiconResponseCache = new Map();
+
+function normalizeLexiconCacheKey(lexiconKey) {
+  return lexiconKey === "classic" ? "classic-v2" : lexiconKey;
+}
+
+function createWeakEtag(value) {
+  let hash = 2166136261;
+  for (let i = 0; i < value.length; i += 1) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return `W/\"${value.length.toString(16)}-${(hash >>> 0).toString(16)}\"`;
+}
+
+function getCachedLexicon(cacheKey) {
+  const entry = lexiconResponseCache.get(cacheKey);
+  if (!entry) return null;
+  if (Date.now() - entry.cachedAt > LEXICON_CACHE_TTL_MS) {
+    lexiconResponseCache.delete(cacheKey);
+    return null;
+  }
+  return entry;
+}
+
+function setCachedLexicon(cacheKey, payloadString) {
+  const etag = createWeakEtag(payloadString);
+  const entry = {
+    payloadString,
+    etag,
+    cachedAt: Date.now(),
+  };
+  lexiconResponseCache.set(cacheKey, entry);
+  return entry;
+}
+
+function invalidateLexiconCache() {
+  lexiconResponseCache.clear();
+}
+
 function getLexiconKey(request, body = null) {
   const url = new URL(request.url);
   const lexiconKey =
@@ -139,11 +181,40 @@ export async function handleLexicon(request, env) {
   const corsHeaders = buildCorsHeaders(request, env);
   if (request.method === "GET") {
     const lexiconKey = getLexiconKey(request);
-    const lexicon =
-      lexiconKey === "classic-v2"
-        ? await getLexicon(env)
-        : await getLexiconByKey(env, lexiconKey);
-    return jsonResponse({ lexicon }, 200, corsHeaders);
+    const cacheKey = normalizeLexiconCacheKey(lexiconKey);
+    const ifNoneMatch = request.headers.get("If-None-Match");
+
+    let cached = getCachedLexicon(cacheKey);
+    if (!cached) {
+      const lexicon =
+        cacheKey === "classic-v2"
+          ? await getLexicon(env)
+          : await getLexiconByKey(env, cacheKey);
+      cached = setCachedLexicon(cacheKey, JSON.stringify({ lexicon }));
+    }
+
+    if (ifNoneMatch && ifNoneMatch === cached.etag) {
+      return new Response(null, {
+        status: 304,
+        headers: {
+          ...corsHeaders,
+          ...getSecurityHeaders(),
+          ETag: cached.etag,
+          "Cache-Control": `private, max-age=${LEXICON_CACHE_TTL_SECONDS}`,
+        },
+      });
+    }
+
+    return new Response(cached.payloadString, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders,
+        ...getSecurityHeaders(),
+        ETag: cached.etag,
+        "Cache-Control": `private, max-age=${LEXICON_CACHE_TTL_SECONDS}`,
+      },
+    });
   }
 
   if (request.method === "POST") {
@@ -158,6 +229,7 @@ export async function handleLexicon(request, env) {
       return jsonResponse({ error: "invalid_lexicon" }, 400, corsHeaders);
     }
     await replaceLexiconByKey(env, lexiconKey, lexicon);
+    invalidateLexiconCache();
     await logAudit(env, "lexicon.replace", session.user.id, null, { lexicon: lexiconKey });
     return jsonResponse({ ok: true }, 200, corsHeaders);
   }

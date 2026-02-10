@@ -948,6 +948,13 @@
   grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
   gap: var(--space-4);
   align-items: start;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.option-grid > * {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .option-grid--wide {
@@ -2024,6 +2031,39 @@ select {
   border-color: var(--accent-attack);
 }
 
+/* Right column split behavior:
+   - Reading panel is clipped to container width.
+   - Form panel scrolls horizontally when content is wider. */
+.performance-right-read-panel {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.performance-right-read-panel .phrase--reading,
+.performance-right-read-panel .combat-reading-readonly,
+.performance-right-read-panel .phrase-block {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.performance-right-form-panel {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.performance-right-form-panel .step-form-panel {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+.performance-right-form-panel .step-form-scroll-shell {
+  width: max-content;
+  min-width: 100%;
+}
+
 .phrase-row {
   position: relative;
 }
@@ -2065,12 +2105,15 @@ select {
   gap: var(--space-2);
   position: relative;
   align-items: stretch;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .phrase-cell {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  min-width: 0;
 }
 
 .phrase-step-number-inline {
@@ -2129,6 +2172,8 @@ select {
   --phrase-column-gap: var(--space-6);
   gap: var(--space-6);
   column-gap: var(--phrase-column-gap);
+  min-width: 0;
+  max-width: 100%;
 }
 
 .phrase--reading .phrase-grid-row {
@@ -2181,6 +2226,7 @@ select {
 .phrase-cell-card-wrap {
   position: relative;
   width: 100%;
+  min-width: 0;
 }
 
 /* Trait horizontal qui relie le point de gauche au point de droite. */
@@ -2327,6 +2373,9 @@ select {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .card-mini-line .tag {
@@ -2358,6 +2407,11 @@ select {
   font-size: 11px;
   line-height: 1.1;
   border: 1px solid transparent;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .tag--target {
@@ -2429,6 +2483,9 @@ select {
   border-radius: var(--radius-3);
   border: 1px solid var(--border-cream-1);
   padding: var(--space-3);
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 /* ============================= */

@@ -49,7 +49,7 @@ const FRONT_ENV =
 
 export default function App() {
   const [page, setPage] = useState("home");
-  const [isMenuCollapsed, setIsMenuCollapsed] = useState(false);
+  const [isMenuCollapsed, setIsMenuCollapsed] = useState(true);
   const bootstrap = useAppBootstrap({
     apiBase: API_BASE,
     tokenKey: TOKEN_KEY,

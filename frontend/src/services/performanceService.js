@@ -4,10 +4,16 @@ function normalizePerformanceType(type) {
 
 export function createPerformanceService(client) {
   return {
-    async listPerformances({ archived = 0, type, signal } = {}) {
+    async listPerformances({
+      archived = 0,
+      type,
+      includeLegacyLexicon = false,
+      signal,
+    } = {}) {
       const path = client.withQuery("/api/performances", {
         archived,
         type,
+        includeLegacyLexicon: includeLegacyLexicon ? 1 : undefined,
       });
       const { response, payload } = await client.requestJson(path, { signal });
       return {

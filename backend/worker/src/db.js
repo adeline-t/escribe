@@ -1174,12 +1174,14 @@ export async function listPerformances(
   userId,
   includeArchived = false,
   performanceType = null,
-  isSuperAdmin = false
+  isSuperAdmin = false,
+  includeLegacyLexicon = false,
 ) {
   await ensureSchema(env);
   const typeFilter = performanceType ? "AND c.type = ?2" : "";
   const archiveFilter = includeArchived ? "" : "AND c.archived = 0";
-  const query = `SELECT DISTINCT c.id, c.name, c.description, c.participants as performers, c.archived, c.updated_at, c.created_at, c.type, c.is_demo, c.user_id,
+  const query = `SELECT DISTINCT c.id, c.name, c.description, c.archived, c.updated_at, c.created_at, c.type, c.is_demo, c.user_id,
+      COALESCE(json_array_length(c.participants), 0) as performers_count,
       (SELECT COUNT(*) FROM performance_sequences cp WHERE cp.performance_id = c.id) as sequence_count,
       CASE WHEN c.user_id = ?1 THEN 1 ELSE 0 END as is_owner,
       CASE WHEN c.user_id = ?1 THEN 'owner' ELSE cs.role END as share_role
@@ -1192,17 +1194,13 @@ export async function listPerformances(
     : env.DB.prepare(query).bind(userId);
   const rows = await stmt.all();
   const results = rows?.results ?? [];
-  const legacyMap = await detectLegacyLexiconByPerformance(
-    env,
-    results.map((row) => row.id)
-  );
+  const legacyMap = includeLegacyLexicon
+    ? await detectLegacyLexiconByPerformance(
+      env,
+      results.map((row) => row.id),
+    )
+    : new Map();
   return results.map((row) => {
-    let performers = [];
-    try {
-      performers = JSON.parse(row.performers);
-    } catch {
-      performers = [];
-    }
     const isDemo = Boolean(row.is_demo);
     const isOwner = Boolean(row.is_owner) || (isSuperAdmin && isDemo);
     return {
@@ -1220,7 +1218,7 @@ export async function listPerformances(
       updatedAt: row.updated_at,
       sequenceCount: Number(row.sequence_count ?? 0),
       hasLegacyLexicon: Boolean(legacyMap.get(row.id)),
-      performersCount: performers.length,
+      performersCount: Number(row.performers_count ?? 0),
     };
   }) ?? [];
 }
@@ -1228,20 +1226,34 @@ export async function listPerformances(
 async function detectLegacyLexiconByPerformance(env, performanceIds) {
   const map = new Map();
   if (!performanceIds?.length) return map;
-  for (const performanceId of performanceIds) {
-    const rows = await env.DB
-      .prepare(
-        `SELECT payload FROM performance_sequences
-         WHERE performance_id = ?1`
-      )
-      .bind(performanceId)
-      .all();
-    const payloads = rows?.results ?? [];
+  const ids = [...new Set(performanceIds.map((id) => Number(id)).filter(Number.isFinite))];
+  if (!ids.length) return map;
+
+  const placeholders = ids.map((_, index) => `?${index + 1}`).join(", ");
+  const rows = await env.DB
+    .prepare(
+      `SELECT performance_id, payload
+       FROM performance_sequences
+       WHERE performance_id IN (${placeholders})`
+    )
+    .bind(...ids)
+    .all();
+
+  const grouped = new Map(ids.map((id) => [id, []]));
+  for (const row of rows?.results ?? []) {
+    const performanceId = Number(row?.performance_id);
+    if (!Number.isFinite(performanceId)) continue;
+    if (!grouped.has(performanceId)) grouped.set(performanceId, []);
+    grouped.get(performanceId).push(row?.payload);
+  }
+
+  for (const performanceId of ids) {
+    const payloads = grouped.get(performanceId) ?? [];
     let hasLegacy = false;
-    for (const row of payloads) {
+    for (const rawPayload of payloads) {
       if (hasLegacy) break;
       try {
-        const payload = JSON.parse(row.payload);
+        const payload = JSON.parse(rawPayload);
         const metadataLexicon = resolveStepLexiconKey(payload?.metadata?.lexicon, {
           fallbackLexicon: "",
         });
