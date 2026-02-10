@@ -1,4 +1,4 @@
-import { buildCorsHeaders, jsonResponse } from "./db.js";
+import { buildCorsHeaders, jsonResponse } from "./utils/http.js";
 import { handleState } from "./handlers/state.js";
 import { handleHealth } from "./handlers/health.js";
 import { handleLexicon, handleLexiconType, handleLexiconPersonal, handleLexiconFavorites } from "./handlers/lexicon.js";

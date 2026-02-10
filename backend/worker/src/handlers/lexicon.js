@@ -18,30 +18,29 @@ import {
   addFavorite,
   removeFavorite,
   isFavorite,
-  jsonResponse,
-  buildCorsHeaders
 } from "../db.js";
+import { jsonResponse, buildCorsHeaders } from "../utils/http.js";
 import { requireAuth, requireRole } from "../auth.js";
 import { logAudit } from "../audit.js";
 
-const NEW_TYPE_MAP = {
-  offensive: "nl_offensive",
-  action: "nl_action",
-  defensive: "nl_defensive",
-  cible: "nl_target",
-  target: "nl_target",
-  deplacement: "nl_movement",
-  movement: "nl_movement",
-  deplacement_complement: "nl_movement_complement",
-  movement_complement: "nl_movement_complement",
-  "movement-complement": "nl_movement_complement",
-  "parade-numero": "nl_guard_number",
-  "guard-number": "nl_guard_number",
-  "parade-attribut": "nl_guard_attribute",
-  "guard-attribute": "nl_guard_attribute",
-  "attaque-attribut": "nl_attack_attribute",
-  "attack-attribute": "nl_attack_attribute"
-};
+const CLASSIC_V2_ALLOWED_TYPES = new Set([
+  "offensive",
+  "action",
+  "defensive",
+  "cible",
+  "target",
+  "deplacement",
+  "movement",
+  "deplacement_complement",
+  "movement_complement",
+  "movement-complement",
+  "parade-numero",
+  "guard-number",
+  "parade-attribut",
+  "guard-attribute",
+  "attaque-attribut",
+  "attack-attribute",
+]);
 
 const NEW_USER_TYPE_MAP = {
   offensive: "user_nl_offensive",
@@ -113,8 +112,8 @@ const SABRE_USER_TYPE_MAP = {
 };
 
 const FAVORITE_TYPES = {
-  classic: new Set(Object.keys(NEW_TYPE_MAP)),
-  "classic-v2": new Set(Object.keys(NEW_TYPE_MAP)),
+  classic: CLASSIC_V2_ALLOWED_TYPES,
+  "classic-v2": CLASSIC_V2_ALLOWED_TYPES,
   "sabre-laser": new Set(Object.keys(SABRE_TYPE_MAP))
 };
 
@@ -128,12 +127,12 @@ function getLexiconKey(request, body = null) {
 
 function getTypeMaps(lexiconKey) {
   if (lexiconKey === "classic-v2" || lexiconKey === "classic") {
-    return { typeMap: NEW_TYPE_MAP, userTypeMap: NEW_USER_TYPE_MAP };
+    return { typeMap: null, userTypeMap: NEW_USER_TYPE_MAP };
   }
   if (lexiconKey === "sabre-laser") {
     return { typeMap: SABRE_TYPE_MAP, userTypeMap: SABRE_USER_TYPE_MAP };
   }
-  return { typeMap: NEW_TYPE_MAP, userTypeMap: NEW_USER_TYPE_MAP };
+  return { typeMap: null, userTypeMap: NEW_USER_TYPE_MAP };
 }
 
 export async function handleLexicon(request, env) {
@@ -166,13 +165,16 @@ export async function handleLexicon(request, env) {
   return jsonResponse({ error: "method_not_allowed" }, 405, corsHeaders);
 }
 
+/** Shared lexicon terms (global scope). */
 export async function handleLexiconType(request, env, params) {
   const type = params?.type;
   const corsHeaders = buildCorsHeaders(request, env);
   const lexiconKey = getLexiconKey(request);
   const { typeMap } = getTypeMaps(lexiconKey);
-  const table = typeMap[type];
-  if (!table) {
+  const table = typeMap?.[type];
+  const isClassicV2 = lexiconKey === "classic-v2" || lexiconKey === "classic";
+  const knownType = isClassicV2 ? CLASSIC_V2_ALLOWED_TYPES.has(type) : Boolean(table);
+  if (!knownType) {
     return jsonResponse({ error: "unknown_type" }, 400, corsHeaders);
   }
 
@@ -231,6 +233,7 @@ export async function handleLexiconType(request, env, params) {
   return jsonResponse({ error: "method_not_allowed" }, 405, corsHeaders);
 }
 
+/** User-specific lexicon overlays (personal scope). */
 export async function handleLexiconPersonal(request, env, params) {
   const type = params?.type;
   const corsHeaders = buildCorsHeaders(request, env);
@@ -278,6 +281,7 @@ export async function handleLexiconPersonal(request, env, params) {
   return jsonResponse({ error: "method_not_allowed" }, 405, corsHeaders);
 }
 
+/** Favorites endpoint for quick-pick terms in UI. */
 export async function handleLexiconFavorites(request, env) {
   const corsHeaders = buildCorsHeaders(request, env);
   const session = await requireAuth(request, env);

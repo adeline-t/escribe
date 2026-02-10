@@ -1,4 +1,4 @@
-import { jsonResponse, buildCorsHeaders } from "../db.js";
+import { jsonResponse, buildCorsHeaders } from "../utils/http.js";
 
 export function handleHealth(request, env) {
   return jsonResponse(

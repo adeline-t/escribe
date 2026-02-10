@@ -1,4 +1,4 @@
-import { jsonResponse, buildCorsHeaders } from "../db.js";
+import { jsonResponse, buildCorsHeaders } from "../utils/http.js";
 import { requireAuth, requireRole, adminResetPassword } from "../auth.js";
 import { logAudit, listAudit } from "../audit.js";
 

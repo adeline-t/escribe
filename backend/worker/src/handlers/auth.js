@@ -6,7 +6,7 @@ import {
   logout,
   updateProfile
 } from "../auth.js";
-import { jsonResponse, buildCorsHeaders } from "../db.js";
+import { jsonResponse, buildCorsHeaders } from "../utils/http.js";
 import { logAudit } from "../audit.js";
 
 export async function handleRegister(request, env) {

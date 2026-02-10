@@ -1,6 +1,4 @@
 import {
-  buildCorsHeaders,
-  jsonResponse,
   listPerformances,
   createPerformance,
   getPerformanceState,
@@ -13,9 +11,16 @@ import {
   listShareUsers,
   listShareUsersAll,
 } from "../db.js";
+import { buildCorsHeaders, jsonResponse } from "../utils/http.js";
 import { requireAuth, requireRole } from "../auth.js";
 import { logAudit } from "../audit.js";
+import { resolvePerformanceAccess } from "./performanceAccess.js";
 
+/**
+ * Collection endpoint for performances.
+ * GET: list accessible performances
+ * POST: create a new performance owned by current user
+ */
 export async function handlePerformances(request, env) {
   const corsHeaders = buildCorsHeaders(request, env);
   const session = await requireAuth(request, env);
@@ -55,6 +60,11 @@ export async function handlePerformances(request, env) {
   return jsonResponse({ error: "method_not_allowed" }, 405, corsHeaders);
 }
 
+/**
+ * Item endpoint for a single performance.
+ * GET: load complete state
+ * POST: update metadata (name/description/performers)
+ */
 export async function handlePerformance(request, env, params) {
   const corsHeaders = buildCorsHeaders(request, env);
   const session = await requireAuth(request, env);
@@ -106,6 +116,7 @@ export async function handlePerformance(request, env, params) {
   return jsonResponse({ error: "method_not_allowed" }, 405, corsHeaders);
 }
 
+/** Toggles archive status on a performance (owner/superadmin demo). */
 export async function handlePerformanceArchive(request, env, params) {
   const corsHeaders = buildCorsHeaders(request, env);
   const session = await requireAuth(request, env);
@@ -115,20 +126,13 @@ export async function handlePerformanceArchive(request, env, params) {
   if (!Number.isFinite(performanceId)) {
     return jsonResponse({ error: "invalid_id" }, 400, corsHeaders);
   }
-  const ownerRow = await env.DB.prepare(
-    "SELECT id, user_id, is_demo FROM performances WHERE id = ?1"
-  )
-    .bind(performanceId)
-    .first();
-  const isSuperAdmin = requireRole(session, ["superadmin"]);
-  const isOwner = ownerRow?.user_id === session.user.id;
-  const isDemo = Boolean(ownerRow?.is_demo);
-  if (!ownerRow?.id || (!isOwner && !(isSuperAdmin && isDemo))) {
+  const access = await resolvePerformanceAccess(env, session, performanceId);
+  if (!access.canManage) {
     return jsonResponse({ error: "forbidden" }, 403, corsHeaders);
   }
   const body = await request.json().catch(() => null);
   const archived = Boolean(body?.archived);
-  const ownerId = isOwner ? session.user.id : ownerRow.user_id;
+  const ownerId = access.ownerId;
   await archivePerformance(env, ownerId, performanceId, archived);
   await logAudit(env, "performance.archive", session.user.id, performanceId, {
     archived,
@@ -136,6 +140,7 @@ export async function handlePerformanceArchive(request, env, params) {
   return jsonResponse({ ok: true }, 200, corsHeaders);
 }
 
+/** Deletes a performance (or archives when it contains multiple sequences). */
 export async function handlePerformanceDelete(request, env, params) {
   const corsHeaders = buildCorsHeaders(request, env);
   const session = await requireAuth(request, env);
@@ -145,19 +150,12 @@ export async function handlePerformanceDelete(request, env, params) {
   if (!Number.isFinite(performanceId)) {
     return jsonResponse({ error: "invalid_id" }, 400, corsHeaders);
   }
-  const ownerRow = await env.DB.prepare(
-    "SELECT id, user_id, is_demo FROM performances WHERE id = ?1"
-  )
-    .bind(performanceId)
-    .first();
-  const isSuperAdmin = requireRole(session, ["superadmin"]);
-  const isOwner = ownerRow?.user_id === session.user.id;
-  const isDemo = Boolean(ownerRow?.is_demo);
-  if (!ownerRow?.id || (!isOwner && !(isSuperAdmin && isDemo))) {
+  const access = await resolvePerformanceAccess(env, session, performanceId);
+  if (!access.canManage) {
     return jsonResponse({ error: "forbidden" }, 403, corsHeaders);
   }
 
-  const ownerId = isOwner ? session.user.id : ownerRow.user_id;
+  const ownerId = access.ownerId;
   const result = await deletePerformance(env, ownerId, performanceId);
   await logAudit(env, "performance.delete", session.user.id, performanceId, {
     mode: result.mode,
@@ -165,6 +163,7 @@ export async function handlePerformanceDelete(request, env, params) {
   return jsonResponse({ ok: true, mode: result.mode }, 200, corsHeaders);
 }
 
+/** CRUD endpoint for sharing a performance with other users. */
 export async function handlePerformanceShares(request, env, params) {
   const corsHeaders = buildCorsHeaders(request, env);
   const session = await requireAuth(request, env);
@@ -175,20 +174,13 @@ export async function handlePerformanceShares(request, env, params) {
     return jsonResponse({ error: "invalid_id" }, 400, corsHeaders);
   }
 
-  const ownerRow = await env.DB.prepare(
-    "SELECT id, user_id, is_demo FROM performances WHERE id = ?1"
-  )
-    .bind(performanceId)
-    .first();
-  const isSuperAdmin = requireRole(session, ["superadmin"]);
-  const isOwner = ownerRow?.user_id === session.user.id;
-  const isDemo = Boolean(ownerRow?.is_demo);
-  if (!ownerRow?.id || (!isOwner && !(isSuperAdmin && isDemo))) {
+  const access = await resolvePerformanceAccess(env, session, performanceId);
+  if (!access.canManage) {
     return jsonResponse({ error: "forbidden" }, 403, corsHeaders);
   }
 
   if (request.method === "GET") {
-    const ownerId = isOwner ? session.user.id : ownerRow.user_id;
+    const ownerId = access.ownerId;
     const shares = await listPerformanceShares(env, ownerId, performanceId);
     return jsonResponse({ shares }, 200, corsHeaders);
   }
@@ -200,7 +192,7 @@ export async function handlePerformanceShares(request, env, params) {
     if (!Number.isFinite(sharedUserId) || sharedUserId === session.user.id) {
       return jsonResponse({ error: "invalid_payload" }, 400, corsHeaders);
     }
-    const ownerId = isOwner ? session.user.id : ownerRow.user_id;
+    const ownerId = access.ownerId;
     await addPerformanceShare(env, ownerId, performanceId, sharedUserId, role);
     await logAudit(env, "performance.share.add", session.user.id, performanceId, {
       sharedUserId,
@@ -216,7 +208,7 @@ export async function handlePerformanceShares(request, env, params) {
     if (!Number.isFinite(sharedUserId)) {
       return jsonResponse({ error: "invalid_payload" }, 400, corsHeaders);
     }
-    const ownerId = isOwner ? session.user.id : ownerRow.user_id;
+    const ownerId = access.ownerId;
     await removePerformanceShare(env, ownerId, performanceId, sharedUserId);
     await logAudit(env, "performance.share.remove", session.user.id, performanceId, {
       sharedUserId,
@@ -228,6 +220,7 @@ export async function handlePerformanceShares(request, env, params) {
   return jsonResponse({ error: "method_not_allowed" }, 405, corsHeaders);
 }
 
+/** Search users for sharing. */
 export async function handleShareUsers(request, env) {
   const corsHeaders = buildCorsHeaders(request, env);
   const session = await requireAuth(request, env);
@@ -245,6 +238,7 @@ export async function handleShareUsers(request, env) {
   return jsonResponse({ users }, 200, corsHeaders);
 }
 
+/** List all users for sharing UI. */
 export async function handleShareUsersAll(request, env) {
   const corsHeaders = buildCorsHeaders(request, env);
   const session = await requireAuth(request, env);

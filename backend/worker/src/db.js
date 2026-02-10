@@ -1,50 +1,28 @@
-export function getSecurityHeaders() {
-  return {
-    "X-Content-Type-Options": "nosniff",
-    "X-Frame-Options": "DENY",
-    "X-XSS-Protection": "1; mode=block",
-    "Strict-Transport-Security": "max-age=31536000; includeSubDomains"
-  };
-}
-
-export function jsonResponse(data, status = 200, headers = {}) {
-  const defaultHeaders = {
-    "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Access-Control-Max-Age": "86400",
-    ...getSecurityHeaders()
-  };
-
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { ...defaultHeaders, ...headers }
-  });
-}
-
-export function buildCorsHeaders(request, env) {
-  const origin = request.headers.get("Origin") ?? "";
-  const allowed = env.CORS_ORIGIN
-    ? env.CORS_ORIGIN.split(",").map((item) => item.trim())
-    : ["*"];
-  const allowOrigin = allowed.includes("*")
-    ? "*"
-    : allowed.includes(origin)
-      ? origin
-      : allowed[0] || "";
-
-  return {
-    "Access-Control-Allow-Origin": allowOrigin,
-    "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Access-Control-Max-Age": "86400",
-    ...getSecurityHeaders()
-  };
-}
-
 import seedSabreLexicon from "./lexicon-sabre-laser.seed.json";
 import seedRecursiveLexicon from "./lexicon-recursive.seed.json";
+import {
+  getSecurityHeaders,
+  jsonResponse,
+  buildCorsHeaders,
+} from "./utils/http.js";
+import {
+  normalizeStepMode,
+  normalizePerformerIdentityList,
+  buildPerformerIdToIndexMap,
+} from "./utils/performers.js";
+import {
+  splitDelimitedValue,
+  normalizeLexiconLabel,
+  hasStorageTerm,
+  resolveStorageTermName,
+  resolveStorageTermRef,
+  resolveStorageTerms,
+  resolveStorageTermRefs,
+  buildStepLexiconFieldLookup,
+  resolveLexiconToken,
+  resolveDelimitedLexiconTokens,
+  resolveLexiconArray,
+} from "./utils/lexicon.js";
 import {
   createDefaultPerformancePerformers,
   DEFAULT_PERFORMANCE_NAME,
@@ -59,11 +37,18 @@ import {
   resolveStepLexiconKey,
 } from "../../../shared/stepModel.js";
 
+export { getSecurityHeaders, jsonResponse, buildCorsHeaders };
+
 let schemaReady = false;
 let lexiconReady = false;
 let lexiconSeeded = false;
 let lexiconSoftDeleteSupport = null;
 
+/**
+ * Mapping buckets used to derive the legacy classic-v2 flat lists from the
+ * recursive lexicon tree. Each bucket points to acceptable ancestor IDs.
+ * This preserves backward compatibility with older front payloads.
+ */
 const CLASSIC_V2_TREE_BUCKET_MARKERS = {
   offensive: new Set(["attack_types", "attaques"]),
   action: new Set([
@@ -189,13 +174,10 @@ const CLASSIC_V2_COMPAT_ID_BY_PARENT = {
   },
 };
 
-function splitDelimitedValue(value) {
-  return String(value ?? "")
-    .split(" · ")
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
+/**
+ * Sequence payload schema version stored in performance_sequences.payload.metadata.
+ * Bump only when payload shape changes in a non backward-compatible way.
+ */
 const SEQUENCE_SCHEMA_VERSION = "2.0";
 
 const GENERIC_ATTACK_MARKERS = new Set([
@@ -204,49 +186,6 @@ const GENERIC_ATTACK_MARKERS = new Set([
   "preparation",
   "préparation",
 ]);
-
-function normalizeStepMode(mode) {
-  return mode === "choregraphie" ? "choreography" : mode;
-}
-
-function normalizePerformerIdentity(performer, index = 0) {
-  if (typeof performer === "string") {
-    return {
-      id: crypto.randomUUID(),
-      name: performer,
-      weapon: "",
-    };
-  }
-  const safe = performer && typeof performer === "object" ? performer : {};
-  const id =
-    typeof safe.id === "string" && safe.id.trim()
-      ? safe.id.trim()
-      : crypto.randomUUID();
-  const fallbackName = String.fromCharCode(65 + (index % 26));
-  const name =
-    typeof safe.name === "string" && safe.name.trim()
-      ? safe.name
-      : fallbackName;
-  const weapon = typeof safe.weapon === "string" ? safe.weapon : "";
-  return { ...safe, id, name, weapon };
-}
-
-function normalizePerformerIdentityList(performers) {
-  if (!Array.isArray(performers)) return [];
-  return performers.map((performer, index) =>
-    normalizePerformerIdentity(performer, index),
-  );
-}
-
-function buildPerformerIdToIndexMap(performers) {
-  const byId = new Map();
-  for (let index = 0; index < performers.length; index += 1) {
-    const id = String(performers[index]?.id ?? "").trim();
-    if (!id || byId.has(id)) continue;
-    byId.set(id, index);
-  }
-  return byId;
-}
 
 function dedupeLexiconTerms(terms) {
   const seen = new Set();
@@ -545,62 +484,6 @@ function legacyPerformerToStoragePerformer(performer, lexiconReferenceIndex) {
     movement,
     note: typeof safe.note === "string" ? safe.note : "",
   };
-}
-
-function hasStorageTerm(term) {
-  if (!term || typeof term !== "object") return false;
-  const name = String(term.name ?? "").trim();
-  const lexiconId = String(term.lexicon_id ?? "").trim();
-  if (name || lexiconId) return true;
-  return false;
-}
-
-function resolveStorageTermName(term, lexiconNameById = null) {
-  if (!term || typeof term !== "object") return "";
-  const lexiconId = String(term.lexicon_id ?? "").trim();
-  const storedName = String(term.name ?? "").trim();
-  if (lexiconId && lexiconNameById?.has(lexiconId)) {
-    const resolved = String(lexiconNameById.get(lexiconId) ?? "").trim();
-    if (resolved) return resolved;
-  }
-  return storedName;
-}
-
-function resolveStorageTermRef(term, lexiconNameById = null) {
-  if (!term || typeof term !== "object") return null;
-  const lexiconId = String(term.lexicon_id ?? "").trim();
-  const name = resolveStorageTermName(term, lexiconNameById);
-  if (!lexiconId && !name) return null;
-  return { lexicon_id: lexiconId || null, name };
-}
-
-function resolveStorageTerms(termList, lexiconNameById = null) {
-  if (!Array.isArray(termList)) return [];
-  const out = [];
-  const seen = new Set();
-  for (const term of termList) {
-    const name = resolveStorageTermName(term, lexiconNameById);
-    const key = normalizeLexiconLabel(name);
-    if (!key || seen.has(key)) continue;
-    seen.add(key);
-    out.push(name);
-  }
-  return out;
-}
-
-function resolveStorageTermRefs(termList, lexiconNameById = null) {
-  if (!Array.isArray(termList)) return [];
-  const out = [];
-  const seen = new Set();
-  for (const term of termList) {
-    const ref = resolveStorageTermRef(term, lexiconNameById);
-    if (!ref) continue;
-    const key = `${ref.lexicon_id ?? "null"}|${normalizeLexiconLabel(ref.name)}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(ref);
-  }
-  return out;
 }
 
 function inferLegacyRoleFromStoragePerformer({
@@ -980,6 +863,10 @@ function buildSequencePayload(
   };
 }
 
+/**
+ * Ensures core performance tables are available.
+ * This guard fails fast when migrations were not applied.
+ */
 export async function ensureSchema(env) {
   if (schemaReady) return;
   const required = ["performances", "performance_sequences", "performance_shares"];
@@ -996,6 +883,10 @@ export async function ensureSchema(env) {
   schemaReady = true;
 }
 
+/**
+ * Ensures all lexicon tables (classic + sabre + user overlays) are available.
+ * Used by lexicon CRUD and by sequence hydration paths.
+ */
 export async function ensureLexiconSchema(env) {
   if (lexiconReady) return;
   const required = [
@@ -1078,6 +969,10 @@ async function ensureLexiconSeeded(env) {
   lexiconSeeded = true;
 }
 
+/**
+ * Reads a full performance state including performers, draft form and sequences.
+ * It transparently supports both legacy and v2 sequence payloads.
+ */
 export async function getPerformanceState(
   env,
   userId,
@@ -1234,6 +1129,10 @@ export async function getPerformanceState(
   };
 }
 
+/**
+ * Returns the requested performance state, or the latest non-archived one.
+ * Used by initial app bootstrap.
+ */
 export async function getState(
   env,
   userId,
@@ -1266,6 +1165,10 @@ export async function getState(
   return getPerformanceState(env, userId, performance.id, isSuperAdmin);
 }
 
+/**
+ * Lists accessible performances for a user (owner, shared, demos).
+ * Includes summary counters and legacy lexicon detection.
+ */
 export async function listPerformances(
   env,
   userId,
@@ -1545,6 +1448,10 @@ export async function listShareUsersAll(env, userId) {
   return rows?.results ?? [];
 }
 
+/**
+ * Persists the whole front state snapshot.
+ * If explicit sequences are provided, existing sequences are replaced atomically.
+ */
 export async function saveState(env, userId, state, isSuperAdmin = false) {
   await ensureSchema(env);
   const now = new Date().toISOString();
@@ -1934,15 +1841,6 @@ const LEXICON_TABLES = {
     deplacements: "sl_movements"
   }
 };
-
-function normalizeLexiconLabel(value) {
-  return String(value ?? "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .toLowerCase();
-}
 
 function isRecursiveLexiconPayload(lexicon) {
   if (!lexicon || typeof lexicon !== "object" || Array.isArray(lexicon)) {
@@ -2422,56 +2320,6 @@ async function getLexiconNameByIdMap(env) {
     map.set(lexiconId, name);
   }
   return map;
-}
-
-function buildStepLexiconFieldLookup(lexiconRefs, lexiconNameById) {
-  const byField = new Map();
-  if (!Array.isArray(lexiconRefs)) return byField;
-  for (const ref of lexiconRefs) {
-    const field = String(ref?.field ?? "").trim();
-    if (!field) continue;
-    const storedName = String(ref?.name ?? "").trim();
-    const resolvedById = ref?.lexicon_id
-      ? String(lexiconNameById?.get(ref.lexicon_id) ?? "").trim()
-      : "";
-    const resolvedName = resolvedById || storedName;
-    if (!resolvedName) continue;
-    let fieldMap = byField.get(field);
-    if (!fieldMap) {
-      fieldMap = new Map();
-      byField.set(field, fieldMap);
-    }
-    const keys = [
-      normalizeLexiconLabel(storedName),
-      normalizeLexiconLabel(resolvedName),
-    ].filter(Boolean);
-    for (const key of keys) {
-      if (!fieldMap.has(key)) fieldMap.set(key, resolvedName);
-    }
-  }
-  return byField;
-}
-
-function resolveLexiconToken(fieldLookup, field, value) {
-  const raw = String(value ?? "").trim();
-  if (!raw) return raw;
-  const key = normalizeLexiconLabel(raw);
-  const fieldMap = fieldLookup.get(field);
-  if (!fieldMap || !fieldMap.has(key)) return raw;
-  return fieldMap.get(key) ?? raw;
-}
-
-function resolveDelimitedLexiconTokens(fieldLookup, field, value) {
-  const tokens = splitDelimitedValue(value);
-  if (!tokens.length) return String(value ?? "").trim();
-  return tokens
-    .map((token) => resolveLexiconToken(fieldLookup, field, token))
-    .join(" · ");
-}
-
-function resolveLexiconArray(fieldLookup, field, values) {
-  if (!Array.isArray(values)) return [];
-  return values.map((value) => resolveLexiconToken(fieldLookup, field, value));
 }
 
 function hydratePerformerLabelsFromLexiconRefs(performer, lexiconNameById) {

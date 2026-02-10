@@ -1,7 +1,12 @@
-import { getState, saveState, jsonResponse, buildCorsHeaders } from "../db.js";
+import { getState, saveState } from "../db.js";
+import { jsonResponse, buildCorsHeaders } from "../utils/http.js";
 import { requireAuth, requireRole } from "../auth.js";
 import { logAudit } from "../audit.js";
 
+/**
+ * Unified state endpoint used by the frontend editor.
+ * GET returns full state, POST persists draft + sequences.
+ */
 export async function handleState(request, env) {
   const corsHeaders = buildCorsHeaders(request, env);
   const session = await requireAuth(request, env);
