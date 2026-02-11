@@ -22,65 +22,27 @@ function normalizeLookupToken(value) {
     .toLowerCase();
 }
 
-function getLexiconNodeName(node) {
-  return String(node?.nom ?? node?.name ?? node?.label ?? "").trim();
-}
-
-function getLexiconNodeChildren(node) {
-  const children = [];
-  if (Array.isArray(node?.children)) children.push(...node.children);
-  if (Array.isArray(node?.categories)) children.push(...node.categories);
-  if (Array.isArray(node?.sous_categories)) children.push(...node.sous_categories);
-  if (Array.isArray(node?.elements)) children.push(...node.elements);
-  return children;
-}
-
-function buildLexiconCatalog(rawLexicon) {
-  if (!rawLexicon || typeof rawLexicon !== "object") {
+function buildLexiconCatalog(normalizedLexicon) {
+  if (!normalizedLexicon || typeof normalizedLexicon !== "object") {
     return { termById: {}, termByName: {}, categories: [] };
   }
-  const root =
-    rawLexicon?.lexicon && typeof rawLexicon.lexicon === "object"
-      ? rawLexicon.lexicon
-      : rawLexicon;
-  const rootChildren = getLexiconNodeChildren(root);
+  const termEntries = Object.values(normalizedLexicon?.termById ?? {});
   const termById = {};
   const termByName = {};
   const categorySet = new Set();
-
-  function visit(node, topCategory) {
-    if (!node || typeof node !== "object") return;
-    const nodeId = String(node.id ?? node.lexicon_id ?? "").trim();
-    const label = getLexiconNodeName(node);
-    const description = String(
-      node.description ??
-        node.definition ??
-        (Array.isArray(node.details) ? node.details.join(" · ") : ""),
-    ).trim();
-    const children = getLexiconNodeChildren(node);
+  for (const node of termEntries) {
+    const nodeId = String(node?.id ?? "").trim();
+    const label = String(node?.label ?? "").trim();
+    if (!nodeId || !label) continue;
+    const category = String(node?.type ?? "autres").trim() || "autres";
+    const description = String(node?.description ?? "").trim();
+    const entry = { id: nodeId, label, description, category };
     const normalizedName = normalizeLookupToken(label);
-    if (topCategory) categorySet.add(topCategory);
-    if (nodeId && label) {
-      const entry = {
-        id: nodeId,
-        label,
-        description,
-        category: topCategory || "autres",
-      };
-      if (!termById[nodeId]) termById[nodeId] = entry;
-      if (normalizedName && !termByName[normalizedName]) {
-        termByName[normalizedName] = entry;
-      }
+    categorySet.add(category);
+    if (!termById[nodeId]) termById[nodeId] = entry;
+    if (normalizedName && !termByName[normalizedName]) {
+      termByName[normalizedName] = entry;
     }
-    for (const child of children) {
-      const childCategory = topCategory || label || "autres";
-      visit(child, childCategory);
-    }
-  }
-
-  for (const child of rootChildren) {
-    const categoryName = getLexiconNodeName(child) || "autres";
-    visit(child, categoryName);
   }
 
   return {
@@ -102,7 +64,6 @@ export default function PerformanceFormPage({
   performerLabels,
   normalizedLexicon,
   lexiconByKey,
-  rawLexiconByKey,
   favorites,
   favoritesByLexicon,
   lexiconKey,
@@ -187,13 +148,9 @@ export default function PerformanceFormPage({
       : resolvedLexicon;
   const resolveCurrentTermLabel = (type, value) =>
     resolveLexiconTermLabel(resolvedLexicon, value, type);
-  const rawActiveLexicon =
-    rawLexiconByKey && activeLexiconKey
-      ? (rawLexiconByKey[activeLexiconKey] ?? null)
-      : null;
   const lexiconCatalog = useMemo(
-    () => buildLexiconCatalog(rawActiveLexicon),
-    [rawActiveLexicon],
+    () => buildLexiconCatalog(resolvedLexicon),
+    [resolvedLexicon],
   );
 
   const uiLabels = { ...PERFORMANCE_UI_LABELS, ...labels };

@@ -47,26 +47,26 @@ const CLASSIC_V2_ALLOWED_TYPES = new Set([
 ]);
 
 const NEW_USER_TYPE_MAP = {
-  offensive: "user_nl_offensive",
-  action: "user_nl_action",
-  defensive: "user_nl_defensive",
-  cible: "user_nl_target",
-  target: "user_nl_target",
-  deplacement: "user_nl_movement",
-  movement: "user_nl_movement",
-  deplacement_complement: "user_nl_movement_complement",
-  movement_complement: "user_nl_movement_complement",
-  "movement-complement": "user_nl_movement_complement",
-  "parade-numero": "user_nl_guard_number",
-  "guard-number": "user_nl_guard_number",
-  "parade-attribut": "user_nl_guard_attribute",
-  "guard-attribute": "user_nl_guard_attribute",
-  "defense-attribut": "user_nl_guard_attribute",
-  "defense-attribute": "user_nl_guard_attribute",
-  attributs_defense: "user_nl_guard_attribute",
-  attributs_defensifs: "user_nl_guard_attribute",
-  "attaque-attribut": "user_nl_attack_attribute",
-  "attack-attribute": "user_nl_attack_attribute"
+  offensive: "user_lexicon_classic:offensive",
+  action: "user_lexicon_classic:action",
+  defensive: "user_lexicon_classic:defensive",
+  cible: "user_lexicon_classic:cible",
+  target: "user_lexicon_classic:target",
+  deplacement: "user_lexicon_classic:deplacement",
+  movement: "user_lexicon_classic:movement",
+  deplacement_complement: "user_lexicon_classic:deplacement_complement",
+  movement_complement: "user_lexicon_classic:movement_complement",
+  "movement-complement": "user_lexicon_classic:movement-complement",
+  "parade-numero": "user_lexicon_classic:parade-numero",
+  "guard-number": "user_lexicon_classic:guard-number",
+  "parade-attribut": "user_lexicon_classic:parade-attribut",
+  "guard-attribute": "user_lexicon_classic:guard-attribute",
+  "defense-attribut": "user_lexicon_classic:defense-attribut",
+  "defense-attribute": "user_lexicon_classic:defense-attribute",
+  attributs_defense: "user_lexicon_classic:attributs_defense",
+  attributs_defensifs: "user_lexicon_classic:attributs_defensifs",
+  "attaque-attribut": "user_lexicon_classic:attaque-attribut",
+  "attack-attribute": "user_lexicon_classic:attack-attribute"
 };
 
 const SABRE_TYPE_MAP = {
@@ -130,6 +130,369 @@ const FAVORITE_TYPES = {
   "classic-v2": CLASSIC_V2_ALLOWED_TYPES,
   "sabre-laser": new Set(Object.keys(SABRE_TYPE_MAP))
 };
+
+const CLASSIC_V2_CATALOG_TYPES = [
+  "offensive",
+  "attaque-attribut",
+  "cible",
+  "defensive",
+  "defense-attribut",
+  "parade-numero",
+  "parade-attribut",
+  "action",
+  "deplacement",
+  "deplacement_complement",
+];
+
+const SABRE_CATALOG_TYPES = [
+  "cibles",
+  "postures_base",
+  "garde_principale",
+  "deplacements",
+  "actions_offensives",
+  "attributs_attaque",
+  "actions_defensives",
+  "attributs_defense",
+  "preparations",
+  "armes",
+];
+
+const TYPE_ALIASES = {
+  offensive: ["offensive"],
+  action: ["action"],
+  defensive: ["defensive"],
+  target: ["target", "cible"],
+  deplacement: ["deplacement", "movement"],
+  deplacement_complement: [
+    "deplacement_complement",
+    "movement_complement",
+    "movement-complement",
+  ],
+  parade_numero: ["parade_numero", "parade-numero", "guard-number"],
+  parade_attribut: ["parade_attribut", "parade-attribut", "guard-attribute"],
+  defense_attribut: [
+    "defense_attribut",
+    "defense-attribut",
+    "defense-attribute",
+    "attributs_defense",
+    "attributs_defensifs",
+  ],
+  attaque_attribut: [
+    "attaque_attribut",
+    "attaque-attribut",
+    "attack-attribute",
+  ],
+  garde_principale: ["garde_principale"],
+  postures_base: ["postures_base"],
+  armes: ["armes", "weapons"],
+};
+
+function normalizeLookupToken(value) {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[’']/g, "'")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function normalizeLexiconId(value, fallbackPrefix = "legacy") {
+  const explicit = String(value ?? "").trim();
+  if (explicit) return explicit;
+  return `${fallbackPrefix}:${crypto.randomUUID()}`;
+}
+
+function normalizeCatalogItem(item, fallbackPrefix = "legacy") {
+  const label = String(item?.label ?? item?.name ?? "").trim();
+  if (!label) return null;
+  return {
+    id: Number(item?.id ?? 0) || 0,
+    label,
+    description:
+      item?.description == null ? "" : String(item.description).trim(),
+    lexicon_id: normalizeLexiconId(item?.lexicon_id, fallbackPrefix),
+  };
+}
+
+function mergeItemsByLabel(primaryItems, secondaryItems) {
+  const out = [];
+  const byLabel = new Map();
+  for (const raw of primaryItems ?? []) {
+    const item = normalizeCatalogItem(raw);
+    if (!item) continue;
+    const key = normalizeLookupToken(item.label);
+    if (!key || byLabel.has(key)) continue;
+    byLabel.set(key, out.length);
+    out.push(item);
+  }
+  for (const raw of secondaryItems ?? []) {
+    const item = normalizeCatalogItem(raw);
+    if (!item) continue;
+    const key = normalizeLookupToken(item.label);
+    if (!key) continue;
+    if (!byLabel.has(key)) {
+      byLabel.set(key, out.length);
+      out.push(item);
+      continue;
+    }
+    const index = byLabel.get(key);
+    const existing = out[index];
+    if (!existing.description && item.description) {
+      out[index] = { ...existing, description: item.description };
+    }
+  }
+  return out;
+}
+
+async function listTypeItemsByScope(env, { lexiconKey, type, scope, userId }) {
+  const { typeMap, userTypeMap } = getTypeMaps(lexiconKey);
+  const isClassicV2 = lexiconKey === "classic-v2" || lexiconKey === "classic";
+  const table = typeMap?.[type];
+  const userTable = userTypeMap?.[type];
+  const knownType = isClassicV2
+    ? CLASSIC_V2_ALLOWED_TYPES.has(type)
+    : Boolean(table);
+  if (!knownType) return [];
+
+  if (scope === "global") {
+    const items = isClassicV2
+      ? await getClassicV2LexiconItems(env, type)
+      : await getLexiconItems(env, table);
+    return (items ?? [])
+      .map((item) => normalizeCatalogItem(item, `legacy:${type}`))
+      .filter(Boolean);
+  }
+
+  if (scope === "personal") {
+    if (!userTable || !Number.isFinite(Number(userId))) return [];
+    const items = await getUserLexiconItems(env, userTable, userId);
+    return (items ?? [])
+      .map((item) => normalizeCatalogItem(item, `user:${type}`))
+      .filter(Boolean);
+  }
+
+  if (scope === "all") {
+    const [personalItems, globalItems] = await Promise.all([
+      listTypeItemsByScope(env, {
+        lexiconKey,
+        type,
+        scope: "personal",
+        userId,
+      }),
+      listTypeItemsByScope(env, {
+        lexiconKey,
+        type,
+        scope: "global",
+        userId,
+      }),
+    ]);
+    return mergeItemsByLabel(personalItems, globalItems);
+  }
+
+  return [];
+}
+
+function buildTermEntries(bucket, items) {
+  const out = [];
+  const seen = new Set();
+  for (const item of items ?? []) {
+    const label = String(item?.label ?? "").trim();
+    if (!label) continue;
+    const key = normalizeLookupToken(label);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push({
+      id: normalizeLexiconId(item?.lexicon_id, `legacy:${bucket}`),
+      label,
+      description:
+        item?.description == null ? "" : String(item.description).trim(),
+    });
+  }
+  return out;
+}
+
+function buildTermLookup(entriesByType) {
+  const termById = {};
+  const idByNormalizedLabelByType = {};
+
+  for (const [type, entries] of Object.entries(entriesByType)) {
+    const aliases = TYPE_ALIASES[type] ?? [type];
+    const maps = aliases.map(() => ({}));
+    for (const entry of entries ?? []) {
+      const id = String(entry?.id ?? "").trim();
+      const label = String(entry?.label ?? "").trim();
+      if (!id || !label) continue;
+      if (!termById[id]) {
+        termById[id] = { id, label, type };
+      }
+      const normalized = normalizeLookupToken(label);
+      if (!normalized) continue;
+      for (const aliasMap of maps) {
+        if (!aliasMap[normalized]) aliasMap[normalized] = id;
+      }
+    }
+    aliases.forEach((alias, index) => {
+      idByNormalizedLabelByType[alias] = maps[index];
+    });
+  }
+
+  return { termById, idByNormalizedLabelByType };
+}
+
+function entryIds(entries) {
+  return (entries ?? []).map((entry) => entry.id);
+}
+
+function buildClassicPreparedLexicon(itemsByType) {
+  const offensive = buildTermEntries("offensive", itemsByType.offensive);
+  const action = buildTermEntries("action", itemsByType.action);
+  const defensive = buildTermEntries("defensive", itemsByType.defensive);
+  const target = buildTermEntries("target", itemsByType.cible);
+  const movement = buildTermEntries("deplacement", itemsByType.deplacement);
+  const movementComplement = buildTermEntries(
+    "deplacement_complement",
+    itemsByType.deplacement_complement,
+  );
+  const paradeNumber = buildTermEntries(
+    "parade_numero",
+    itemsByType["parade-numero"],
+  );
+  const paradeAttribute = buildTermEntries(
+    "parade_attribut",
+    itemsByType["parade-attribut"],
+  );
+  const defenseAttribute = buildTermEntries(
+    "defense_attribut",
+    itemsByType["defense-attribut"],
+  );
+  const attackAttribute = buildTermEntries(
+    "attaque_attribut",
+    itemsByType["attaque-attribut"],
+  );
+  const movementMerged = [...movement, ...movementComplement];
+
+  const entriesByType = {
+    offensive,
+    action,
+    defensive,
+    target,
+    deplacement: movement,
+    deplacement_complement: movementComplement,
+    parade_numero: paradeNumber,
+    parade_attribut: paradeAttribute,
+    defense_attribut: defenseAttribute,
+    attaque_attribut: attackAttribute,
+  };
+  const { termById, idByNormalizedLabelByType } = buildTermLookup(entriesByType);
+
+  return {
+    offensive: entryIds(offensive),
+    action: entryIds(action),
+    defensive: entryIds(defensive),
+    target: entryIds(target),
+    cible: entryIds(target),
+    attackMove: entryIds(movementMerged),
+    defendMove: entryIds(movementMerged),
+    attackMoveBase: entryIds(movement),
+    attackMoveComplement: entryIds(movementComplement),
+    paradeNumber: entryIds(paradeNumber),
+    paradeAttribute: entryIds(paradeAttribute),
+    defenseAttribute: entryIds(defenseAttribute),
+    attackAttribute: entryIds(attackAttribute),
+    preparationTypes: entryIds(action),
+    termEntries: entriesByType,
+    termById,
+    idByNormalizedLabelByType,
+  };
+}
+
+function buildSabrePreparedLexicon(itemsByType) {
+  const mainGuard = buildTermEntries(
+    "garde_principale",
+    itemsByType.garde_principale,
+  );
+  const basePosture = buildTermEntries("postures_base", itemsByType.postures_base);
+  const offensive = buildTermEntries(
+    "offensive",
+    itemsByType.actions_offensives,
+  );
+  const action = buildTermEntries("action", itemsByType.preparations);
+  const defensive = buildTermEntries(
+    "defensive",
+    itemsByType.actions_defensives,
+  );
+  const target = buildTermEntries("target", itemsByType.cibles);
+  const movement = buildTermEntries("deplacement", itemsByType.deplacements);
+  const attackAttribute = buildTermEntries(
+    "attaque_attribut",
+    itemsByType.attributs_attaque,
+  );
+  const defenseAttribute = buildTermEntries(
+    "defense_attribut",
+    itemsByType.attributs_defense,
+  );
+  const weapons = buildTermEntries("armes", itemsByType.armes);
+
+  const entriesByType = {
+    garde_principale: mainGuard,
+    postures_base: basePosture,
+    offensive,
+    action,
+    defensive,
+    target,
+    deplacement: movement,
+    deplacement_complement: [],
+    parade_numero: [],
+    parade_attribut: [],
+    defense_attribut: defenseAttribute,
+    attaque_attribut: attackAttribute,
+    armes: weapons,
+  };
+  const { termById, idByNormalizedLabelByType } = buildTermLookup(entriesByType);
+
+  return {
+    mainGuard: entryIds(mainGuard),
+    basePosture: entryIds(basePosture),
+    offensive: entryIds(offensive),
+    action: entryIds(action),
+    defensive: entryIds(defensive),
+    target: entryIds(target),
+    cible: entryIds(target),
+    attackMove: entryIds(movement),
+    defendMove: entryIds(movement),
+    attackMoveBase: entryIds(movement),
+    attackMoveComplement: [],
+    paradeNumber: [],
+    paradeAttribute: [],
+    defenseAttribute: entryIds(defenseAttribute),
+    attackAttribute: entryIds(attackAttribute),
+    preparationTypes: entryIds(action),
+    armes: entryIds(weapons),
+    termEntries: entriesByType,
+    termById,
+    idByNormalizedLabelByType,
+  };
+}
+
+async function loadCatalogByType(env, { lexiconKey, scope, userId }) {
+  const catalogTypes =
+    lexiconKey === "sabre-laser"
+      ? SABRE_CATALOG_TYPES
+      : CLASSIC_V2_CATALOG_TYPES;
+  const entries = await Promise.all(
+    catalogTypes.map(async (type) => {
+      const items = await listTypeItemsByScope(env, {
+        lexiconKey,
+        type,
+        scope,
+        userId,
+      });
+      return [type, items];
+    }),
+  );
+  return Object.fromEntries(entries);
+}
 
 const LEXICON_CACHE_TTL_SECONDS = 60 * 60 * 24;
 const LEXICON_CACHE_TTL_MS = LEXICON_CACHE_TTL_SECONDS * 1000;
@@ -312,6 +675,69 @@ export async function handleLexicon(request, env) {
   }
 
   return jsonResponse({ error: "method_not_allowed" }, 405, corsHeaders);
+}
+
+/**
+ * Pre-flattened lexicon payload for step forms.
+ * Front should consume this payload directly (no heavy normalization needed).
+ */
+export async function handleLexiconForm(request, env) {
+  const corsHeaders = buildCorsHeaders(request, env);
+  if (request.method !== "GET") {
+    return jsonResponse({ error: "method_not_allowed" }, 405, corsHeaders);
+  }
+  const lexiconKey = getLexiconKey(request);
+  const catalogByType = await loadCatalogByType(env, {
+    lexiconKey,
+    scope: "global",
+    userId: null,
+  });
+  const prepared =
+    lexiconKey === "sabre-laser"
+      ? buildSabrePreparedLexicon(catalogByType)
+      : buildClassicPreparedLexicon(catalogByType);
+  return jsonResponse({ lexicon: prepared }, 200, corsHeaders);
+}
+
+/**
+ * Aggregated lexicon catalog by type and scope (global/personal/all).
+ * Used by Lexicon page to avoid N requests per category.
+ */
+export async function handleLexiconCatalog(request, env) {
+  const corsHeaders = buildCorsHeaders(request, env);
+  if (request.method !== "GET") {
+    return jsonResponse({ error: "method_not_allowed" }, 405, corsHeaders);
+  }
+  const session = await requireAuth(request, env);
+  if (!session) {
+    return jsonResponse({ error: "unauthorized" }, 401, corsHeaders);
+  }
+  const lexiconKey = getLexiconKey(request);
+  const url = new URL(request.url);
+  const rawScope = String(url.searchParams.get("scope") ?? "global").trim();
+  const scope =
+    rawScope === "personal" || rawScope === "all" ? rawScope : "global";
+
+  const itemsByType = await loadCatalogByType(env, {
+    lexiconKey,
+    scope,
+    userId: session.user.id,
+  });
+  const types = Object.entries(itemsByType).map(([key, items]) => ({
+    key,
+    count: Array.isArray(items) ? items.length : 0,
+  }));
+
+  return jsonResponse(
+    {
+      lexicon: lexiconKey,
+      scope,
+      types,
+      itemsByType,
+    },
+    200,
+    corsHeaders,
+  );
 }
 
 /** Shared lexicon terms (global scope). */

@@ -6,7 +6,7 @@ export function normalizeStepMode(mode) {
   return mode;
 }
 
-export function normalizePerformerIdentity(performer, index = 0) {
+function normalizePerformerIdentity(performer, index = 0) {
   if (typeof performer === "string") {
     return {
       id: crypto.randomUUID(),

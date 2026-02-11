@@ -44,6 +44,7 @@ export function usePerformanceStateManager({ isSaveEnabled, saveState } = {}) {
   const [performanceId, setPerformanceId] = useState(null);
   const [performanceName, setPerformanceName] = useState(DEFAULT_PERFORMANCE_NAME);
   const [performanceDescription, setPerformanceDescription] = useState("");
+  const [performanceUpdatedAt, setPerformanceUpdatedAt] = useState(null);
   const [performanceType, setPerformanceType] = useState(DEFAULT_PERFORMANCE_TYPE);
   const [performanceShareRole, setPerformanceShareRole] = useState(
     DEFAULT_PERFORMANCE_SHARE_ROLE,
@@ -81,6 +82,7 @@ export function usePerformanceStateManager({ isSaveEnabled, saveState } = {}) {
     setPerformanceId(normalized.performanceId ?? fallbackPerformanceId ?? null);
     setPerformanceName(normalized.performanceName ?? DEFAULT_PERFORMANCE_NAME);
     setPerformanceDescription(normalized.performanceDescription ?? "");
+    setPerformanceUpdatedAt(normalized.performanceUpdatedAt ?? null);
     setPerformanceType(normalizePerformanceType(normalized.performanceType));
     setPerformanceShareRole(normalized.performanceShareRole ?? DEFAULT_PERFORMANCE_SHARE_ROLE);
     setActiveSequenceId(normalized.sequences?.[0]?.id ?? null);
@@ -109,6 +111,7 @@ export function usePerformanceStateManager({ isSaveEnabled, saveState } = {}) {
     setPerformanceId(id ?? null);
     setPerformanceName(name ?? DEFAULT_PERFORMANCE_NAME);
     setPerformanceDescription(description ?? "");
+    setPerformanceUpdatedAt(null);
     setPerformanceType(normalizePerformanceType(type));
     setPerformanceShareRole(OWNER_PERFORMANCE_SHARE_ROLE);
     setPerformers(resolvedPerformers);
@@ -128,6 +131,7 @@ export function usePerformanceStateManager({ isSaveEnabled, saveState } = {}) {
       performanceId,
       performanceName,
       performanceDescription,
+      performanceUpdatedAt,
       performanceType,
       performers,
       sequences,
@@ -143,12 +147,28 @@ export function usePerformanceStateManager({ isSaveEnabled, saveState } = {}) {
       if (hasExistingPerformance && hasEmptySequences) {
         return { performanceId: state.performanceId, skipped: true };
       }
-      return saveState(state);
+      return Promise.resolve(saveState(state)).then((result) => {
+        if (!result?.ok) {
+          const error = new Error(result?.payload?.error || "state_save_failed");
+          error.status = result?.response?.status;
+          error.payload = result?.payload;
+          throw error;
+        }
+        return result;
+      });
     },
     onSaved: (result) => {
       const savedId = result?.performanceId ?? null;
       if (savedId) {
         setPerformanceId((prev) => prev ?? savedId);
+      }
+      const updatedAt =
+        typeof result?.performanceUpdatedAt === "string" &&
+        result.performanceUpdatedAt.trim()
+          ? result.performanceUpdatedAt.trim()
+          : null;
+      if (updatedAt) {
+        setPerformanceUpdatedAt(updatedAt);
       }
     },
     onError: (error) => {
@@ -506,6 +526,7 @@ export function usePerformanceStateManager({ isSaveEnabled, saveState } = {}) {
     performanceId,
     performanceName,
     performanceDescription,
+    performanceUpdatedAt,
     performanceType,
     performanceShareRole,
     stepLexiconKey,

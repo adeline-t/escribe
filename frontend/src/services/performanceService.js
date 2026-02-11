@@ -45,6 +45,7 @@ export function createPerformanceService(client) {
       return {
         ok: response.ok,
         performanceId: payload?.performanceId ?? null,
+        performanceUpdatedAt: payload?.performanceUpdatedAt ?? null,
         payload,
         response,
       };

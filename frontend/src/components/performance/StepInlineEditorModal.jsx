@@ -7,12 +7,23 @@ import {
 
 function shouldShowDefenseParadeFields({
   defenseActionValue,
+  defenseDetailDefense,
+  legacyDefenseValue,
   showParadeNumber,
 }) {
   if (!showParadeNumber) return false;
-  const token = String(defenseActionValue ?? "").trim().toLowerCase();
-  if (!token) return false;
-  return token === "parry";
+  const normalize = (value) =>
+    String(value ?? "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  const candidates = [
+    normalize(defenseActionValue),
+    normalize(defenseDetailDefense),
+    normalize(legacyDefenseValue),
+  ].filter(Boolean);
+  return candidates.some((token) => token === "parry" || token === "parade");
 }
 
 function hasSelectableOptions(options, currentValue = "") {
@@ -776,6 +787,8 @@ export default function StepInlineEditorModal({
 
                     {shouldShowDefenseParadeFields({
                       defenseActionValue,
+                      defenseDetailDefense: defenseDetail?.defense ?? "",
+                      legacyDefenseValue: inlineItem?.defense ?? "",
                       showParadeNumber,
                     }) ? (
                       <>

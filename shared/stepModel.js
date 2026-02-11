@@ -160,31 +160,18 @@ export function createStepModel(
   {
     fallbackLexicon = DEFAULT_STEP_LEXICON_KEY,
     performerCount = null,
-    participantCount = null,
     fillPerformer,
-    fillParticipant,
   } = {},
 ) {
+  // Read compatibility only: old payloads may still expose `participants`.
   const resolvedPerformers = performers ?? participants;
-  const resolvedPerformerCount = performerCount ?? participantCount;
-  const resolvedFillPerformer = fillPerformer ?? fillParticipant;
   const normalizedPerformers = normalizeStepPerformers(resolvedPerformers, {
-    performerCount: resolvedPerformerCount,
-    fillPerformer: resolvedFillPerformer,
+    performerCount,
+    fillPerformer,
   });
   return {
     id: id ?? crypto.randomUUID(),
     lexicon: resolveStepLexiconKey(lexicon, { fallbackLexicon }),
     performers: normalizedPerformers,
-    // Legacy compatibility during participant -> performer migration.
-    participants: normalizedPerformers,
   };
 }
-
-// Legacy aliases kept while the codebase is migrated.
-export const STEP_PARTICIPANT_MODES = STEP_PERFORMER_MODES;
-export const STEP_PARTICIPANT_ROLES = STEP_PERFORMER_ROLES;
-export const DEFAULT_STEP_PARTICIPANT = DEFAULT_STEP_PERFORMER;
-export const createStepParticipantModel = createStepPerformerModel;
-export const createInsertedStepParticipantModel = createInsertedStepPerformerModel;
-export const normalizeStepParticipants = normalizeStepPerformers;

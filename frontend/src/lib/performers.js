@@ -99,11 +99,14 @@ export function normalizeState(raw, defaultPerformers) {
     typeof raw.performanceDescription === "string"
       ? raw.performanceDescription
       : "";
+  const performanceUpdatedAt =
+    typeof raw.performanceUpdatedAt === "string" &&
+    raw.performanceUpdatedAt.trim()
+      ? raw.performanceUpdatedAt.trim()
+      : null;
   const performersRaw =
     Array.isArray(raw.performers) && raw.performers.length
       ? raw.performers
-      : Array.isArray(raw.participants) && raw.participants.length
-        ? raw.participants
       : defaultPerformers;
   const performers = performersRaw.map((item, index) =>
     normalizePerformerIdentity(item, index, buildPerformerLabel(index)),
@@ -112,18 +115,12 @@ export function normalizeState(raw, defaultPerformers) {
   const form = performers.map((_, index) =>
     normalizePerformer(formRaw[index] ?? {}),
   );
-  const sequencesRaw = Array.isArray(raw.sequences)
-    ? raw.sequences
-    : Array.isArray(raw.phrases)
-      ? raw.phrases
-      : [];
+  const sequencesRaw = Array.isArray(raw.sequences) ? raw.sequences : [];
   const sequences = sequencesRaw.map((sequence, sequenceIndex) => {
     const stepsRaw = Array.isArray(sequence?.steps) ? sequence.steps : [];
     const steps = stepsRaw.map((step) => {
       const stepPerformersRaw = Array.isArray(step?.performers)
         ? step.performers
-        : Array.isArray(step?.participants)
-          ? step.participants
         : [];
       return createStepModel(
         {
@@ -143,8 +140,7 @@ export function normalizeState(raw, defaultPerformers) {
       id: sequence?.id,
       name: sequence?.name,
       index: sequenceIndex,
-      hiddenPerformerIndexes:
-        sequence?.hiddenPerformerIndexes ?? sequence?.hiddenParticipantIndexes,
+      hiddenPerformerIndexes: sequence?.hiddenPerformerIndexes,
       performerCount: performers.length,
       steps,
     });
@@ -159,6 +155,7 @@ export function normalizeState(raw, defaultPerformers) {
     performanceId,
     performanceName,
     performanceDescription,
+    performanceUpdatedAt,
     performers,
     form,
     sequences,

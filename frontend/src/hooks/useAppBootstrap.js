@@ -66,8 +66,8 @@ export function useAppBootstrap({ apiBase, tokenKey }) {
   const refreshLexiconsAndFavorites = useCallback(async () => {
     try {
       const [sabreLexiconResult, newLexiconResult] = await Promise.all([
-        lexicon.getLexicon({ lexicon: "sabre-laser" }),
-        lexicon.getLexicon({ lexicon: "classic-v2" }),
+        lexicon.getFormLexicon({ lexicon: "sabre-laser" }),
+        lexicon.getFormLexicon({ lexicon: "classic-v2" }),
       ]);
 
       if (sabreLexiconResult.ok && sabreLexiconResult.lexicon) {

@@ -13,6 +13,42 @@ export function createLexiconService(client) {
   }
 
   return {
+    async getFormLexicon({ lexicon, forceRefresh = true } = {}) {
+      const path = client.withQuery(
+        "/api/lexicon/form",
+        cacheBustQuery({ lexicon }, forceRefresh),
+      );
+      const { response, payload } = await client.requestJson(path);
+      return {
+        ok: response.ok,
+        lexicon: payload?.lexicon,
+        payload,
+        response,
+      };
+    },
+
+    async getCatalog({
+      lexicon,
+      scope = "global",
+      signal,
+      forceRefresh = true,
+    } = {}) {
+      const path = client.withQuery(
+        "/api/lexicon/catalog",
+        cacheBustQuery({ lexicon, scope }, forceRefresh),
+      );
+      const { response, payload } = await client.requestJson(path, { signal });
+      return {
+        ok: response.ok,
+        lexicon: payload?.lexicon,
+        scope: payload?.scope ?? scope,
+        types: payload?.types ?? [],
+        itemsByType: payload?.itemsByType ?? {},
+        payload,
+        response,
+      };
+    },
+
     async getLexicon({ lexicon, forceRefresh = true } = {}) {
       const path = client.withQuery(
         "/api/lexicon",

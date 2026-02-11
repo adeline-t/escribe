@@ -748,12 +748,22 @@ function useSharedCombatStepLogic({
     );
   }
 
+  function pickExistingOptionValue(optionsList, candidates) {
+    const optionValues = new Set((optionsList ?? []).map((option) => option.value));
+    for (const candidate of candidates ?? []) {
+      const value = String(candidate ?? "").trim();
+      if (!value) continue;
+      if (optionValues.has(value)) return value;
+    }
+    return "";
+  }
+
   /**
    * Résout la valeur "action d'attaque" affichée dans le select.
    *
-   * Compat:
-   * - ancien format: offensive="attaque", action="coup de pointe"
-   * - nouveau format: offensive="coup de pointe"
+   * Règle legacy:
+   * - aucun mapping name -> id à l'édition;
+   * - on ne préremplit que si la valeur est déjà un id/option valide.
    *
    * @param {StepItem|number} itemOrIndex
    * @returns {string}
@@ -773,22 +783,15 @@ function useSharedCombatStepLogic({
     if (!hasLinkedPreparation && legacyAction) preferred.push(legacyAction);
     if (offensive) preferred.push(offensive);
 
-    for (const candidate of preferred) {
-      if (options.offensiveOptions.some((option) => option.value === candidate)) {
-        return candidate;
-      }
-      const canonical = options.resolveId("offensive", candidate);
-      if (canonical) return canonical;
-    }
-    return preferred[0] ?? "";
+    return pickExistingOptionValue(options.offensiveOptions, preferred);
   }
 
   /**
    * Résout la valeur "action de défense" affichée dans le select esquive.
    *
-   * Compat:
-   * - accepte des labels legacy (casse/accents différents)
-   * - conserve une valeur hors lexique pour éviter un select visuellement vide
+   * Règle legacy:
+   * - aucun mapping name -> id à l'édition;
+   * - on ne préremplit que si la valeur est déjà un id/option valide.
    *
    * @param {StepItem|number} itemOrIndex
    * @returns {string}
@@ -810,19 +813,13 @@ function useSharedCombatStepLogic({
     if (detailDefense) preferred.push(detailDefense);
     if (legacyDefense) preferred.push(legacyDefense);
 
-    for (const candidate of preferred) {
-      if (options.defensiveOptions.some((option) => option.value === candidate)) {
-        return candidate;
-      }
-      const canonical = options.resolveId("defensive", candidate);
-      if (canonical) return canonical;
-    }
-    return preferred[0] ?? "";
+    return pickExistingOptionValue(options.defensiveOptions, preferred);
   }
 
   /**
-   * Injecte la valeur courante d'un select si elle n'est pas dans les options
-   * (cas données legacy / import hors lexique), pour éviter un affichage vide.
+   * Règle stricte des formulaires:
+   * - ne pas injecter de valeur legacy/non-résolue dans un select;
+   * - préremplir uniquement quand la valeur est déjà une option valide.
    *
    * @param {OptionItem[]} optionsList
    * @param {string} currentValue
@@ -832,10 +829,7 @@ function useSharedCombatStepLogic({
     const value = String(currentValue ?? "").trim();
     if (!value) return optionsList;
     if (optionsList.some((option) => option.value === value)) return optionsList;
-    return [
-      { value, label: options.resolveLabel(type, value) },
-      ...optionsList,
-    ];
+    return optionsList;
   }
 
   return {

@@ -42,6 +42,7 @@ export default function LexiconPage({
   }, [lexiconKey, lexiconTypes, nonEmptyTypeKeys]);
   const [activeType, setActiveType] = useState(lexiconTypes[0]?.key ?? "");
   const [scope, setScope] = useState("global");
+  const [catalogByType, setCatalogByType] = useState({});
   const [items, setItems] = useState([]);
   const [draft, setDraft] = useState("");
   const [loading, setLoading] = useState(false);
@@ -91,49 +92,26 @@ export default function LexiconPage({
     [favoritesSource, activeType],
   );
 
-  async function loadType(signal) {
-    if (!activeType) return;
+  async function loadCatalog(signal) {
     setLoading(true);
     setError("");
     try {
-      if (scope === "all") {
-        const [globalResult, personalResult] = await Promise.all([
-          lexiconService.listItems({
-            type: activeType,
-            scope: "global",
-            lexicon: lexiconKey,
-            signal,
-          }),
-          lexiconService.listItems({
-            type: activeType,
-            scope: "personal",
-            lexicon: lexiconKey,
-            signal,
-          }),
-        ]);
-        const merged = new Map();
-        (personalResult.items ?? []).forEach((item) => {
-          merged.set(item.label, item);
-        });
-        (globalResult.items ?? []).forEach((item) => {
-          const existing = merged.get(item.label);
-          if (!existing) {
-            merged.set(item.label, item);
-            return;
-          }
-          if (!existing.description && item.description) {
-            merged.set(item.label, { ...existing, description: item.description });
-          }
-        });
-        setItems(Array.from(merged.values()));
+      const result = await lexiconService.getCatalog({
+        lexicon: lexiconKey,
+        scope,
+        signal,
+      });
+      if (!result.ok) return;
+      const nextCatalog = result.itemsByType ?? {};
+      setCatalogByType(nextCatalog);
+      setItems(nextCatalog[activeType] ?? []);
+      if (lexiconKey === "sabre-laser") {
+        const keys = (result.types ?? [])
+          .filter((entry) => Number(entry?.count ?? 0) > 0)
+          .map((entry) => entry.key);
+        setNonEmptyTypeKeys(new Set(keys));
       } else {
-        const result = await lexiconService.listItems({
-          type: activeType,
-          scope,
-          lexicon: lexiconKey,
-          signal,
-        });
-        setItems(result.items ?? []);
+        setNonEmptyTypeKeys(null);
       }
     } catch (error) {
       if (error?.name !== "AbortError") {
@@ -146,11 +124,15 @@ export default function LexiconPage({
 
   useEffect(() => {
     const controller = new AbortController();
-    loadType(controller.signal);
+    loadCatalog(controller.signal);
     return () => {
       controller.abort();
     };
-  }, [activeType, scope, lexiconKey, lexiconService]);
+  }, [scope, lexiconKey, lexiconService]);
+
+  useEffect(() => {
+    setItems(catalogByType[activeType] ?? []);
+  }, [activeType, catalogByType]);
 
   useEffect(() => {
     if (!authUser) return;
@@ -184,55 +166,7 @@ export default function LexiconPage({
       setNonEmptyTypeKeys(null);
       return;
     }
-    const controller = new AbortController();
-    (async () => {
-      try {
-        const checks = await Promise.all(
-          lexiconTypes.map(async (type) => {
-            if (scope === "all") {
-              const [globalResult, personalResult] = await Promise.all([
-                lexiconService.listItems({
-                  type: type.key,
-                  scope: "global",
-                  lexicon: lexiconKey,
-                  signal: controller.signal,
-                }),
-                lexiconService.listItems({
-                  type: type.key,
-                  scope: "personal",
-                  lexicon: lexiconKey,
-                  signal: controller.signal,
-                }),
-              ]);
-              return [
-                type.key,
-                (globalResult.items ?? []).length +
-                  (personalResult.items ?? []).length >
-                  0,
-              ];
-            }
-            const result = await lexiconService.listItems({
-              type: type.key,
-              scope,
-              lexicon: lexiconKey,
-              signal: controller.signal,
-            });
-            return [type.key, (result.items ?? []).length > 0];
-          }),
-        );
-        setNonEmptyTypeKeys(
-          new Set(
-            checks.filter(([, hasItems]) => hasItems).map(([key]) => key),
-          ),
-        );
-      } catch (error) {
-        if (error?.name !== "AbortError") {
-          setNonEmptyTypeKeys(null);
-        }
-      }
-    })();
-    return () => controller.abort();
-  }, [lexiconKey, lexiconTypes, scope, lexiconService]);
+  }, [lexiconKey]);
 
   useEffect(() => {
     if (!visibleLexiconTypes.some((type) => type.key === activeType)) {
@@ -352,6 +286,10 @@ export default function LexiconPage({
     }
     if (result.item) {
       setItems((prev) => [...prev, result.item]);
+      setCatalogByType((prev) => ({
+        ...prev,
+        [activeType]: [...(prev[activeType] ?? []), result.item],
+      }));
       setDraft("");
       setIsAddOpen(false);
     }
@@ -369,6 +307,10 @@ export default function LexiconPage({
     });
     if (!result.ok) return;
     setItems((prev) => prev.filter((item) => item.id !== id));
+    setCatalogByType((prev) => ({
+      ...prev,
+      [activeType]: (prev[activeType] ?? []).filter((item) => item.id !== id),
+    }));
   }
 
   async function toggleFavorite(label) {

@@ -26,7 +26,7 @@ export function hasStorageTerm(term) {
   return false;
 }
 
-export function resolveStorageTermName(term, lexiconNameById = null) {
+function resolveStorageTermName(term, lexiconNameById = null) {
   if (!term || typeof term !== "object") return "";
   const lexiconId = String(term.lexicon_id ?? "").trim();
   const storedName = String(term.name ?? "").trim();
@@ -43,20 +43,6 @@ export function resolveStorageTermRef(term, lexiconNameById = null) {
   const name = resolveStorageTermName(term, lexiconNameById);
   if (!lexiconId && !name) return null;
   return { lexicon_id: lexiconId || null, name };
-}
-
-export function resolveStorageTerms(termList, lexiconNameById = null) {
-  if (!Array.isArray(termList)) return [];
-  const out = [];
-  const seen = new Set();
-  for (const term of termList) {
-    const name = resolveStorageTermName(term, lexiconNameById);
-    const key = normalizeLexiconLabel(name);
-    if (!key || seen.has(key)) continue;
-    seen.add(key);
-    out.push(name);
-  }
-  return out;
 }
 
 export function resolveStorageTermRefs(termList, lexiconNameById = null) {

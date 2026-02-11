@@ -25,25 +25,19 @@ export function createSequenceModel({
   index = 0,
   steps,
   hiddenPerformerIndexes,
-  hiddenParticipantIndexes,
   performerCount = 0,
-  participantCount = 0,
   stepFallbackLexicon = LEGACY_STEP_LEXICON_KEY,
 } = {}) {
-  const resolvedPerformerCount = performerCount || participantCount;
-  const resolvedHiddenPerformerIndexes =
-    hiddenPerformerIndexes ?? hiddenParticipantIndexes;
+  const resolvedPerformerCount = performerCount;
   const stepList = Array.isArray(steps) ? steps : [];
   const normalizedHiddenPerformerIndexes = normalizeHiddenPerformerIndexes(
-    resolvedHiddenPerformerIndexes,
+    hiddenPerformerIndexes,
     resolvedPerformerCount,
   );
   return {
     id: id ?? crypto.randomUUID(),
     name: resolveSequenceName(name, index),
     hiddenPerformerIndexes: normalizedHiddenPerformerIndexes,
-    // Legacy compatibility during participant -> performer migration.
-    hiddenParticipantIndexes: normalizedHiddenPerformerIndexes,
     steps: stepList.map((step) =>
       createStepModel(step, {
         fallbackLexicon: stepFallbackLexicon,

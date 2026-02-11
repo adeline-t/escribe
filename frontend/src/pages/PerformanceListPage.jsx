@@ -78,7 +78,6 @@ export default function PerformanceListPage({
     const result = await performanceService.listPerformances({
       archived: 0,
       type: performanceType,
-      includeLegacyLexicon: true,
       signal,
     });
     if (result.ok) {

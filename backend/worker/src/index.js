@@ -1,7 +1,14 @@
 import { buildCorsHeaders, jsonResponse } from "./utils/http.js";
 import { handleState } from "./handlers/state.js";
 import { handleHealth } from "./handlers/health.js";
-import { handleLexicon, handleLexiconType, handleLexiconPersonal, handleLexiconFavorites } from "./handlers/lexicon.js";
+import {
+  handleLexicon,
+  handleLexiconForm,
+  handleLexiconCatalog,
+  handleLexiconType,
+  handleLexiconPersonal,
+  handleLexiconFavorites,
+} from "./handlers/lexicon.js";
 import { createRouter } from "./router.js";
 import { handleRegister, handleLogin, handleMe, handleProfile, handleChangePassword, handleLogout } from "./handlers/auth.js";
 import { handleUsersList, handleUserRole, handleUserPasswordReset, handleAudit } from "./handlers/users.js";
@@ -24,6 +31,8 @@ router.add("GET", "/api/", handleHealth);
 router.add("GET", "/api/health", handleHealth);
 router.add("GET", "/api/version", handleVersion);
 router.add("GET", "/api/lexicon", handleLexicon);
+router.add("GET", "/api/lexicon/form", handleLexiconForm);
+router.add("GET", "/api/lexicon/catalog", handleLexiconCatalog);
 router.add("GET", "/api/lexicon/favorites", handleLexiconFavorites);
 router.add("POST", "/api/lexicon/favorites", handleLexiconFavorites);
 router.add("GET", "/api/lexicon/:type", handleLexiconType);
