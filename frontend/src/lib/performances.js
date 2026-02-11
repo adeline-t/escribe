@@ -28,6 +28,8 @@ export const PERFORMANCE_FAVORITE_TYPE_KEYS = {
 };
 
 export const SABRE_UI_LABELS = {
+  mainGuard: "Garde principale",
+  basePosture: "Posture de base",
   offensive: "Technique offensive",
   action: "Préparation",
   attackAttribute: "Attribut offensif",
@@ -35,6 +37,7 @@ export const SABRE_UI_LABELS = {
   target: "Cible",
   attackMove: "Déplacement",
   defensive: "Technique défensive",
+  paradeNumber: "Cible",
   paradeAttribute: "Attribut défensif",
   defendMove: "Déplacement",
   notes: "Notes",
@@ -42,13 +45,17 @@ export const SABRE_UI_LABELS = {
 };
 
 export const SABRE_FAVORITE_TYPE_KEYS = {
-  offensive: "techniques_offensives",
+  mainGuard: "garde_principale",
+  basePosture: "postures_base",
+  offensive: "actions_offensives",
   action: "preparations",
-  attackAttribute: "attributs_offensifs",
+  attackAttribute: "attributs_attaque",
   target: "cibles",
   attackMove: "deplacements",
-  defensive: "techniques_defensives",
-  paradeAttribute: "attributs_defensifs",
+  defensive: "actions_defensives",
+  defenseAttribute: "attributs_defense",
+  paradeNumber: "cibles",
+  paradeAttribute: "parade-attribut",
   defendMove: "deplacements",
 };
 
@@ -59,11 +66,7 @@ export const CLASSIC_LEXICON_OPTIONS = [
 export const PERFORMANCE_STEP_LABELS = {
   summaryTitle: "Phrase résumée",
   chooseFighterAria: "Choisir un combattant",
-  modeLabel: (name) => `mode de ${name}`,
-  modeLabelInline: "mode",
   editStepAria: "modifier",
-  modeNote: "note",
-  modeCombat: "combat",
   roleLabel: (name) => `rôle de ${name}`,
   roleLabelInline: "rôle",
   roleAttack: "attaque",
@@ -80,6 +83,8 @@ export const PERFORMANCE_STEP_LABELS = {
   attributeLabel: "attributs",
   positionComplement: "attributs",
   preparationType: "préparation",
+  mainGuard: "garde principale",
+  basePosture: "posture de base",
   addPreparation: "ajouter une préparation",
   preparationBefore: "avant",
   preparationAfter: "après",

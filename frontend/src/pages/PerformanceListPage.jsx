@@ -4,6 +4,8 @@ import PerformanceShareModal from "../components/performance/PerformanceShareMod
 import ConfirmDeleteModal from "../components/modals/ConfirmDeleteModal.jsx";
 import { useWorkerServices } from "../hooks/useWorkerServices.js";
 
+const DEMO_FOLD_STORAGE_KEY = "performance_list_demo_fold_open";
+
 export default function PerformanceListPage({
   apiBase,
   authToken,
@@ -36,6 +38,16 @@ export default function PerformanceListPage({
   const [shareRole, setShareRole] = useState("read");
   const [exportingPerformanceId, setExportingPerformanceId] = useState(null);
   const [pendingPerformanceDelete, setPendingPerformanceDelete] = useState(null);
+  const [isDemoFoldOpen, setIsDemoFoldOpen] = useState(() => {
+    try {
+      if (typeof window === "undefined") return true;
+      const rawValue = window.localStorage.getItem(DEMO_FOLD_STORAGE_KEY);
+      if (rawValue === null) return true;
+      return rawValue === "1";
+    } catch {
+      return true;
+    }
+  });
   const { performances: performanceService, lexicon: lexiconService } = useWorkerServices(
     apiBase,
     authToken,
@@ -375,6 +387,18 @@ export default function PerformanceListPage({
     setShareList(result.shares ?? []);
   }
 
+  function handleDemoFoldToggle(event) {
+    const isOpen = Boolean(event.currentTarget.open);
+    setIsDemoFoldOpen(isOpen);
+    try {
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(DEMO_FOLD_STORAGE_KEY, isOpen ? "1" : "0");
+      }
+    } catch {
+      // Ignore storage failures (private mode, quotas, etc.).
+    }
+  }
+
   // ==================== RENDER HELPERS ====================
 
   function PerformanceSection({ title, performances: sectionPerformances }) {
@@ -559,7 +583,11 @@ export default function PerformanceListPage({
               {!performanceType ? (
                 <>
                   {groupedPerformances.demo.length ? (
-                    <details className="fold fold-combat" open>
+                    <details
+                      className="fold fold-combat"
+                      open={isDemoFoldOpen}
+                      onToggle={handleDemoFoldToggle}
+                    >
                       <summary className="fold-kicker demo-fold-summary">
                         <span className="demo-fold-title">
                           <span className="text-bold text-lg">Démo</span>

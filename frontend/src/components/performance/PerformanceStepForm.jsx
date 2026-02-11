@@ -7,6 +7,21 @@ import {
   useSabreCombatStepFormLogic,
 } from "../../hooks/usePerformanceFormLogic.js";
 
+function shouldShowDefenseParadeFields({
+  defenseActionValue,
+  showParadeNumber,
+}) {
+  if (!showParadeNumber) return false;
+  const token = String(defenseActionValue ?? "").trim().toLowerCase();
+  if (!token) return false;
+  return token === "parry";
+}
+
+function hasSelectableOptions(options, currentValue = "") {
+  if (Array.isArray(options) && options.length > 0) return true;
+  return Boolean(String(currentValue ?? "").trim());
+}
+
 export default function PerformanceStepForm({
   form,
   performers,
@@ -31,7 +46,6 @@ export default function PerformanceStepForm({
   formVariant = "classic",
 }) {
   const isSabre = formVariant === "sabre";
-  const showModeToggle = lexiconKey === "sabre-laser";
   // Both wrappers target the same logic core.
   // Keep this explicit selection so the component stays readable.
   const classicLogic = useClassicCombatStepFormLogic({
@@ -84,6 +98,8 @@ export default function PerformanceStepForm({
     summaryLines,
     hasAnySummary,
     offensiveOptions,
+    mainGuardOptions,
+    basePostureOptions,
     attackAttributeOptions,
     targetOptions,
     defensiveOptions,
@@ -328,15 +344,78 @@ export default function PerformanceStepForm({
             defenseActionValue,
             "defensive",
           );
-          const paradeNumberSelectOptions = withCurrentOption(
-            paradeNumberOptions,
-            defenseDetail?.position ?? "",
-            "parade_numero",
-          );
+          const positionSelectOptions =
+            lexiconKey === "sabre-laser"
+              ? withCurrentOption(
+                  targetOptions,
+                  defenseDetail?.position ?? "",
+                  "target",
+                )
+              : withCurrentOption(
+                  paradeNumberOptions,
+                  defenseDetail?.position ?? "",
+                  "parade_numero",
+                );
           const targetSelectOptions = withCurrentOption(
             targetOptions,
             item.target,
             "target",
+          );
+          const mainGuardSelectOptions = withCurrentOption(
+            mainGuardOptions,
+            item.mainGuard,
+            "garde_principale",
+          );
+          const basePostureSelectOptions = withCurrentOption(
+            basePostureOptions,
+            item.basePosture,
+            "postures_base",
+          );
+          const showMainGuardSelector = hasSelectableOptions(
+            mainGuardSelectOptions,
+            item.mainGuard,
+          );
+          const showBasePostureSelector = hasSelectableOptions(
+            basePostureSelectOptions,
+            item.basePosture,
+          );
+          const showAttackActionSelector = hasSelectableOptions(
+            attackActionOptions,
+            attackActionValue,
+          );
+          const showAttackAttributeSelector = hasSelectableOptions(
+            attackAttributeOptions,
+          );
+          const showTargetSelector = hasSelectableOptions(
+            targetSelectOptions,
+            item.target,
+          );
+          const attackMoveParts = getMoveParts(item.attackMove, attackMoveBaseValues);
+          const defendMoveParts = getMoveParts(item.defendMove, attackMoveBaseValues);
+          const showAttackMoveBaseSelector = hasSelectableOptions(
+            attackMoveBaseOptions,
+            attackMoveParts.base,
+          );
+          const showDefendMoveBaseSelector = hasSelectableOptions(
+            attackMoveBaseOptions,
+            defendMoveParts.base,
+          );
+          const showMoveAttributeSelector = hasSelectableOptions(
+            attackMoveComplementOptions,
+          );
+          const showDefenseActionSelector = hasSelectableOptions(
+            defenseActionOptions,
+            defenseActionValue,
+          );
+          const showDefenseActionAttributeSelector = hasSelectableOptions(
+            defenseAttributeOptions,
+          );
+          const showPositionSelector = hasSelectableOptions(
+            positionSelectOptions,
+            defenseDetail?.position ?? "",
+          );
+          const showParadeAttributeSelector = hasSelectableOptions(
+            paradeComplementOptions,
           );
           return (
             <div
@@ -345,42 +424,54 @@ export default function PerformanceStepForm({
             >
               <div className="performer-card-header">
                 <div className="text-strong">{name}</div>
-                {showModeToggle ? (
-                  <div
-                    className="segmented segmented--solid"
-                    role="radiogroup"
-                    aria-label={PERFORMANCE_STEP_LABELS.modeLabel(name)}
-                  >
-                    <button
-                      type="button"
-                      className={`segmented-button ${item.mode === "note" ? "is-active" : ""}`}
-                      aria-pressed={item.mode === "note"}
-                      onClick={() => onFormChange(index, { mode: "note" })}
-                      disabled={isReadOnly}
-                    >
-                      {PERFORMANCE_STEP_LABELS.modeNote}
-                    </button>
-                    <button
-                      type="button"
-                      className={`segmented-button ${item.mode === "combat" ? "is-active" : ""}`}
-                      aria-pressed={item.mode === "combat"}
-                      onClick={() =>
-                        onFormChange(index, {
-                          mode: "combat",
-                          noteOverrides: false,
-                        })
-                      }
-                      disabled={isReadOnly}
-                    >
-                      {PERFORMANCE_STEP_LABELS.modeCombat}
-                    </button>
-                  </div>
-                ) : null}
               </div>
 
-              {item.mode === "combat" ? (
-                <div className="performer-fields">
+              <div className="performer-fields">
                   <>
+                    {isSabre && (showMainGuardSelector || showBasePostureSelector) ? (
+                      <div className="action-row performer-context-row">
+                        {showMainGuardSelector ? (
+                          <label>
+                            {PERFORMANCE_STEP_LABELS.mainGuard}
+                            <select
+                              value={item.mainGuard ?? ""}
+                              onChange={(event) =>
+                                onFormChange(index, {
+                                  mainGuard: event.target.value,
+                                })
+                              }
+                            >
+                              <option value="">—</option>
+                              {mainGuardSelectOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        ) : null}
+                        {showBasePostureSelector ? (
+                          <label>
+                            {PERFORMANCE_STEP_LABELS.basePosture}
+                            <select
+                              value={item.basePosture ?? ""}
+                              onChange={(event) =>
+                                onFormChange(index, {
+                                  basePosture: event.target.value,
+                                })
+                              }
+                            >
+                              <option value="">—</option>
+                              {basePostureSelectOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        ) : null}
+                      </div>
+                    ) : null}
                     <div
                       className="segmented segmented--outline segmented--compact"
                       role="radiogroup"
@@ -392,6 +483,7 @@ export default function PerformanceStepForm({
                         aria-pressed={v2Mode === "attack"}
                         onClick={() =>
                           onFormChange(index, {
+                            mode: "combat",
                             role: "attack",
                             noteOverrides: false,
                           })
@@ -406,6 +498,7 @@ export default function PerformanceStepForm({
                         aria-pressed={v2Mode === "defense"}
                         onClick={() =>
                           onFormChange(index, {
+                            mode: "combat",
                             role: "defense",
                             noteOverrides: false,
                           })
@@ -420,6 +513,7 @@ export default function PerformanceStepForm({
                         aria-pressed={v2Mode === "movement"}
                         onClick={() =>
                           onFormChange(index, {
+                            mode: "combat",
                             role: "movement",
                             noteOverrides: false,
                             offensive: "",
@@ -445,7 +539,9 @@ export default function PerformanceStepForm({
                         type="button"
                         className={`segmented-button ${v2Mode === "note" ? "is-active" : ""}`}
                         aria-pressed={v2Mode === "note"}
-                        onClick={() => onFormChange(index, { role: "none" })}
+                        onClick={() =>
+                          onFormChange(index, { mode: "note", role: "none" })
+                        }
                         disabled={isReadOnly}
                       >
                           {PERFORMANCE_STEP_LABELS.roleNote}
@@ -536,60 +632,64 @@ export default function PerformanceStepForm({
                           </label>
                         ) : null}
                         <div className="action-row action-row--two preparation-position-row attack-layout-block attack-layout-block--offense">
-                          <label>
-                            {uiLabels.offensive}
-                            <select
-                              value={attackActionValue}
-                              onChange={(event) =>
-                                onFormChange(index, {
-                                  offensive: event.target.value,
-                                })
-                              }
-                            >
-                              <option value="">—</option>
-                              {attackActionOptions.map((option) => (
-                                <option key={option.value} value={option.value}>
-                                  {option.label}
-                                </option>
-                              ))}
-                            </select>
-                          </label>
-
-                          <label>
-                            {uiLabels.attackAttributeLabel ??
-                              PERFORMANCE_STEP_LABELS.complement}
-                            <div className="input-row">
+                          {showAttackActionSelector ? (
+                            <label>
+                              {uiLabels.offensive}
                               <select
-                                value={
-                                  builderSelections[index]?.attackComplement ??
-                                  ""
+                                value={attackActionValue}
+                                onChange={(event) =>
+                                  onFormChange(index, {
+                                    offensive: event.target.value,
+                                  })
                                 }
-                                onChange={(event) => {
-                                  const value = event.target.value;
-                                  if (!value) {
-                                    updateBuilderSelection(index, {
-                                      attackComplement: "",
-                                    });
-                                    return;
-                                  }
-                                  addAttackComplement(index, value);
-                                  updateBuilderSelection(index, {
-                                    attackComplement: "",
-                                  });
-                                }}
                               >
                                 <option value="">—</option>
-                                {attackAttributeOptions.map((option) => (
-                                  <option
-                                    key={option.value}
-                                    value={option.value}
-                                  >
+                                {attackActionOptions.map((option) => (
+                                  <option key={option.value} value={option.value}>
                                     {option.label}
                                   </option>
                                 ))}
                               </select>
-                            </div>
-                          </label>
+                            </label>
+                          ) : null}
+
+                          {showAttackAttributeSelector ? (
+                            <label>
+                              {uiLabels.attackAttributeLabel ??
+                                PERFORMANCE_STEP_LABELS.complement}
+                              <div className="input-row">
+                                <select
+                                  value={
+                                    builderSelections[index]?.attackComplement ??
+                                    ""
+                                  }
+                                  onChange={(event) => {
+                                    const value = event.target.value;
+                                    if (!value) {
+                                      updateBuilderSelection(index, {
+                                        attackComplement: "",
+                                      });
+                                      return;
+                                    }
+                                    addAttackComplement(index, value);
+                                    updateBuilderSelection(index, {
+                                      attackComplement: "",
+                                    });
+                                  }}
+                                >
+                                  <option value="">—</option>
+                                  {attackAttributeOptions.map((option) => (
+                                    <option
+                                      key={option.value}
+                                      value={option.value}
+                                    >
+                                      {option.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            </label>
+                          ) : null}
                         </div>
                         {Array.isArray(item.attackAttribute) &&
                         item.attackAttribute.length ? (
@@ -615,96 +715,93 @@ export default function PerformanceStepForm({
                           </div>
                         ) : null}
 
+                        {showTargetSelector ? (
                           <label className="attack-layout-block attack-layout-block--target">
                             {uiLabels.target}
                             <select
-                            value={item.target}
-                            onChange={(event) =>
-                              onFormChange(index, {
-                                target: event.target.value,
-                              })
-                            }
-                          >
-                            <option value="">—</option>
-                            {targetSelectOptions.map((option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-
-                        <div className="action-row action-row--two attack-layout-block attack-layout-block--move">
-                          <label>
-                            {PERFORMANCE_STEP_LABELS.movementLabel}
-                            <select
-                              value={
-                                getMoveParts(
-                                  item.attackMove,
-                                  attackMoveBaseValues,
-                                ).base
-                              }
+                              value={item.target}
                               onChange={(event) =>
-                                updateMoveBase(
-                                  index,
-                                  "attackMove",
-                                  event.target.value,
-                                  attackMoveBaseValues,
-                                )
+                                onFormChange(index, {
+                                  target: event.target.value,
+                                })
                               }
                             >
                               <option value="">—</option>
-                              {attackMoveBaseOptions.map((option) => (
+                              {targetSelectOptions.map((option) => (
                                 <option key={option.value} value={option.value}>
                                   {option.label}
                                 </option>
                               ))}
                             </select>
                           </label>
-                          <label>
-                            {PERFORMANCE_STEP_LABELS.attributeLabel}
-                            <div className="input-row">
+                        ) : null}
+
+                        <div className="action-row action-row--two attack-layout-block attack-layout-block--move">
+                          {showAttackMoveBaseSelector ? (
+                            <label>
+                              {PERFORMANCE_STEP_LABELS.movementLabel}
                               <select
-                                value={
-                                  builderSelections[index]
-                                    ?.attackMoveComplement ?? ""
-                                }
-                                onChange={(event) => {
-                                  const value = event.target.value;
-                                  if (!value) {
-                                    updateBuilderSelection(index, {
-                                      attackMoveComplement: "",
-                                    });
-                                    return;
-                                  }
-                                  addMoveComplement(
+                                value={attackMoveParts.base}
+                                onChange={(event) =>
+                                  updateMoveBase(
                                     index,
                                     "attackMove",
-                                    value,
+                                    event.target.value,
                                     attackMoveBaseValues,
-                                  );
-                                  updateBuilderSelection(index, {
-                                    attackMoveComplement: "",
-                                  });
-                                }}
+                                  )
+                                }
                               >
                                 <option value="">—</option>
-                                {attackMoveComplementOptions.map((value) => (
-                                  <option key={value} value={value}>
-                                    {resolveTermLabel("deplacement_complement", value)}
+                                {attackMoveBaseOptions.map((option) => (
+                                  <option key={option.value} value={option.value}>
+                                    {option.label}
                                   </option>
                                 ))}
                               </select>
-                            </div>
-                          </label>
+                            </label>
+                          ) : null}
+                          {showMoveAttributeSelector ? (
+                            <label>
+                              {PERFORMANCE_STEP_LABELS.attributeLabel}
+                              <div className="input-row">
+                                <select
+                                  value={
+                                    builderSelections[index]
+                                      ?.attackMoveComplement ?? ""
+                                  }
+                                  onChange={(event) => {
+                                    const value = event.target.value;
+                                    if (!value) {
+                                      updateBuilderSelection(index, {
+                                        attackMoveComplement: "",
+                                      });
+                                      return;
+                                    }
+                                    addMoveComplement(
+                                      index,
+                                      "attackMove",
+                                      value,
+                                      attackMoveBaseValues,
+                                    );
+                                    updateBuilderSelection(index, {
+                                      attackMoveComplement: "",
+                                    });
+                                  }}
+                                >
+                                  <option value="">—</option>
+                                  {attackMoveComplementOptions.map((value) => (
+                                    <option key={value} value={value}>
+                                      {resolveTermLabel("deplacement_complement", value)}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            </label>
+                          ) : null}
                         </div>
-                        {getMoveParts(item.attackMove, attackMoveBaseValues)
-                          .complements.length > 0 && (
+                        {attackMoveParts.complements.length > 0 && (
                           <div className="builder-tags attack-layout-full">
-                            {getMoveParts(
-                              item.attackMove,
-                              attackMoveBaseValues,
-                            ).complements.map((token) => (
+                            {attackMoveParts.complements.map((token) => (
                               <span key={token} className="builder-tag">
                                 <span className="builder-tag-value">
                                   {resolveTermLabel("deplacement_complement", token)}
@@ -816,65 +913,69 @@ export default function PerformanceStepForm({
                           </label>
                         ) : null}
                         <div className="action-row action-row--two attack-layout-block attack-layout-block--offense">
-                          <label>
-                            {uiLabels.defensive}
-                            <select
-                              value={defenseActionValue}
-                              onChange={(event) =>
-                                updateDefenseDetails(index, [
-                                  {
-                                    defense: event.target.value,
-                                    position: defenseDetail?.position ?? "",
-                                    attribute: defenseDetail?.attribute ?? "",
-                                  },
-                                  ...defenseDetails.slice(1),
-                                ])
-                              }
-                            >
-                              <option value="">—</option>
-                              {defenseActionOptions.map((option) => (
-                                <option key={option.value} value={option.value}>
-                                  {option.label}
-                                </option>
-                              ))}
-                            </select>
-                          </label>
-                          <label>
-                            {PERFORMANCE_STEP_LABELS.attributeLabel}
-                            <div className="input-row">
+                          {showDefenseActionSelector ? (
+                            <label>
+                              {uiLabels.defensive}
                               <select
-                                value={
-                                  builderSelections[index]
-                                    ?.defenseActionComplement ?? ""
+                                value={defenseActionValue}
+                                onChange={(event) =>
+                                  updateDefenseDetails(index, [
+                                    {
+                                      defense: event.target.value,
+                                      position: defenseDetail?.position ?? "",
+                                      attribute: defenseDetail?.attribute ?? "",
+                                    },
+                                    ...defenseDetails.slice(1),
+                                  ])
                                 }
-                                onChange={(event) => {
-                                  const value = event.target.value;
-                                  if (!value) {
-                                    updateBuilderSelection(index, {
-                                      defenseActionComplement: "",
-                                    });
-                                    return;
-                                  }
-                                  if (!defenseActionAttributeTokens.includes(value)) {
-                                    setDefenseActionAttributeTokens(index, [
-                                      ...defenseActionAttributeTokens,
-                                      value,
-                                    ]);
-                                  }
-                                  updateBuilderSelection(index, {
-                                    defenseActionComplement: "",
-                                  });
-                                }}
                               >
                                 <option value="">—</option>
-                                {defenseAttributeOptions.map((value) => (
-                                  <option key={value} value={value}>
-                                    {resolveTermLabel("defense_attribut", value)}
+                                {defenseActionOptions.map((option) => (
+                                  <option key={option.value} value={option.value}>
+                                    {option.label}
                                   </option>
                                 ))}
                               </select>
-                            </div>
-                          </label>
+                            </label>
+                          ) : null}
+                          {showDefenseActionAttributeSelector ? (
+                            <label>
+                              {PERFORMANCE_STEP_LABELS.attributeLabel}
+                              <div className="input-row">
+                                <select
+                                  value={
+                                    builderSelections[index]
+                                      ?.defenseActionComplement ?? ""
+                                  }
+                                  onChange={(event) => {
+                                    const value = event.target.value;
+                                    if (!value) {
+                                      updateBuilderSelection(index, {
+                                        defenseActionComplement: "",
+                                      });
+                                      return;
+                                    }
+                                    if (!defenseActionAttributeTokens.includes(value)) {
+                                      setDefenseActionAttributeTokens(index, [
+                                        ...defenseActionAttributeTokens,
+                                        value,
+                                      ]);
+                                    }
+                                    updateBuilderSelection(index, {
+                                      defenseActionComplement: "",
+                                    });
+                                  }}
+                                >
+                                  <option value="">—</option>
+                                  {defenseAttributeOptions.map((value) => (
+                                    <option key={value} value={value}>
+                                      {resolveTermLabel("defense_attribut", value)}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            </label>
+                          ) : null}
                         </div>
                         {defenseActionAttributeTokens.length > 0 && (
                           <div className="builder-tags attack-layout-full">
@@ -904,69 +1005,76 @@ export default function PerformanceStepForm({
                           </div>
                         )}
 
-                        {defenseActionValue === "parry" ? (
+                        {shouldShowDefenseParadeFields({
+                          defenseActionValue,
+                          showParadeNumber,
+                        }) ? (
                           <>
                             <div className="action-row action-row--two attack-layout-block attack-layout-block--position">
-                              <label>
-                                {uiLabels.paradeNumber}
-                                <select
-                                  value={defenseDetail?.position ?? ""}
-                                  onChange={(event) =>
-                                    updateDefenseDetails(index, [
-                                      {
-                                        defense: defenseDetail?.defense ?? "",
-                                        position: event.target.value,
-                                        attribute: defenseDetail?.attribute ?? "",
-                                      },
-                                      ...defenseDetails.slice(1),
-                                    ])
-                                  }
-                                >
-                                  <option value="">—</option>
-                                  {paradeNumberSelectOptions.map((option) => (
-                                    <option key={option.value} value={option.value}>
-                                      {option.label}
-                                    </option>
-                                  ))}
-                                </select>
-                              </label>
-                              <label>
-                                {PERFORMANCE_STEP_LABELS.attributeLabel}
-                                <div className="input-row">
+                              {showPositionSelector ? (
+                                <label>
+                                  {uiLabels.paradeNumber}
                                   <select
-                                    value={
-                                      builderSelections[index]?.paradeComplement ??
-                                      ""
+                                    value={defenseDetail?.position ?? ""}
+                                    onChange={(event) =>
+                                      updateDefenseDetails(index, [
+                                        {
+                                          defense: defenseDetail?.defense ?? "",
+                                          position: event.target.value,
+                                          attribute: defenseDetail?.attribute ?? "",
+                                        },
+                                        ...defenseDetails.slice(1),
+                                      ])
                                     }
-                                    onChange={(event) => {
-                                      const value = event.target.value;
-                                      if (!value) {
-                                        updateBuilderSelection(index, {
-                                          paradeComplement: "",
-                                        });
-                                        return;
-                                      }
-                                      const list = getDefenseAttributeTokens(item);
-                                      if (!list.includes(value)) {
-                                        setDefenseAttributeTokens(index, [
-                                          ...list,
-                                          value,
-                                        ]);
-                                      }
-                                      updateBuilderSelection(index, {
-                                        paradeComplement: "",
-                                      });
-                                    }}
                                   >
                                     <option value="">—</option>
-                                    {paradeComplementOptions.map((value) => (
-                                      <option key={value} value={value}>
-                                        {resolveTermLabel("parade_attribut", value)}
+                                    {positionSelectOptions.map((option) => (
+                                      <option key={option.value} value={option.value}>
+                                        {option.label}
                                       </option>
                                     ))}
                                   </select>
-                                </div>
-                              </label>
+                                </label>
+                              ) : null}
+                              {showParadeAttributeSelector ? (
+                                <label>
+                                  {PERFORMANCE_STEP_LABELS.attributeLabel}
+                                  <div className="input-row">
+                                    <select
+                                      value={
+                                        builderSelections[index]?.paradeComplement ??
+                                        ""
+                                      }
+                                      onChange={(event) => {
+                                        const value = event.target.value;
+                                        if (!value) {
+                                          updateBuilderSelection(index, {
+                                            paradeComplement: "",
+                                          });
+                                          return;
+                                        }
+                                        const list = getDefenseAttributeTokens(item);
+                                        if (!list.includes(value)) {
+                                          setDefenseAttributeTokens(index, [
+                                            ...list,
+                                            value,
+                                          ]);
+                                        }
+                                        updateBuilderSelection(index, {
+                                          paradeComplement: "",
+                                        });
+                                      }}
+                                    >
+                                      <option value="">—</option>
+                                      {paradeComplementOptions.map((value) => (
+                                        <option key={value} value={value}>
+                                          {resolveTermLabel("parade_attribut", value)}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                </label>
+                              ) : null}
                             </div>
                             {getDefenseAttributeTokens(item).length > 0 && (
                               <div className="builder-tags attack-layout-full">
@@ -997,81 +1105,76 @@ export default function PerformanceStepForm({
                         ) : null}
 
                         <div className="action-row action-row--two attack-layout-block attack-layout-block--move">
-                              <label>
-                                {PERFORMANCE_STEP_LABELS.movementLabel}
-                                <select
-                                  value={
-                                    getMoveParts(
-                                      item.defendMove,
-                                      attackMoveBaseValues,
-                                    ).base
-                                  }
-                                  onChange={(event) =>
-                                    updateMoveBase(
-                                      index,
-                                      "defendMove",
-                                      event.target.value,
-                                      attackMoveBaseValues,
-                                    )
-                                  }
-                                >
-                                  <option value="">—</option>
-                                  {attackMoveBaseOptions.map((option) => (
-                                    <option
-                                      key={option.value}
-                                      value={option.value}
-                                    >
-                                      {option.label}
-                                    </option>
-                                  ))}
-                                </select>
-                              </label>
-                              <label>
-                                {PERFORMANCE_STEP_LABELS.attributeLabel}
-                                <div className="input-row">
+                              {showDefendMoveBaseSelector ? (
+                                <label>
+                                  {PERFORMANCE_STEP_LABELS.movementLabel}
                                   <select
-                                    value={
-                                      builderSelections[index]
-                                        ?.defendMoveComplement ?? ""
+                                    value={defendMoveParts.base}
+                                    onChange={(event) =>
+                                      updateMoveBase(
+                                        index,
+                                        "defendMove",
+                                        event.target.value,
+                                        attackMoveBaseValues,
+                                      )
                                     }
-                                    onChange={(event) => {
-                                      const value = event.target.value;
-                                      if (!value) {
+                                  >
+                                    <option value="">—</option>
+                                    {attackMoveBaseOptions.map((option) => (
+                                      <option
+                                        key={option.value}
+                                        value={option.value}
+                                      >
+                                        {option.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </label>
+                              ) : null}
+                              {showMoveAttributeSelector ? (
+                                <label>
+                                  {PERFORMANCE_STEP_LABELS.attributeLabel}
+                                  <div className="input-row">
+                                    <select
+                                      value={
+                                        builderSelections[index]
+                                          ?.defendMoveComplement ?? ""
+                                      }
+                                      onChange={(event) => {
+                                        const value = event.target.value;
+                                        if (!value) {
+                                          updateBuilderSelection(index, {
+                                            defendMoveComplement: "",
+                                          });
+                                          return;
+                                        }
+                                        addMoveComplement(
+                                          index,
+                                          "defendMove",
+                                          value,
+                                          attackMoveBaseValues,
+                                        );
                                         updateBuilderSelection(index, {
                                           defendMoveComplement: "",
                                         });
-                                        return;
-                                      }
-                                      addMoveComplement(
-                                        index,
-                                        "defendMove",
-                                        value,
-                                        attackMoveBaseValues,
-                                      );
-                                      updateBuilderSelection(index, {
-                                        defendMoveComplement: "",
-                                      });
-                                    }}
-                                  >
-                                    <option value="">—</option>
-                                    {attackMoveComplementOptions.map(
-                                      (value) => (
-                                        <option key={value} value={value}>
-                                          {resolveTermLabel("deplacement_complement", value)}
-                                        </option>
-                                      ),
-                                    )}
-                                  </select>
-                                </div>
-                              </label>
+                                      }}
+                                    >
+                                      <option value="">—</option>
+                                      {attackMoveComplementOptions.map(
+                                        (value) => (
+                                          <option key={value} value={value}>
+                                            {resolveTermLabel("deplacement_complement", value)}
+                                          </option>
+                                        ),
+                                      )}
+                                    </select>
+                                  </div>
+                                </label>
+                              ) : null}
                             </div>
-                            {getMoveParts(item.defendMove, attackMoveBaseValues)
-                              .complements.length > 0 && (
+                            {defendMoveParts.complements.length > 0 && (
                               <div className="builder-tags attack-layout-full">
-                                {getMoveParts(
-                                  item.defendMove,
-                                  attackMoveBaseValues,
-                                ).complements.map((token) => (
+                                {defendMoveParts.complements.map((token) => (
                                   <span key={token} className="builder-tag">
                                     <span className="builder-tag-value">
                                       {resolveTermLabel("deplacement_complement", token)}
@@ -1102,79 +1205,74 @@ export default function PerformanceStepForm({
                     {!item.noteOverrides && v2Mode === "movement" ? (
                       <div className="form-section">
                         <div className="action-row action-row--two">
-                          <label>
-                            {PERFORMANCE_STEP_LABELS.movementLabel}
-                            <select
-                              value={
-                                getMoveParts(
-                                  item.attackMove,
-                                  attackMoveBaseValues,
-                                ).base
-                              }
-                              onChange={(event) =>
-                                updateMoveBase(
-                                  index,
-                                  "attackMove",
-                                  event.target.value,
-                                  attackMoveBaseValues,
-                                )
-                              }
-                            >
-                              <option value="">—</option>
-                              {attackMoveBaseOptions.map((option) => (
-                                <option key={option.value} value={option.value}>
-                                  {option.label}
-                                </option>
-                              ))}
-                            </select>
-                          </label>
-                          <label>
-                            {PERFORMANCE_STEP_LABELS.attributeLabel}
-                            <div className="input-row">
+                          {showAttackMoveBaseSelector ? (
+                            <label>
+                              {PERFORMANCE_STEP_LABELS.movementLabel}
                               <select
-                                value={
-                                  builderSelections[index]
-                                    ?.attackMoveComplement ?? ""
-                                }
-                                onChange={(event) => {
-                                  const value = event.target.value;
-                                  if (!value) {
-                                    updateBuilderSelection(index, {
-                                      attackMoveComplement: "",
-                                    });
-                                    return;
-                                  }
-                                  addMoveComplement(
+                                value={attackMoveParts.base}
+                                onChange={(event) =>
+                                  updateMoveBase(
                                     index,
                                     "attackMove",
-                                    value,
+                                    event.target.value,
                                     attackMoveBaseValues,
-                                  );
-                                  updateBuilderSelection(index, {
-                                    attackMoveComplement: "",
-                                  });
-                                }}
+                                  )
+                                }
                               >
                                 <option value="">—</option>
-                                {attackMoveComplementOptions.map((value) => (
-                                  <option key={value} value={value}>
-                                    {resolveTermLabel(
-                                      "deplacement_complement",
-                                      value,
-                                    )}
+                                {attackMoveBaseOptions.map((option) => (
+                                  <option key={option.value} value={option.value}>
+                                    {option.label}
                                   </option>
                                 ))}
                               </select>
-                            </div>
-                          </label>
+                            </label>
+                          ) : null}
+                          {showMoveAttributeSelector ? (
+                            <label>
+                              {PERFORMANCE_STEP_LABELS.attributeLabel}
+                              <div className="input-row">
+                                <select
+                                  value={
+                                    builderSelections[index]
+                                      ?.attackMoveComplement ?? ""
+                                  }
+                                  onChange={(event) => {
+                                    const value = event.target.value;
+                                    if (!value) {
+                                      updateBuilderSelection(index, {
+                                        attackMoveComplement: "",
+                                      });
+                                      return;
+                                    }
+                                    addMoveComplement(
+                                      index,
+                                      "attackMove",
+                                      value,
+                                      attackMoveBaseValues,
+                                    );
+                                    updateBuilderSelection(index, {
+                                      attackMoveComplement: "",
+                                    });
+                                  }}
+                                >
+                                  <option value="">—</option>
+                                  {attackMoveComplementOptions.map((value) => (
+                                    <option key={value} value={value}>
+                                      {resolveTermLabel(
+                                        "deplacement_complement",
+                                        value,
+                                      )}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            </label>
+                          ) : null}
                         </div>
-                        {getMoveParts(item.attackMove, attackMoveBaseValues)
-                          .complements.length > 0 && (
+                        {attackMoveParts.complements.length > 0 && (
                           <div className="builder-tags">
-                            {getMoveParts(
-                              item.attackMove,
-                              attackMoveBaseValues,
-                            ).complements.map((token) => (
+                            {attackMoveParts.complements.map((token) => (
                               <span key={token} className="builder-tag">
                                 <span className="builder-tag-value">
                                   {resolveTermLabel(
@@ -1255,33 +1353,7 @@ export default function PerformanceStepForm({
                       </label>
                     ) : null}
                   </>
-                </div>
-              ) : null}
-
-              {item.mode !== "combat" ? (
-                <div className="performer-fields">
-                  <label>
-                    {uiLabels.notes}
-                    <div className="input-with-clear">
-                      <input
-                        value={item.note}
-                        onChange={(event) =>
-                          onFormChange(index, { note: event.target.value })
-                        }
-                      />
-                      {item.note ? (
-                        <button
-                          type="button"
-                          className="input-clear"
-                          onClick={() => onFormChange(index, { note: "" })}
-                          aria-label={PERFORMANCE_STEP_LABELS.noteClear}
-                          title="Effacer"
-                        />
-                      ) : null}
-                    </div>
-                  </label>
-                </div>
-              ) : null}
+              </div>
             </div>
           );
         })}

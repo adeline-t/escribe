@@ -5,6 +5,21 @@ import {
   useSabreInlineStepFormLogic,
 } from "../../hooks/usePerformanceFormLogic.js";
 
+function shouldShowDefenseParadeFields({
+  defenseActionValue,
+  showParadeNumber,
+}) {
+  if (!showParadeNumber) return false;
+  const token = String(defenseActionValue ?? "").trim().toLowerCase();
+  if (!token) return false;
+  return token === "parry";
+}
+
+function hasSelectableOptions(options, currentValue = "") {
+  if (Array.isArray(options) && options.length > 0) return true;
+  return Boolean(String(currentValue ?? "").trim());
+}
+
 export default function StepInlineEditorModal({
   isOpen,
   inlineEdit,
@@ -70,6 +85,8 @@ export default function StepInlineEditorModal({
     withCurrentOption,
     v2Mode,
     offensiveOptions,
+    mainGuardOptions,
+    basePostureOptions,
     attackAttributeOptions,
     targetOptions,
     defensiveOptions,
@@ -111,18 +128,79 @@ export default function StepInlineEditorModal({
     inlineItem.target,
     "target",
   );
+  const mainGuardSelectOptions = withCurrentOption(
+    mainGuardOptions,
+    inlineItem.mainGuard,
+    "garde_principale",
+  );
+  const basePostureSelectOptions = withCurrentOption(
+    basePostureOptions,
+    inlineItem.basePosture,
+    "postures_base",
+  );
   const defenseDetails = logic.getDefenseDetails(inlineItem);
   const defenseDetail = defenseDetails[0] ?? {
     defense: "",
     position: "",
     attribute: "",
   };
-  const paradeNumberSelectOptions = withCurrentOption(
-    paradeNumberOptions,
-    defenseDetail?.position ?? "",
-    "parade_numero",
-  );
+  const positionSelectOptions =
+    lexiconKey === "sabre-laser"
+      ? withCurrentOption(
+          targetOptions,
+          defenseDetail?.position ?? "",
+          "target",
+        )
+      : withCurrentOption(
+          paradeNumberOptions,
+          defenseDetail?.position ?? "",
+          "parade_numero",
+        );
   const defenseActionAttributeTokens = getDefenseActionAttributeTokens();
+  const showMainGuardSelector = hasSelectableOptions(
+    mainGuardSelectOptions,
+    inlineItem.mainGuard,
+  );
+  const showBasePostureSelector = hasSelectableOptions(
+    basePostureSelectOptions,
+    inlineItem.basePosture,
+  );
+  const showAttackActionSelector = hasSelectableOptions(
+    attackActionOptions,
+    attackActionValue,
+  );
+  const showAttackAttributeSelector = hasSelectableOptions(attackAttributeOptions);
+  const showTargetSelector = hasSelectableOptions(
+    targetSelectOptions,
+    inlineItem.target,
+  );
+  const attackMoveParts = getMoveParts(inlineItem.attackMove, attackMoveBaseValues);
+  const defendMoveParts = getMoveParts(inlineItem.defendMove, attackMoveBaseValues);
+  const showAttackMoveBaseSelector = hasSelectableOptions(
+    attackMoveBaseOptions,
+    attackMoveParts.base,
+  );
+  const showDefendMoveBaseSelector = hasSelectableOptions(
+    attackMoveBaseOptions,
+    defendMoveParts.base,
+  );
+  const showMoveAttributeSelector = hasSelectableOptions(
+    attackMoveComplementOptions,
+  );
+  const showDefenseActionSelector = hasSelectableOptions(
+    defenseActionOptions,
+    defenseActionValue,
+  );
+  const showDefenseActionAttributeSelector = hasSelectableOptions(
+    defenseAttributeOptions,
+  );
+  const showPositionSelector = hasSelectableOptions(
+    positionSelectOptions,
+    defenseDetail?.position ?? "",
+  );
+  const showParadeAttributeSelector = hasSelectableOptions(
+    paradeComplementOptions,
+  );
 
   return (
     <div className="modal-backdrop" role="presentation" onClick={onClose}>
@@ -140,43 +218,50 @@ export default function StepInlineEditorModal({
         <div className="performer-card performer-card--inline-modal">
           <div className="performer-card-header">
             <div className="text-strong">{performerName}</div>
-            {lexiconKey === "sabre-laser" ? (
-              <div
-                className="segmented segmented--solid"
-                role="radiogroup"
-                aria-label={PERFORMANCE_STEP_LABELS.modeLabelInline}
-              >
-                <button
-                  type="button"
-                  className={`segmented-button ${
-                    inlineItem.mode === "note" ? "is-active" : ""
-                  }`}
-                  aria-pressed={inlineItem.mode === "note"}
-                  onClick={() => updateInlineItem({ mode: "note" })}
-                  disabled={isReadOnly}
-                >
-                  {PERFORMANCE_STEP_LABELS.modeNote}
-                </button>
-                <button
-                  type="button"
-                  className={`segmented-button ${
-                    inlineItem.mode === "combat" ? "is-active" : ""
-                  }`}
-                  aria-pressed={inlineItem.mode === "combat"}
-                  onClick={() =>
-                    updateInlineItem({ mode: "combat", noteOverrides: false })
-                  }
-                  disabled={isReadOnly}
-                >
-                  {PERFORMANCE_STEP_LABELS.modeCombat}
-                </button>
-              </div>
-            ) : null}
           </div>
 
-          {inlineItem.mode === "combat" ? (
-            <div className="performer-fields">
+          <div className="performer-fields">
               <>
+                {isSabre && (showMainGuardSelector || showBasePostureSelector) ? (
+                  <div className="action-row performer-context-row">
+                    {showMainGuardSelector ? (
+                      <label>
+                        {PERFORMANCE_STEP_LABELS.mainGuard}
+                        <select
+                          value={inlineItem.mainGuard ?? ""}
+                          onChange={(event) =>
+                            updateInlineItem({ mainGuard: event.target.value })
+                          }
+                        >
+                          <option value="">—</option>
+                          {mainGuardSelectOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    ) : null}
+                    {showBasePostureSelector ? (
+                      <label>
+                        {PERFORMANCE_STEP_LABELS.basePosture}
+                        <select
+                          value={inlineItem.basePosture ?? ""}
+                          onChange={(event) =>
+                            updateInlineItem({ basePosture: event.target.value })
+                          }
+                        >
+                          <option value="">—</option>
+                          {basePostureSelectOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    ) : null}
+                  </div>
+                ) : null}
                 <div
                   className="segmented segmented--outline segmented--compact"
                   role="radiogroup"
@@ -341,51 +426,55 @@ export default function StepInlineEditorModal({
                       </label>
                     ) : null}
                     <div className="action-row action-row--two preparation-position-row attack-layout-block attack-layout-block--offense">
-                      <label>
-                        {uiLabels.offensive}
-                        <select
-                          value={attackActionValue}
-                          onChange={(event) =>
-                            updateInlineItem({ offensive: event.target.value })
-                          }
-                        >
-                          <option value="">—</option>
-                          {attackActionOptions.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
+                      {showAttackActionSelector ? (
                         <label>
-                          {uiLabels.attackAttributeLabel ??
-                            PERFORMANCE_STEP_LABELS.complement}
-                        <div className="input-row">
+                          {uiLabels.offensive}
                           <select
-                            value={builderSelection.attackComplement}
-                            onChange={(event) => {
-                              const value = event.target.value;
-                              if (!value) {
-                                updateBuilderSelection({
-                                  attackComplement: "",
-                                });
-                                return;
-                              }
-                              addAttackComplement(value);
-                              updateBuilderSelection({
-                                attackComplement: "",
-                              });
-                            }}
+                            value={attackActionValue}
+                            onChange={(event) =>
+                              updateInlineItem({ offensive: event.target.value })
+                            }
                           >
                             <option value="">—</option>
-                            {attackAttributeOptions.map((option) => (
+                            {attackActionOptions.map((option) => (
                               <option key={option.value} value={option.value}>
                                 {option.label}
                               </option>
                             ))}
                           </select>
-                        </div>
-                      </label>
+                        </label>
+                      ) : null}
+                      {showAttackAttributeSelector ? (
+                        <label>
+                          {uiLabels.attackAttributeLabel ??
+                            PERFORMANCE_STEP_LABELS.complement}
+                          <div className="input-row">
+                            <select
+                              value={builderSelection.attackComplement}
+                              onChange={(event) => {
+                                const value = event.target.value;
+                                if (!value) {
+                                  updateBuilderSelection({
+                                    attackComplement: "",
+                                  });
+                                  return;
+                                }
+                                addAttackComplement(value);
+                                updateBuilderSelection({
+                                  attackComplement: "",
+                                });
+                              }}
+                            >
+                              <option value="">—</option>
+                              {attackAttributeOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </label>
+                      ) : null}
                     </div>
                     {Array.isArray(inlineItem.attackAttribute) &&
                     inlineItem.attackAttribute.length ? (
@@ -409,89 +498,86 @@ export default function StepInlineEditorModal({
                       </div>
                     ) : null}
 
-                    <label className="attack-layout-block attack-layout-block--target">
-                      {uiLabels.target}
-                      <select
-                        value={inlineItem.target}
-                        onChange={(event) =>
-                          updateInlineItem({ target: event.target.value })
-                        }
-                      >
-                        <option value="">—</option>
-                        {targetSelectOptions.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-
-                    <div className="action-row action-row--two attack-layout-block attack-layout-block--move">
-                      <label>
-                        {PERFORMANCE_STEP_LABELS.movementLabel}
+                    {showTargetSelector ? (
+                      <label className="attack-layout-block attack-layout-block--target">
+                        {uiLabels.target}
                         <select
-                          value={
-                            getMoveParts(
-                              inlineItem.attackMove,
-                              attackMoveBaseValues,
-                            ).base
-                          }
+                          value={inlineItem.target}
                           onChange={(event) =>
-                            updateMoveBase(
-                              "attackMove",
-                              event.target.value,
-                              attackMoveBaseValues,
-                            )
+                            updateInlineItem({ target: event.target.value })
                           }
                         >
                           <option value="">—</option>
-                          {attackMoveBaseOptions.map((option) => (
+                          {targetSelectOptions.map((option) => (
                             <option key={option.value} value={option.value}>
                               {option.label}
                             </option>
                           ))}
                         </select>
                       </label>
-                      <label>
-                        {PERFORMANCE_STEP_LABELS.attributeLabel}
-                        <div className="input-row">
+                    ) : null}
+
+                    <div className="action-row action-row--two attack-layout-block attack-layout-block--move">
+                      {showAttackMoveBaseSelector ? (
+                        <label>
+                          {PERFORMANCE_STEP_LABELS.movementLabel}
                           <select
-                            value={builderSelection.attackMoveComplement}
-                            onChange={(event) => {
-                              const value = event.target.value;
-                              if (!value) {
-                                updateBuilderSelection({
-                                  attackMoveComplement: "",
-                                });
-                                return;
-                              }
-                              addMoveComplement(
+                            value={attackMoveParts.base}
+                            onChange={(event) =>
+                              updateMoveBase(
                                 "attackMove",
-                                value,
+                                event.target.value,
                                 attackMoveBaseValues,
-                              );
-                              updateBuilderSelection({
-                                attackMoveComplement: "",
-                              });
-                            }}
+                              )
+                            }
                           >
                             <option value="">—</option>
-                            {attackMoveComplementOptions.map((value) => (
-                              <option key={value} value={value}>
-                                {resolveTermLabel("deplacement_complement", value)}
+                            {attackMoveBaseOptions.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
                               </option>
                             ))}
                           </select>
-                        </div>
-                      </label>
+                        </label>
+                      ) : null}
+                      {showMoveAttributeSelector ? (
+                        <label>
+                          {PERFORMANCE_STEP_LABELS.attributeLabel}
+                          <div className="input-row">
+                            <select
+                              value={builderSelection.attackMoveComplement}
+                              onChange={(event) => {
+                                const value = event.target.value;
+                                if (!value) {
+                                  updateBuilderSelection({
+                                    attackMoveComplement: "",
+                                  });
+                                  return;
+                                }
+                                addMoveComplement(
+                                  "attackMove",
+                                  value,
+                                  attackMoveBaseValues,
+                                );
+                                updateBuilderSelection({
+                                  attackMoveComplement: "",
+                                });
+                              }}
+                            >
+                              <option value="">—</option>
+                              {attackMoveComplementOptions.map((value) => (
+                                <option key={value} value={value}>
+                                  {resolveTermLabel("deplacement_complement", value)}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </label>
+                      ) : null}
                     </div>
-                    {getMoveParts(inlineItem.attackMove, attackMoveBaseValues)
-                      .complements.length > 0 && (
+                    {attackMoveParts.complements.length > 0 && (
                       <div className="builder-tags attack-layout-full">
-                        {getMoveParts(
-                          inlineItem.attackMove,
-                          attackMoveBaseValues,
-                        ).complements.map((token) => (
+                        {attackMoveParts.complements.map((token) => (
                           <span key={token} className="builder-tag">
                             <span className="builder-tag-value">
                               {resolveTermLabel("deplacement_complement", token)}
@@ -600,62 +686,66 @@ export default function StepInlineEditorModal({
                       </label>
                     ) : null}
                     <div className="action-row action-row--two attack-layout-block attack-layout-block--offense">
-                      <label>
-                        {uiLabels.defensive}
-                        <select
-                          value={defenseActionValue}
-                          onChange={(event) =>
-                            updateDefenseDetails([
-                              {
-                                defense: event.target.value,
-                                position: defenseDetail?.position ?? "",
-                                attribute: defenseDetail?.attribute ?? "",
-                              },
-                              ...defenseDetails.slice(1),
-                            ])
-                          }
-                        >
-                          <option value="">—</option>
-                          {defenseActionOptions.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label>
-                        {PERFORMANCE_STEP_LABELS.attributeLabel}
-                        <div className="input-row">
+                      {showDefenseActionSelector ? (
+                        <label>
+                          {uiLabels.defensive}
                           <select
-                            value={builderSelection.defenseActionComplement ?? ""}
-                            onChange={(event) => {
-                              const value = event.target.value;
-                              if (!value) {
-                                updateBuilderSelection({
-                                  defenseActionComplement: "",
-                                });
-                                return;
-                              }
-                              if (!defenseActionAttributeTokens.includes(value)) {
-                                setDefenseActionAttributeTokens([
-                                  ...defenseActionAttributeTokens,
-                                  value,
-                                ]);
-                              }
-                              updateBuilderSelection({
-                                defenseActionComplement: "",
-                              });
-                            }}
+                            value={defenseActionValue}
+                            onChange={(event) =>
+                              updateDefenseDetails([
+                                {
+                                  defense: event.target.value,
+                                  position: defenseDetail?.position ?? "",
+                                  attribute: defenseDetail?.attribute ?? "",
+                                },
+                                ...defenseDetails.slice(1),
+                              ])
+                            }
                           >
                             <option value="">—</option>
-                            {defenseAttributeOptions.map((value) => (
-                              <option key={value} value={value}>
-                                {resolveTermLabel("defense_attribut", value)}
+                            {defenseActionOptions.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
                               </option>
                             ))}
                           </select>
-                        </div>
-                      </label>
+                        </label>
+                      ) : null}
+                      {showDefenseActionAttributeSelector ? (
+                        <label>
+                          {PERFORMANCE_STEP_LABELS.attributeLabel}
+                          <div className="input-row">
+                            <select
+                              value={builderSelection.defenseActionComplement ?? ""}
+                              onChange={(event) => {
+                                const value = event.target.value;
+                                if (!value) {
+                                  updateBuilderSelection({
+                                    defenseActionComplement: "",
+                                  });
+                                  return;
+                                }
+                                if (!defenseActionAttributeTokens.includes(value)) {
+                                  setDefenseActionAttributeTokens([
+                                    ...defenseActionAttributeTokens,
+                                    value,
+                                  ]);
+                                }
+                                updateBuilderSelection({
+                                  defenseActionComplement: "",
+                                });
+                              }}
+                            >
+                              <option value="">—</option>
+                              {defenseAttributeOptions.map((value) => (
+                                <option key={value} value={value}>
+                                  {resolveTermLabel("defense_attribut", value)}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </label>
+                      ) : null}
                     </div>
                     {defenseActionAttributeTokens.length > 0 && (
                       <div className="builder-tags attack-layout-full">
@@ -684,63 +774,70 @@ export default function StepInlineEditorModal({
                       </div>
                     )}
 
-                    {defenseActionValue === "parry" ? (
+                    {shouldShowDefenseParadeFields({
+                      defenseActionValue,
+                      showParadeNumber,
+                    }) ? (
                       <>
                         <div className="action-row action-row--two attack-layout-block attack-layout-block--position">
-                          <label>
-                            {uiLabels.paradeNumber}
-                            <select
-                              value={defenseDetail?.position ?? ""}
-                              onChange={(event) =>
-                                updateDefenseDetails([
-                                  {
-                                    defense: defenseDetail?.defense ?? "",
-                                    position: event.target.value,
-                                    attribute: defenseDetail?.attribute ?? "",
-                                  },
-                                  ...defenseDetails.slice(1),
-                                ])
-                              }
-                            >
-                              <option value="">—</option>
-                              {paradeNumberSelectOptions.map((option) => (
-                                <option key={option.value} value={option.value}>
-                                  {option.label}
-                                </option>
-                              ))}
-                            </select>
-                          </label>
-                          <label>
-                            {PERFORMANCE_STEP_LABELS.attributeLabel}
-                            <div className="input-row">
+                          {showPositionSelector ? (
+                            <label>
+                              {uiLabels.paradeNumber}
                               <select
-                                value={builderSelection.paradeComplement}
-                                onChange={(event) => {
-                                  const value = event.target.value;
-                                  if (!value) {
-                                    updateBuilderSelection({
-                                      paradeComplement: "",
-                                    });
-                                    return;
-                                  }
-                                  const list = getDefenseAttributeTokens();
-                                  if (!list.includes(value)) {
-                                    setDefenseAttributeTokens([...list, value]);
-                                  }
-                                  updateBuilderSelection({
-                                    paradeComplement: "",
-                                  });
-                                }}
+                                value={defenseDetail?.position ?? ""}
+                                onChange={(event) =>
+                                  updateDefenseDetails([
+                                    {
+                                      defense: defenseDetail?.defense ?? "",
+                                      position: event.target.value,
+                                      attribute: defenseDetail?.attribute ?? "",
+                                    },
+                                    ...defenseDetails.slice(1),
+                                  ])
+                                }
                               >
                                 <option value="">—</option>
-                                {paradeComplementOptions.map((value) => (
-                                  <option key={value} value={value}>
-                                    {resolveTermLabel("parade_attribut", value)}
+                                {positionSelectOptions.map((option) => (
+                                  <option key={option.value} value={option.value}>
+                                    {option.label}
                                   </option>
                                 ))}
                               </select>
-                            </div>
-                          </label>
+                            </label>
+                          ) : null}
+                          {showParadeAttributeSelector ? (
+                            <label>
+                              {PERFORMANCE_STEP_LABELS.attributeLabel}
+                              <div className="input-row">
+                                <select
+                                  value={builderSelection.paradeComplement}
+                                  onChange={(event) => {
+                                    const value = event.target.value;
+                                    if (!value) {
+                                      updateBuilderSelection({
+                                        paradeComplement: "",
+                                      });
+                                      return;
+                                    }
+                                    const list = getDefenseAttributeTokens();
+                                    if (!list.includes(value)) {
+                                      setDefenseAttributeTokens([...list, value]);
+                                    }
+                                    updateBuilderSelection({
+                                      paradeComplement: "",
+                                    });
+                                  }}
+                                >
+                                  <option value="">—</option>
+                                  {paradeComplementOptions.map((value) => (
+                                    <option key={value} value={value}>
+                                      {resolveTermLabel("parade_attribut", value)}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            </label>
+                          ) : null}
                         </div>
                         {getDefenseAttributeTokens().length > 0 && (
                           <div className="builder-tags attack-layout-full">
@@ -771,73 +868,66 @@ export default function StepInlineEditorModal({
                     ) : null}
 
                     <div className="action-row action-row--two attack-layout-block attack-layout-block--move">
-                        <label>
-                          {PERFORMANCE_STEP_LABELS.movementLabel}
-                          <select
-                            value={
-                              getMoveParts(
-                                inlineItem.defendMove,
-                                attackMoveBaseValues,
-                              ).base
-                            }
-                            onChange={(event) =>
-                              updateMoveBase(
-                                "defendMove",
-                                event.target.value,
-                                attackMoveBaseValues,
-                              )
-                            }
-                          >
-                            <option value="">—</option>
-                            {attackMoveBaseOptions.map((option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        <label>
-                          {PERFORMANCE_STEP_LABELS.attributeLabel}
-                          <div className="input-row">
+                        {showDefendMoveBaseSelector ? (
+                          <label>
+                            {PERFORMANCE_STEP_LABELS.movementLabel}
                             <select
-                              value={builderSelection.defendMoveComplement}
-                              onChange={(event) => {
-                                const value = event.target.value;
-                                if (!value) {
-                                  updateBuilderSelection({
-                                    defendMoveComplement: "",
-                                  });
-                                  return;
-                                }
-                                addMoveComplement(
+                              value={defendMoveParts.base}
+                              onChange={(event) =>
+                                updateMoveBase(
                                   "defendMove",
-                                  value,
+                                  event.target.value,
                                   attackMoveBaseValues,
-                                );
-                                updateBuilderSelection({
-                                  defendMoveComplement: "",
-                                });
-                              }}
+                                )
+                              }
                             >
                               <option value="">—</option>
-                              {attackMoveComplementOptions.map((value) => (
-                                <option key={value} value={value}>
-                                  {resolveTermLabel("deplacement_complement", value)}
+                              {attackMoveBaseOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
                                 </option>
                               ))}
                             </select>
-                          </div>
-                        </label>
+                          </label>
+                        ) : null}
+                        {showMoveAttributeSelector ? (
+                          <label>
+                            {PERFORMANCE_STEP_LABELS.attributeLabel}
+                            <div className="input-row">
+                              <select
+                                value={builderSelection.defendMoveComplement}
+                                onChange={(event) => {
+                                  const value = event.target.value;
+                                  if (!value) {
+                                    updateBuilderSelection({
+                                      defendMoveComplement: "",
+                                    });
+                                    return;
+                                  }
+                                  addMoveComplement(
+                                    "defendMove",
+                                    value,
+                                    attackMoveBaseValues,
+                                  );
+                                  updateBuilderSelection({
+                                    defendMoveComplement: "",
+                                  });
+                                }}
+                              >
+                                <option value="">—</option>
+                                {attackMoveComplementOptions.map((value) => (
+                                  <option key={value} value={value}>
+                                    {resolveTermLabel("deplacement_complement", value)}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </label>
+                        ) : null}
                       </div>
-                      {getMoveParts(
-                        inlineItem.defendMove,
-                        attackMoveBaseValues,
-                      ).complements.length > 0 && (
+                      {defendMoveParts.complements.length > 0 && (
                         <div className="builder-tags attack-layout-full">
-                          {getMoveParts(
-                            inlineItem.defendMove,
-                            attackMoveBaseValues,
-                          ).complements.map((token) => (
+                          {defendMoveParts.complements.map((token) => (
                             <span key={token} className="builder-tag">
                               <span className="builder-tag-value">
                                 {resolveTermLabel("deplacement_complement", token)}
@@ -867,71 +957,66 @@ export default function StepInlineEditorModal({
                 {!inlineItem.noteOverrides && v2Mode === "movement" ? (
                   <div className="form-section">
                     <div className="action-row action-row--two">
-                      <label>
-                        {PERFORMANCE_STEP_LABELS.movementLabel}
-                        <select
-                          value={
-                            getMoveParts(
-                              inlineItem.attackMove,
-                              attackMoveBaseValues,
-                            ).base
-                          }
-                          onChange={(event) =>
-                            updateMoveBase(
-                              "attackMove",
-                              event.target.value,
-                              attackMoveBaseValues,
-                            )
-                          }
-                        >
-                          <option value="">—</option>
-                          {attackMoveBaseOptions.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label>
-                        {PERFORMANCE_STEP_LABELS.attributeLabel}
-                        <div className="input-row">
+                      {showAttackMoveBaseSelector ? (
+                        <label>
+                          {PERFORMANCE_STEP_LABELS.movementLabel}
                           <select
-                            value={builderSelection.attackMoveComplement}
-                            onChange={(event) => {
-                              const value = event.target.value;
-                              if (!value) {
-                                updateBuilderSelection({
-                                  attackMoveComplement: "",
-                                });
-                                return;
-                              }
-                              addMoveComplement(
+                            value={attackMoveParts.base}
+                            onChange={(event) =>
+                              updateMoveBase(
                                 "attackMove",
-                                value,
+                                event.target.value,
                                 attackMoveBaseValues,
-                              );
-                              updateBuilderSelection({
-                                attackMoveComplement: "",
-                              });
-                            }}
+                              )
+                            }
                           >
                             <option value="">—</option>
-                            {attackMoveComplementOptions.map((value) => (
-                              <option key={value} value={value}>
-                                {resolveTermLabel("deplacement_complement", value)}
+                            {attackMoveBaseOptions.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
                               </option>
                             ))}
                           </select>
-                        </div>
-                      </label>
+                        </label>
+                      ) : null}
+                      {showMoveAttributeSelector ? (
+                        <label>
+                          {PERFORMANCE_STEP_LABELS.attributeLabel}
+                          <div className="input-row">
+                            <select
+                              value={builderSelection.attackMoveComplement}
+                              onChange={(event) => {
+                                const value = event.target.value;
+                                if (!value) {
+                                  updateBuilderSelection({
+                                    attackMoveComplement: "",
+                                  });
+                                  return;
+                                }
+                                addMoveComplement(
+                                  "attackMove",
+                                  value,
+                                  attackMoveBaseValues,
+                                );
+                                updateBuilderSelection({
+                                  attackMoveComplement: "",
+                                });
+                              }}
+                            >
+                              <option value="">—</option>
+                              {attackMoveComplementOptions.map((value) => (
+                                <option key={value} value={value}>
+                                  {resolveTermLabel("deplacement_complement", value)}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </label>
+                      ) : null}
                     </div>
-                    {getMoveParts(inlineItem.attackMove, attackMoveBaseValues)
-                      .complements.length > 0 && (
+                    {attackMoveParts.complements.length > 0 && (
                       <div className="builder-tags">
-                        {getMoveParts(
-                          inlineItem.attackMove,
-                          attackMoveBaseValues,
-                        ).complements.map((token) => (
+                        {attackMoveParts.complements.map((token) => (
                           <span key={token} className="builder-tag">
                             <span className="builder-tag-value">
                               {resolveTermLabel("deplacement_complement", token)}
@@ -959,7 +1044,6 @@ export default function StepInlineEditorModal({
                 ) : null}
               </>
             </div>
-          ) : null}
 
           <div className="performer-fields">
             <label>

@@ -7,6 +7,8 @@ export const STEP_PERFORMER_ROLES = ["none", "attack", "defense", "movement"];
 export const DEFAULT_STEP_PERFORMER = Object.freeze({
   mode: "combat",
   role: "attack",
+  mainGuard: "",
+  basePosture: "",
   preparationAction: "",
   preparationTiming: "before",
   offensive: "",
@@ -95,6 +97,9 @@ export function createStepPerformerModel(overrides = {}) {
     actionDetails: normalizeActionDetails(overrides?.actionDetails),
     defenseDetails: normalizeDefenseDetails(overrides?.defenseDetails),
     attackAttribute: normalizeStringArray(overrides?.attackAttribute),
+    mainGuard: typeof overrides?.mainGuard === "string" ? overrides.mainGuard : "",
+    basePosture:
+      typeof overrides?.basePosture === "string" ? overrides.basePosture : "",
     move: typeof overrides?.move === "string" ? overrides.move : "",
     moveDetails: normalizeStringArray(overrides?.moveDetails),
     preparationAction:

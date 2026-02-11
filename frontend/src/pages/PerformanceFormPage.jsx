@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ConfirmDeleteModal from "../components/modals/ConfirmDeleteModal.jsx";
 import PerformancePageLayout from "../components/performance/PerformancePageLayout.jsx";
 import PerformanceColumns from "../components/performance/PerformanceColumns.jsx";
@@ -13,6 +13,83 @@ import {
 } from "../lib/performances.js";
 import { resolveLexiconTermLabel } from "../lib/lexicon.js";
 
+
+function normalizeLookupToken(value) {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+function getLexiconNodeName(node) {
+  return String(node?.nom ?? node?.name ?? node?.label ?? "").trim();
+}
+
+function getLexiconNodeChildren(node) {
+  const children = [];
+  if (Array.isArray(node?.children)) children.push(...node.children);
+  if (Array.isArray(node?.categories)) children.push(...node.categories);
+  if (Array.isArray(node?.sous_categories)) children.push(...node.sous_categories);
+  if (Array.isArray(node?.elements)) children.push(...node.elements);
+  return children;
+}
+
+function buildLexiconCatalog(rawLexicon) {
+  if (!rawLexicon || typeof rawLexicon !== "object") {
+    return { termById: {}, termByName: {}, categories: [] };
+  }
+  const root =
+    rawLexicon?.lexicon && typeof rawLexicon.lexicon === "object"
+      ? rawLexicon.lexicon
+      : rawLexicon;
+  const rootChildren = getLexiconNodeChildren(root);
+  const termById = {};
+  const termByName = {};
+  const categorySet = new Set();
+
+  function visit(node, topCategory) {
+    if (!node || typeof node !== "object") return;
+    const nodeId = String(node.id ?? node.lexicon_id ?? "").trim();
+    const label = getLexiconNodeName(node);
+    const description = String(
+      node.description ??
+        node.definition ??
+        (Array.isArray(node.details) ? node.details.join(" · ") : ""),
+    ).trim();
+    const children = getLexiconNodeChildren(node);
+    const normalizedName = normalizeLookupToken(label);
+    if (topCategory) categorySet.add(topCategory);
+    if (nodeId && label) {
+      const entry = {
+        id: nodeId,
+        label,
+        description,
+        category: topCategory || "autres",
+      };
+      if (!termById[nodeId]) termById[nodeId] = entry;
+      if (normalizedName && !termByName[normalizedName]) {
+        termByName[normalizedName] = entry;
+      }
+    }
+    for (const child of children) {
+      const childCategory = topCategory || label || "autres";
+      visit(child, childCategory);
+    }
+  }
+
+  for (const child of rootChildren) {
+    const categoryName = getLexiconNodeName(child) || "autres";
+    visit(child, categoryName);
+  }
+
+  return {
+    termById,
+    termByName,
+    categories: [...categorySet].sort((a, b) => a.localeCompare(b, "fr")),
+  };
+}
+
 export default function PerformanceFormPage({
   performers,
   form,
@@ -25,6 +102,7 @@ export default function PerformanceFormPage({
   performerLabels,
   normalizedLexicon,
   lexiconByKey,
+  rawLexiconByKey,
   favorites,
   favoritesByLexicon,
   lexiconKey,
@@ -84,6 +162,11 @@ export default function PerformanceFormPage({
   const [pendingSequenceDelete, setPendingSequenceDelete] = useState(null);
   const [pendingSequenceRename, setPendingSequenceRename] = useState(null);
   const [renameValue, setRenameValue] = useState("");
+  const [lexiconSearch, setLexiconSearch] = useState("");
+  const [lexiconCategory, setLexiconCategory] = useState("");
+  const [isLexiconAssistantOpen, setIsLexiconAssistantOpen] = useState(false);
+  const [selectedLexiconDefinitionId, setSelectedLexiconDefinitionId] =
+    useState("");
   const inlineStepIndex = inlineEdit
     ? (activeSequence?.steps?.findIndex(
         (step) => step.id === inlineEdit.stepId,
@@ -104,6 +187,14 @@ export default function PerformanceFormPage({
       : resolvedLexicon;
   const resolveCurrentTermLabel = (type, value) =>
     resolveLexiconTermLabel(resolvedLexicon, value, type);
+  const rawActiveLexicon =
+    rawLexiconByKey && activeLexiconKey
+      ? (rawLexiconByKey[activeLexiconKey] ?? null)
+      : null;
+  const lexiconCatalog = useMemo(
+    () => buildLexiconCatalog(rawActiveLexicon),
+    [rawActiveLexicon],
+  );
 
   const uiLabels = { ...PERFORMANCE_UI_LABELS, ...labels };
 
@@ -215,6 +306,18 @@ export default function PerformanceFormPage({
     closeRenameSequenceModal();
   }
 
+  const assistedTermList = useMemo(() => {
+    const allTerms = Object.values(lexiconCatalog.termById);
+    const query = normalizeLookupToken(lexiconSearch);
+    return allTerms
+      .filter((term) => {
+        if (lexiconCategory && term.category !== lexiconCategory) return false;
+        if (!query) return true;
+        return normalizeLookupToken(term.label).includes(query);
+      })
+      .sort((a, b) => a.label.localeCompare(b.label, "fr"));
+  }, [lexiconCatalog, lexiconSearch, lexiconCategory]);
+
   const stepForm = (
     <PerformanceStepForm
       form={form}
@@ -312,6 +415,83 @@ export default function PerformanceFormPage({
           }
         />
       </PerformancePageLayout>
+      <button
+        type="button"
+        className="lexicon-assistant-tab"
+        onClick={() => setIsLexiconAssistantOpen(true)}
+        aria-label="Ouvrir le lexique assisté"
+      >
+        Lexique
+      </button>
+      {isLexiconAssistantOpen ? (
+        <div
+          className="modal-backdrop lexicon-assistant-backdrop"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setIsLexiconAssistantOpen(false)}
+        >
+          <div
+            className="modal lexicon-assistant-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="kicker">Lexique assisté</div>
+            <h4 className="subtitle">Lexique assisté</h4>
+            <div className="stack-1">
+              <input
+                value={lexiconSearch}
+                onChange={(event) => setLexiconSearch(event.target.value)}
+                placeholder="Rechercher un terme..."
+              />
+              <select
+                value={lexiconCategory}
+                onChange={(event) => setLexiconCategory(event.target.value)}
+              >
+                <option value="">Toutes les catégories</option>
+                {lexiconCatalog.categories.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="lexicon-proto-list lexicon-proto-list--dense">
+              {assistedTermList.slice(0, 180).map((term) => {
+                const isSelected = selectedLexiconDefinitionId === term.id;
+                return (
+                  <button
+                    key={term.id}
+                    type="button"
+                    className={`lexicon-proto-term ${
+                      isSelected ? "is-selected" : ""
+                    }`}
+                    aria-pressed={isSelected}
+                    onClick={() => setSelectedLexiconDefinitionId(term.id)}
+                  >
+                    <span className="lexicon-proto-term-head">
+                      <span className="text-sm text-strong">{term.label}</span>
+                      <span className="text-xs text-muted lexicon-proto-term-category">
+                        {term.category || "—"}
+                      </span>
+                    </span>
+                    <span className="text-xs text-muted">
+                      {term.description || "Définition non trouvée."}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={() => setIsLexiconAssistantOpen(false)}
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <StepInlineEditorModal
         isOpen={!!inlineEdit && !!inlineItem}
         inlineEdit={inlineEdit}

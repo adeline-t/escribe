@@ -27,6 +27,8 @@ const INLINE_INDEX = 0;
  * @property {string} [mode]
  * @property {string} [role]
  * @property {string} [offensive]
+ * @property {string} [mainGuard]
+ * @property {string} [basePosture]
  * @property {string} [action]
  * @property {Array<{action?: string, attribute?: string}>} [actionDetails]
  * @property {string} [target]
@@ -322,6 +324,8 @@ function isDisplacementPreparationToken(value) {
  * }} params
  * @returns {{
  *   offensiveOptions: OptionItem[],
+ *   mainGuardOptions: OptionItem[],
+ *   basePostureOptions: OptionItem[],
  *   attackAttributeOptions: OptionItem[],
  *   targetOptions: OptionItem[],
  *   defensiveOptions: OptionItem[],
@@ -349,6 +353,24 @@ function useLexiconOptions({ normalizedLexicon, favoriteKeys, orderOptions }) {
         normalizedLexicon.offensive ?? [],
         favoriteKeys.offensive,
         (value) => resolveLabel("offensive", value),
+      ),
+    [normalizedLexicon, favoriteKeys, orderOptions],
+  );
+  const mainGuardOptions = useMemo(
+    () =>
+      orderOptions(
+        normalizedLexicon.mainGuard ?? [],
+        favoriteKeys.mainGuard,
+        (value) => resolveLabel("garde_principale", value),
+      ),
+    [normalizedLexicon, favoriteKeys, orderOptions],
+  );
+  const basePostureOptions = useMemo(
+    () =>
+      orderOptions(
+        normalizedLexicon.basePosture ?? [],
+        favoriteKeys.basePosture,
+        (value) => resolveLabel("postures_base", value),
       ),
     [normalizedLexicon, favoriteKeys, orderOptions],
   );
@@ -437,6 +459,8 @@ function useLexiconOptions({ normalizedLexicon, favoriteKeys, orderOptions }) {
 
   return {
     offensiveOptions,
+    mainGuardOptions,
+    basePostureOptions,
     attackAttributeOptions,
     targetOptions,
     defensiveOptions,

@@ -51,17 +51,19 @@ export default function PerformanceLeftPanels({
           <PerformanceSequenceList sequences={sequences} mode="read" />
         </details>
       ) : (
-        <PerformanceSequenceList
-          sequences={sequences}
-          activeSequenceId={activeSequenceId}
-          onCreateSequence={onCreateSequence}
-          onSelectSequence={onSelectSequence}
-          onMoveSequence={onMoveSequence}
-          onMoveSequenceToIndex={onMoveSequenceToIndex}
-          onRequestDeleteSequence={onRequestDeleteSequence}
-          onRequestRenameSequence={onRequestRenameSequence}
-          mode="edit"
-        />
+        <div className="fold">
+          <PerformanceSequenceList
+            sequences={sequences}
+            activeSequenceId={activeSequenceId}
+            onCreateSequence={onCreateSequence}
+            onSelectSequence={onSelectSequence}
+            onMoveSequence={onMoveSequence}
+            onMoveSequenceToIndex={onMoveSequenceToIndex}
+            onRequestDeleteSequence={onRequestDeleteSequence}
+            onRequestRenameSequence={onRequestRenameSequence}
+            mode="edit"
+          />
+        </div>
       )}
     </>
   );

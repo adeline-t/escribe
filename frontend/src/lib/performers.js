@@ -235,6 +235,15 @@ function buildPreparationPrefix(item, resolveTermLabel) {
   return `${resolveTerm("action", action, resolveTermLabel)}`;
 }
 
+function buildContextPrefix(item, resolveTermLabel) {
+  const guard = resolveTerm("garde_principale", item?.mainGuard, resolveTermLabel);
+  const posture = resolveTerm("postures_base", item?.basePosture, resolveTermLabel);
+  if (guard && posture) return `en garde ${guard} avec une ${posture}`;
+  if (guard) return `en garde ${guard}`;
+  if (posture) return `avec une ${posture}`;
+  return "";
+}
+
 function buildAttackSummary(item, resolveTermLabel) {
   const preparationPrefix = buildPreparationPrefix(item, resolveTermLabel);
   const preparationTiming =
@@ -354,22 +363,31 @@ function buildDefenseSummary(item, resolveTermLabel) {
 }
 
 function buildCombatSummary(item, resolveTermLabel) {
+  const contextPrefix = buildContextPrefix(item, resolveTermLabel);
+  const withContext = (summary) => {
+    const main = String(summary ?? "").trim();
+    if (!contextPrefix) return main;
+    if (!main) return contextPrefix;
+    return `${contextPrefix}. ${main}`;
+  };
+
   if (item.role === "attack") {
     if (item.noteOverrides) return buildNoteSummary(item);
-    return buildAttackSummary(item, resolveTermLabel);
+    return withContext(buildAttackSummary(item, resolveTermLabel));
   }
 
   if (item.role === "movement" || item.role === "preparation") {
     if (item.noteOverrides) return buildNoteSummary(item);
-    return buildPreparationSummary(item, resolveTermLabel);
+    return withContext(buildPreparationSummary(item, resolveTermLabel));
   }
 
   if (item.role === "defense") {
     if (item.noteOverrides) return buildNoteSummary(item);
-    return buildDefenseSummary(item, resolveTermLabel);
+    return withContext(buildDefenseSummary(item, resolveTermLabel));
   }
 
-  if (item.note) return `${item.note}`;
+  if (item.note) return withContext(`${item.note}`);
+  if (contextPrefix) return contextPrefix;
   return "";
 }
 

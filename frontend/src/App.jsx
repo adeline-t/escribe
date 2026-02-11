@@ -490,6 +490,10 @@ export default function App() {
               classic: normalizedLexicon,
               "classic-v2": normalizedNewLexicon,
             }}
+            rawLexiconByKey={{
+              classic: newLexiconData,
+              "classic-v2": newLexiconData,
+            }}
             favorites={favorites}
             favoritesByLexicon={{
               classic: favorites,
@@ -552,6 +556,9 @@ export default function App() {
             performerLabels={performerLabels}
             normalizedLexicon={normalizedSabreLexicon}
             lexiconKey="sabre-laser"
+            rawLexiconByKey={{
+              "sabre-laser": sabreLexiconData,
+            }}
             favorites={sabreFavorites}
             labels={SABRE_UI_LABELS}
             favoriteTypeKeys={SABRE_FAVORITE_TYPE_KEYS}

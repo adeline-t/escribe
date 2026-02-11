@@ -208,6 +208,35 @@ const GENERIC_ATTACK_MARKERS = new Set([
   "préparation",
 ]);
 
+function isSqliteBusyError(error) {
+  const message = String(error?.message ?? "");
+  return (
+    message.includes("SQLITE_BUSY") ||
+    message.toLowerCase().includes("database is locked")
+  );
+}
+
+async function runDbWithRetry(operation, options = {}) {
+  const retries = Number.isFinite(options.retries) ? options.retries : 3;
+  const baseDelayMs = Number.isFinite(options.baseDelayMs)
+    ? options.baseDelayMs
+    : 25;
+  let lastError;
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+      if (!isSqliteBusyError(error) || attempt === retries) {
+        throw error;
+      }
+      const waitMs = baseDelayMs * (attempt + 1);
+      await new Promise((resolve) => setTimeout(resolve, waitMs));
+    }
+  }
+  throw lastError;
+}
+
 function dedupeLexiconTerms(terms) {
   const seen = new Set();
   const out = [];
@@ -490,9 +519,27 @@ function legacyPerformerToStoragePerformer(performer, lexiconReferenceIndex) {
         attributes: movementAttributes,
       }
     : null;
+  const mainGuardName = String(safe.mainGuard ?? "").trim();
+  const basePostureName = String(safe.basePosture ?? "").trim();
+  const mainGuard = mainGuardName
+    ? resolveLexiconTerm(
+        lexiconReferenceIndex,
+        ["garde_principale", "parade-numero", "cible"],
+        mainGuardName,
+      )
+    : null;
+  const basePosture = basePostureName
+    ? resolveLexiconTerm(
+        lexiconReferenceIndex,
+        ["postures_base", "deplacement", "action"],
+        basePostureName,
+      )
+    : null;
 
   return {
     mode,
+    mainGuard,
+    basePosture,
     preparation,
     attack,
     defense,
@@ -583,6 +630,11 @@ function storagePerformerToLegacyPerformer(storagePerformer, lexiconNameById = n
     movement?.attributes,
     lexiconNameById,
   );
+  const mainGuardRef = resolveStorageTermRef(safe.mainGuard, lexiconNameById);
+  const basePostureRef = resolveStorageTermRef(
+    safe.basePosture,
+    lexiconNameById,
+  );
 
   const preparationName = preparationRef?.name ?? "";
   const preparationTargetName = preparationTargetRef?.name ?? "";
@@ -668,6 +720,8 @@ function storagePerformerToLegacyPerformer(storagePerformer, lexiconNameById = n
   return {
     mode,
     role,
+    mainGuard: mainGuardRef?.lexicon_id || mainGuardRef?.name || "",
+    basePosture: basePostureRef?.lexicon_id || basePostureRef?.name || "",
     preparationAction:
       role === "movement"
         ? ""
@@ -1192,14 +1246,20 @@ export async function listPerformances(
   const stmt = performanceType
     ? env.DB.prepare(query).bind(userId, performanceType)
     : env.DB.prepare(query).bind(userId);
-  const rows = await stmt.all();
+  const rows = await runDbWithRetry(() => stmt.all());
   const results = rows?.results ?? [];
-  const legacyMap = includeLegacyLexicon
-    ? await detectLegacyLexiconByPerformance(
-      env,
-      results.map((row) => row.id),
-    )
-    : new Map();
+  let legacyMap = new Map();
+  if (includeLegacyLexicon) {
+    try {
+      legacyMap = await detectLegacyLexiconByPerformance(
+        env,
+        results.map((row) => row.id),
+      );
+    } catch (error) {
+      console.warn("detectLegacyLexiconByPerformance failed:", error);
+      legacyMap = new Map();
+    }
+  }
   return results.map((row) => {
     const isDemo = Boolean(row.is_demo);
     const isOwner = Boolean(row.is_owner) || (isSuperAdmin && isDemo);
@@ -1229,18 +1289,27 @@ async function detectLegacyLexiconByPerformance(env, performanceIds) {
   const ids = [...new Set(performanceIds.map((id) => Number(id)).filter(Number.isFinite))];
   if (!ids.length) return map;
 
-  const placeholders = ids.map((_, index) => `?${index + 1}`).join(", ");
-  const rows = await env.DB
-    .prepare(
-      `SELECT performance_id, payload
-       FROM performance_sequences
-       WHERE performance_id IN (${placeholders})`
-    )
-    .bind(...ids)
-    .all();
+  // D1 supports positional bind variables only up to ?100.
+  const chunkSize = 100;
+  const allRows = [];
+  for (let offset = 0; offset < ids.length; offset += chunkSize) {
+    const chunk = ids.slice(offset, offset + chunkSize);
+    const placeholders = chunk.map((_, index) => `?${index + 1}`).join(", ");
+    const rows = await runDbWithRetry(() =>
+      env.DB
+        .prepare(
+          `SELECT performance_id, payload
+           FROM performance_sequences
+           WHERE performance_id IN (${placeholders})`
+        )
+        .bind(...chunk)
+        .all(),
+    );
+    allRows.push(...(rows?.results ?? []));
+  }
 
   const grouped = new Map(ids.map((id) => [id, []]));
-  for (const row of rows?.results ?? []) {
+  for (const row of allRows) {
     const performanceId = Number(row?.performance_id);
     if (!Number.isFinite(performanceId)) continue;
     if (!grouped.has(performanceId)) grouped.set(performanceId, []);
@@ -2474,6 +2543,20 @@ function addStepPerformerLexiconRefs(performer, index) {
 
   addLexiconReference(refState, index, "offensive", ["offensive"], performer.offensive);
   addLexiconReference(refState, index, "action", ["action", "offensive"], performer.action);
+  addLexiconReference(
+    refState,
+    index,
+    "mainGuard",
+    ["garde_principale", "parade-numero", "cible"],
+    performer.mainGuard,
+  );
+  addLexiconReference(
+    refState,
+    index,
+    "basePosture",
+    ["postures_base", "deplacement", "action"],
+    performer.basePosture,
+  );
   addLexiconReference(refState, index, "target", ["cible"], performer.target);
   addDelimitedLexiconReferences(
     refState,
@@ -2625,6 +2708,8 @@ function hydratePerformerLabelsFromLexiconRefs(performer, lexiconNameById) {
 
   return {
     ...performer,
+    mainGuard: resolveLexiconToken(fieldLookup, "mainGuard", performer.mainGuard),
+    basePosture: resolveLexiconToken(fieldLookup, "basePosture", performer.basePosture),
     offensive: resolveLexiconToken(fieldLookup, "offensive", performer.offensive),
     action: resolveLexiconToken(fieldLookup, "action", performer.action),
     target: resolveLexiconToken(fieldLookup, "target", performer.target),

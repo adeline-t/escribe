@@ -36,6 +36,8 @@ export function hasPerformerStepContent(item) {
 
   if (role === "defense") {
     return Boolean(
+      item.mainGuard ||
+        item.basePosture ||
       item.preparationAction ||
         item.defense ||
         item.defensive ||
@@ -50,6 +52,8 @@ export function hasPerformerStepContent(item) {
 
   // Default combat role is attack-like.
   return Boolean(
+    item.mainGuard ||
+      item.basePosture ||
     item.preparationAction ||
       item.offensive ||
       item.action ||

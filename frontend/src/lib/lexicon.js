@@ -138,6 +138,39 @@ const CLASSIC_V2_RECURSIVE_BUCKET_MARKERS = {
   "attaque-attribut": new Set(["attack_complements", "attaque-attribut"]),
 };
 
+const SABRE_RECURSIVE_BUCKET_MARKERS = {
+  garde_principale: new Set(["garde_principale"]),
+  postures_base: new Set(["postures_base"]),
+  offensive: new Set([
+    "actions_offensives",
+    "techniques_offensives",
+    "offensive_techniques",
+  ]),
+  action: new Set(["preparations"]),
+  defensive: new Set([
+    "actions_defensives",
+    "techniques_defensives",
+    "defensive_techniques",
+  ]),
+  cible: new Set(["cibles", "targets", "zones_touche"]),
+  deplacement: new Set(["deplacements", "movements"]),
+  deplacement_complement: new Set([
+    "deplacement_complement",
+    "deplacement_complements",
+    "movement_complement",
+    "movement_complements",
+  ]),
+  "parade-numero": new Set(["garde_principale", "positions", "position_main"]),
+  "parade-attribut": new Set([
+    "parade_attribut",
+    "parade_attributs",
+    "attributs_parade",
+  ]),
+  "defense-attribut": new Set(["attributs_defense", "attributs_defensifs"]),
+  "attaque-attribut": new Set(["attributs_attaque", "attributs_offensifs"]),
+  armes: new Set(["armes", "weapons"]),
+};
+
 function orderLexiconTypes(types, order) {
   if (!Array.isArray(order) || !order.length) return types;
   const rank = new Map(order.map((key, index) => [key, index]));
@@ -233,6 +266,73 @@ function flattenClassicV2RecursiveLexicon(data) {
   return bucketEntries;
 }
 
+function flattenSabreRecursiveLexicon(data) {
+  const rootChildren = getRecursiveLexiconChildren(data);
+  if (!rootChildren.length) return null;
+
+  const bucketEntries = {
+    garde_principale: [],
+    postures_base: [],
+    offensive: [],
+    action: [],
+    defensive: [],
+    "defense-attribut": [],
+    cible: [],
+    deplacement: [],
+    deplacement_complement: [],
+    "parade-numero": [],
+    "parade-attribut": [],
+    "attaque-attribut": [],
+    armes: [],
+  };
+
+  const seenByBucket = new Map(
+    Object.keys(bucketEntries).map((bucket) => [bucket, new Set()]),
+  );
+
+  function visit(node, ancestorIds) {
+    const nodeId = normalizeLexiconNodeId(node);
+    const nextAncestorIds = nodeId ? [...ancestorIds, nodeId] : ancestorIds;
+    const children = getRecursiveLexiconChildren(node);
+
+    if (!children.length) {
+      const label = String(getLexiconLabel(node) ?? "").trim();
+      if (!label) return;
+
+      let targetBucket = null;
+      for (const [bucket, markers] of Object.entries(
+        SABRE_RECURSIVE_BUCKET_MARKERS,
+      )) {
+        if (nextAncestorIds.some((ancestorId) => markers.has(ancestorId))) {
+          targetBucket = bucket;
+          break;
+        }
+      }
+      if (!targetBucket) return;
+
+      const seen = seenByBucket.get(targetBucket);
+      const key = normalizeTokenForLookup(label);
+      if (!key || seen?.has(key)) return;
+      seen?.add(key);
+      bucketEntries[targetBucket].push({
+        lexicon_id: nodeId || `legacy:${targetBucket}:${key}`,
+        name: label,
+      });
+      return;
+    }
+
+    for (const child of children) {
+      visit(child, nextAncestorIds);
+    }
+  }
+
+  for (const child of rootChildren) {
+    visit(child, []);
+  }
+
+  return bucketEntries;
+}
+
 export function getLexiconTypesForMode(lexiconKey) {
   const base =
     lexiconKey === "sabre-laser"
@@ -276,20 +376,135 @@ export function normalizeLexicon(data) {
 }
 
 export function normalizeSabreLexicon(data) {
-  const target = data.targets ?? data.cibles ?? [];
+  const recursiveFlat = flattenSabreRecursiveLexicon(data);
+
+  // New sabre lexicon comes from recursive DB payload. Keep flat fallback
+  // for compatibility with older datasets/dev fixtures.
+  const flatData = recursiveFlat ?? data ?? {};
+
+  const offensiveEntries = mergeUniqueTermEntries(
+    "offensive",
+    flatData?.offensive,
+    flatData?.actions_offensives,
+    flatData?.techniques_offensives,
+  );
+  const actionEntries = mergeUniqueTermEntries(
+    "action",
+    flatData?.action,
+    flatData?.preparations,
+  );
+  const defensiveEntries = mergeUniqueTermEntries(
+    "defensive",
+    flatData?.defensive,
+    flatData?.actions_defensives,
+    flatData?.techniques_defensives,
+  );
+  const targetEntries = mergeUniqueTermEntries(
+    "cible",
+    flatData?.target,
+    flatData?.cible,
+    flatData?.targets,
+    flatData?.cibles,
+  );
+  const movementEntries = mergeUniqueTermEntries(
+    "deplacement",
+    flatData?.deplacement,
+    flatData?.deplacements,
+    flatData?.attackMove,
+  );
+  const movementComplementEntries = mergeUniqueTermEntries(
+    "deplacement_complement",
+    flatData?.deplacement_complement,
+    flatData?.deplacement_complements,
+    flatData?.movement_complement,
+    flatData?.movement_complements,
+    flatData?.attackMoveComplement,
+  );
+  const paradeNumberEntries = mergeUniqueTermEntries(
+    "parade-numero",
+    flatData?.["parade-numero"],
+    flatData?.paradeNumero,
+    flatData?.garde_principale,
+  );
+  const mainGuardEntries = mergeUniqueTermEntries(
+    "garde_principale",
+    flatData?.garde_principale,
+  );
+  const basePostureEntries = mergeUniqueTermEntries(
+    "postures_base",
+    flatData?.postures_base,
+  );
+  const paradeAttributeEntries = mergeUniqueTermEntries(
+    "parade-attribut",
+    flatData?.["parade-attribut"],
+    flatData?.paradeAttribut,
+    flatData?.attributs_parade,
+  );
+  const defenseAttributeEntries = mergeUniqueTermEntries(
+    "defense-attribut",
+    flatData?.["defense-attribut"],
+    flatData?.defenseAttribut,
+    flatData?.attributs_defense,
+    flatData?.attributs_defensifs,
+  );
+  const attackAttributeEntries = mergeUniqueTermEntries(
+    "attaque-attribut",
+    flatData?.["attaque-attribut"],
+    flatData?.attaqueAttribut,
+    flatData?.attributs_attaque,
+    flatData?.attributs_offensifs,
+  );
+  const weaponEntries = mergeUniqueTermEntries(
+    "armes",
+    flatData?.armes,
+    flatData?.weapons,
+  );
+  const attackMoveEntries = mergeUniqueTermEntries(
+    "deplacement",
+    movementEntries,
+    movementComplementEntries,
+  );
+
+  const entriesByType = {
+    garde_principale: mainGuardEntries,
+    postures_base: basePostureEntries,
+    offensive: offensiveEntries,
+    action: actionEntries,
+    defensive: defensiveEntries,
+    target: targetEntries,
+    attaque_attribut: attackAttributeEntries,
+    defense_attribut: defenseAttributeEntries,
+    parade_numero: paradeNumberEntries,
+    parade_attribut: paradeAttributeEntries,
+    deplacement: movementEntries,
+    deplacement_complement: movementComplementEntries,
+    armes: weaponEntries,
+  };
+  const { termById, idByNormalizedLabelByType } =
+    buildLexiconLookupByType(entriesByType);
+
   return {
-    offensive: data.techniques_offensives ?? [],
-    action: data.preparations ?? [],
-    defensive: data.techniques_defensives ?? [],
-    target,
+    offensive: termIds(offensiveEntries),
+    action: termIds(actionEntries),
+    defensive: termIds(defensiveEntries),
+    target: termIds(targetEntries),
     // Backward compatibility for existing form logic.
-    cible: target,
-    attackMove: data.deplacements ?? [],
-    defendMove: data.deplacements ?? [],
-    paradeNumber: [],
-    paradeAttribute: data.attributs_defensifs ?? [],
-    attackAttribute: data.attributs_offensifs ?? [],
-    armes: data.armes ?? [],
+    cible: termIds(targetEntries),
+    attackMove: termIds(attackMoveEntries),
+    defendMove: termIds(attackMoveEntries),
+    attackMoveBase: termIds(movementEntries),
+    attackMoveComplement: termIds(movementComplementEntries),
+    paradeNumber: termIds(paradeNumberEntries),
+    mainGuard: termIds(mainGuardEntries),
+    basePosture: termIds(basePostureEntries),
+    paradeAttribute: termIds(paradeAttributeEntries),
+    defenseAttribute: termIds(defenseAttributeEntries),
+    attackAttribute: termIds(attackAttributeEntries),
+    preparationTypes: termIds(actionEntries),
+    armes: termIds(weaponEntries),
+    termEntries: entriesByType,
+    termById,
+    idByNormalizedLabelByType,
   };
 }
 
