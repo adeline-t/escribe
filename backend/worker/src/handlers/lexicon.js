@@ -322,9 +322,13 @@ function buildTermLookup(entriesByType) {
     for (const entry of entries ?? []) {
       const id = String(entry?.id ?? "").trim();
       const label = String(entry?.label ?? "").trim();
+      const description =
+        entry?.description == null ? "" : String(entry.description).trim();
       if (!id || !label) continue;
       if (!termById[id]) {
-        termById[id] = { id, label, type };
+        termById[id] = { id, label, type, description };
+      } else if (!termById[id].description && description) {
+        termById[id] = { ...termById[id], description };
       }
       const normalized = normalizeLookupToken(label);
       if (!normalized) continue;

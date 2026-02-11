@@ -1,0 +1,784 @@
+[
+  {
+    "results": [
+      {
+        "id": 10923,
+        "step_id": 5026,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "note",
+        "note": "Garde à gauche",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10924,
+        "step_id": 5026,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10925,
+        "step_id": 5027,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "defense",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10926,
+        "step_id": 5027,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10927,
+        "step_id": 5028,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "defense",
+        "note": "Contre",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10928,
+        "step_id": 5028,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10929,
+        "step_id": 5029,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "defense",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10930,
+        "step_id": 5029,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10931,
+        "step_id": 5030,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10932,
+        "step_id": 5030,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10933,
+        "step_id": 5031,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "note",
+        "note": "tourne le poignet pour le dégagement",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10934,
+        "step_id": 5031,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10935,
+        "step_id": 5032,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "defense",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10936,
+        "step_id": 5032,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10937,
+        "step_id": 5033,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "defense",
+        "note": " Contre",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10938,
+        "step_id": 5033,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10939,
+        "step_id": 5034,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "defense",
+        "note": "Esquive du buste",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10940,
+        "step_id": 5034,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10941,
+        "step_id": 5035,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10942,
+        "step_id": 5035,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10943,
+        "step_id": 5036,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10944,
+        "step_id": 5036,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10945,
+        "step_id": 5037,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "defense",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10946,
+        "step_id": 5037,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10947,
+        "step_id": 5038,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "defense",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10948,
+        "step_id": 5038,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10949,
+        "step_id": 5039,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "defense",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10950,
+        "step_id": 5039,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10951,
+        "step_id": 5040,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "defense",
+        "note": " Passe à droite",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10952,
+        "step_id": 5040,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10953,
+        "step_id": 5041,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "note",
+        "note": "Bras mélangés",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10954,
+        "step_id": 5041,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10955,
+        "step_id": 5042,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10956,
+        "step_id": 5042,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10957,
+        "step_id": 5043,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "defense",
+        "note": "debut du retour en garde",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10958,
+        "step_id": 5043,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10959,
+        "step_id": 5044,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "defense",
+        "note": "fin du retour en garde",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10960,
+        "step_id": 5044,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10961,
+        "step_id": 5045,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "defense",
+        "note": "fin en terrassé 5 basse",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10962,
+        "step_id": 5045,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10963,
+        "step_id": 5046,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10964,
+        "step_id": 5046,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10965,
+        "step_id": 5047,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10966,
+        "step_id": 5047,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10967,
+        "step_id": 5048,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "defense",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10968,
+        "step_id": 5048,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10969,
+        "step_id": 5049,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "defense",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10970,
+        "step_id": 5049,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10971,
+        "step_id": 5050,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "defense",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10972,
+        "step_id": 5050,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10973,
+        "step_id": 5051,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10974,
+        "step_id": 5051,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10975,
+        "step_id": 5052,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "note",
+        "note": "Garde inverse",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10976,
+        "step_id": 5052,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "note",
+        "note": "Garde inverse",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10977,
+        "step_id": 5053,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "note",
+        "note": "doigts en mi-supronation",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10978,
+        "step_id": 5053,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "defense",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10979,
+        "step_id": 5054,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10980,
+        "step_id": 5054,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "defense",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10981,
+        "step_id": 5055,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "note",
+        "note": "Petite marche",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10982,
+        "step_id": 5055,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "defense",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10983,
+        "step_id": 5056,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "defense",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10984,
+        "step_id": 5056,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "note",
+        "note": "flanconaade",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10985,
+        "step_id": 5057,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "note",
+        "note": " Couronné inversé",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10986,
+        "step_id": 5057,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "defense",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10987,
+        "step_id": 5058,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "defense",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10988,
+        "step_id": 5058,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10989,
+        "step_id": 5059,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10990,
+        "step_id": 5059,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "defense",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10991,
+        "step_id": 5060,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "defense",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10992,
+        "step_id": 5060,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10993,
+        "step_id": 5061,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "defense",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10994,
+        "step_id": 5061,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "inactive",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10995,
+        "step_id": 5062,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "note",
+        "note": "transfert de poids",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10996,
+        "step_id": 5062,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "defense",
+        "note": "Retour en garde avant quart de volte",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10997,
+        "step_id": 5063,
+        "performer_id": "8897162c-5ffd-453c-9810-3d828ca83fe4",
+        "action_type": "defense",
+        "note": "",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 10998,
+        "step_id": 5063,
+        "performer_id": "1c894376-5745-4e7c-b908-12fbfc8b8578",
+        "action_type": "note",
+        "note": "Menace dos haute",
+        "preparation_timing": "before",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      }
+    ],
+    "success": true,
+    "meta": {
+      "served_by": "v3-prod",
+      "served_by_region": "WEUR",
+      "served_by_colo": "CDG",
+      "served_by_primary": true,
+      "timings": {
+        "sql_duration_ms": 0.9931
+      },
+      "duration": 0.9931,
+      "changes": 0,
+      "last_row_id": 0,
+      "changed_db": false,
+      "size_after": 11210752,
+      "rows_read": 240,
+      "rows_written": 0,
+      "total_attempts": 1
+    }
+  }
+]

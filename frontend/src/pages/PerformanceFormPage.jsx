@@ -11,7 +11,7 @@ import {
   PERFORMANCE_FAVORITE_TYPE_KEYS,
   PERFORMANCE_UI_LABELS,
 } from "../lib/performances.js";
-import { resolveLexiconTermLabel } from "../lib/lexicon.js";
+import { getLexiconTypesForMode, resolveLexiconTermLabel } from "../lib/lexicon.js";
 
 
 function normalizeLookupToken(value) {
@@ -20,6 +20,32 @@ function normalizeLookupToken(value) {
     .replace(/[\u0300-\u036f]/g, "")
     .trim()
     .toLowerCase();
+}
+
+function normalizeAssistantCategory(category) {
+  const key = String(category ?? "").trim();
+  if (!key) return "";
+  const alias = {
+    target: "cible",
+    targets: "cible",
+    cibles: "cible",
+    attaque_attribut: "attaque-attribut",
+    defense_attribut: "defense-attribut",
+    parade_numero: "parade-numero",
+    parade_attribut: "parade-attribut",
+    deplacement_base: "deplacement",
+    movement: "deplacement",
+    movements: "deplacement",
+    movement_complement: "deplacement_complement",
+    movement_complements: "deplacement_complement",
+    deplacement_complements: "deplacement_complement",
+    offensive_techniques: "offensive",
+    defensive_techniques: "defensive",
+    actions_offensives: "offensive",
+    actions_defensives: "defensive",
+    preparations: "action",
+  };
+  return alias[key] || key;
 }
 
 function buildLexiconCatalog(normalizedLexicon) {
@@ -34,7 +60,9 @@ function buildLexiconCatalog(normalizedLexicon) {
     const nodeId = String(node?.id ?? "").trim();
     const label = String(node?.label ?? "").trim();
     if (!nodeId || !label) continue;
-    const category = String(node?.type ?? "autres").trim() || "autres";
+    const category = normalizeAssistantCategory(
+      String(node?.type ?? "autres").trim() || "autres",
+    );
     const description = String(node?.description ?? "").trim();
     const entry = { id: nodeId, label, description, category };
     const normalizedName = normalizeLookupToken(label);
@@ -152,6 +180,22 @@ export default function PerformanceFormPage({
     () => buildLexiconCatalog(resolvedLexicon),
     [resolvedLexicon],
   );
+  const categoryLabelByKey = useMemo(() => {
+    const entries = getLexiconTypesForMode(activeLexiconKey) ?? [];
+    const map = new Map();
+    for (const entry of entries) {
+      const key = String(entry?.key ?? "").trim();
+      const label = String(entry?.label ?? "").trim();
+      if (key && label) map.set(key, label);
+    }
+    // Assisted lexicon categories are normalized as `action` in forms.
+    // Keep display aligned with lexicon labels (not internal keys).
+    if (!map.has("action")) {
+      const preparationsLabel = map.get("preparations");
+      if (preparationsLabel) map.set("action", preparationsLabel);
+    }
+    return map;
+  }, [activeLexiconKey]);
 
   const uiLabels = { ...PERFORMANCE_UI_LABELS, ...labels };
 
@@ -272,8 +316,12 @@ export default function PerformanceFormPage({
         if (!query) return true;
         return normalizeLookupToken(term.label).includes(query);
       })
+      .map((term) => ({
+        ...term,
+        categoryLabel: categoryLabelByKey.get(term.category) || term.category,
+      }))
       .sort((a, b) => a.label.localeCompare(b.label, "fr"));
-  }, [lexiconCatalog, lexiconSearch, lexiconCategory]);
+  }, [lexiconCatalog, lexiconSearch, lexiconCategory, categoryLabelByKey]);
 
   const stepForm = (
     <PerformanceStepForm
@@ -406,7 +454,7 @@ export default function PerformanceFormPage({
                 <option value="">Toutes les catégories</option>
                 {lexiconCatalog.categories.map((category) => (
                   <option key={category} value={category}>
-                    {category}
+                    {categoryLabelByKey.get(category) || category}
                   </option>
                 ))}
               </select>
@@ -427,7 +475,7 @@ export default function PerformanceFormPage({
                     <span className="lexicon-proto-term-head">
                       <span className="text-sm text-strong">{term.label}</span>
                       <span className="text-xs text-muted lexicon-proto-term-category">
-                        {term.category || "—"}
+                        {term.categoryLabel || "—"}
                       </span>
                     </span>
                     <span className="text-xs text-muted">

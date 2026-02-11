@@ -23,7 +23,6 @@ import {
 import {
   buildSequencePayload,
   convertStorageStepToLegacyStep,
-  hydrateStepLabelsFromLexiconRefs,
   normalizeStoragePerformerOrder,
   resolveHiddenPerformerIndexesFromMetadata,
 } from "./sequencePayload.js";
@@ -79,9 +78,449 @@ export async function ensureSchema(env) {
   schemaReady = true;
 }
 
+function normalizeStoredTerm(lexiconId, lexiconName) {
+  const id = String(lexiconId ?? "").trim();
+  const name = String(lexiconName ?? "").trim();
+  if (!id && !name) return null;
+  return {
+    lexicon_id: id || null,
+    name: name || id || "",
+  };
+}
+
+function createEmptyStoragePerformer() {
+  return {
+    mode: "combat",
+    mainGuard: null,
+    basePosture: null,
+    preparation: null,
+    attack: null,
+    defense: null,
+    movement: null,
+    note: "",
+  };
+}
+
+function deriveActionTypeFromPerformer(performer) {
+  const hasAttack = Boolean(performer?.attack);
+  const hasDefense = Boolean(performer?.defense);
+  const hasMovement = Boolean(performer?.movement) && !hasAttack && !hasDefense;
+  const hasNoteOnly =
+    !hasAttack &&
+    !hasDefense &&
+    !hasMovement &&
+    !performer?.preparation &&
+    String(performer?.note ?? "").trim() !== "";
+  if (hasAttack && hasDefense) return "mixed";
+  if (hasAttack) return "attack";
+  if (hasDefense) return "defense";
+  if (hasMovement) return "movement";
+  if (hasNoteOnly) return "note";
+  return "inactive";
+}
+
+function categoryForActionSlot(slot) {
+  const normalized = String(slot ?? "").trim();
+  if (!normalized) return null;
+  if (normalized === "main_guard") return "positions";
+  if (normalized === "base_posture") return "movements";
+  if (normalized === "preparation") return "preparations";
+  if (normalized === "attack") return "attack_types";
+  if (normalized === "defense") return "defensive_actions";
+  if (normalized === "movement") return "movements";
+  if (normalized.endsWith("_target")) return "target_zones";
+  if (normalized.endsWith("_position")) return "positions";
+  return null;
+}
+
+function categoryForAttributeSlot(slot, scope) {
+  const normalized = String(slot ?? "").trim();
+  if (String(scope ?? "").trim() === "position") return "position_complements";
+  if (normalized === "attack") return "attack_complements";
+  if (normalized === "defense") return "attributs_defense";
+  if (normalized === "movement") return "movement_complements";
+  if (normalized === "preparation") return "preparations";
+  return null;
+}
+
+async function getCurrentSequenceCount(env, performanceId) {
+  const row = await env.DB
+    .prepare(
+      `SELECT COUNT(*) AS total
+       FROM performance_sequences
+       WHERE performance_id = ?1`,
+    )
+    .bind(performanceId)
+    .first();
+  return Number(row?.total ?? 0);
+}
+
+async function getCurrentStepCountsBySequencePosition(env, performanceId) {
+  const rows = await env.DB
+    .prepare(
+      `SELECT
+         position,
+         COALESCE(json_array_length(json_extract(payload, '$.steps')), 0) AS step_count
+       FROM performance_sequences
+       WHERE performance_id = ?1
+       ORDER BY position`,
+    )
+    .bind(performanceId)
+    .all();
+  const out = new Map();
+  for (const row of rows?.results ?? []) {
+    const position = Number(row?.position);
+    if (!Number.isFinite(position)) continue;
+    out.set(position, Number(row?.step_count ?? 0));
+  }
+  return out;
+}
+
+function getIncomingStepCount(sequence) {
+  const steps = Array.isArray(sequence?.steps) ? sequence.steps : [];
+  return steps.length;
+}
+
+async function loadStructuredStepsBySequence(env, performanceId) {
+  const stepsRows = await env.DB
+    .prepare(
+      `SELECT ss.id, ss.sequence_id, ss.step_uid, ss.position, ss.lexicon_key
+       FROM sequence_steps ss
+       JOIN performance_sequences ps ON ps.id = ss.sequence_id
+       WHERE ps.performance_id = ?1
+       ORDER BY ss.sequence_id, ss.position`,
+    )
+    .bind(performanceId)
+    .all();
+  const stepResults = stepsRows?.results ?? [];
+  if (!stepResults.length) return new Map();
+
+  const performerRows = await env.DB
+    .prepare(
+      `SELECT sp.id, sp.step_id, sp.performer_id, sp.note, sp.preparation_timing
+       FROM step_performers sp
+       JOIN sequence_steps ss ON ss.id = sp.step_id
+       JOIN performance_sequences ps ON ps.id = ss.sequence_id
+       WHERE ps.performance_id = ?1
+       ORDER BY sp.id`,
+    )
+    .bind(performanceId)
+    .all();
+  const actionRows = await env.DB
+    .prepare(
+      `SELECT sa.id, sa.step_performer_id, sa.slot, sa.timing, sa.lexicon_id, sa.lexicon_name, sa.position
+       FROM step_actions sa
+       JOIN step_performers sp ON sp.id = sa.step_performer_id
+       JOIN sequence_steps ss ON ss.id = sp.step_id
+       JOIN performance_sequences ps ON ps.id = ss.sequence_id
+       WHERE ps.performance_id = ?1
+       ORDER BY sa.step_performer_id, sa.position, sa.id`,
+    )
+    .bind(performanceId)
+    .all();
+  const attributeRows = await env.DB
+    .prepare(
+      `SELECT saa.id, saa.step_action_id, saa.attribute_scope, saa.lexicon_id, saa.lexicon_name, saa.position
+       FROM step_action_attributes saa
+       JOIN step_actions sa ON sa.id = saa.step_action_id
+       JOIN step_performers sp ON sp.id = sa.step_performer_id
+       JOIN sequence_steps ss ON ss.id = sp.step_id
+       JOIN performance_sequences ps ON ps.id = ss.sequence_id
+       WHERE ps.performance_id = ?1
+       ORDER BY saa.step_action_id, saa.position, saa.id`,
+    )
+    .bind(performanceId)
+    .all();
+
+  const sequenceMap = new Map();
+  const stepById = new Map();
+  for (const row of stepResults) {
+    const sequenceId = Number(row.sequence_id);
+    if (!sequenceMap.has(sequenceId)) sequenceMap.set(sequenceId, []);
+    const stepPayload = {
+      id: row.step_uid,
+      lexicon: row.lexicon_key,
+      performers: {},
+    };
+    sequenceMap.get(sequenceId).push(stepPayload);
+    stepById.set(Number(row.id), stepPayload);
+  }
+
+  const stepPerformerById = new Map();
+  for (const row of performerRows?.results ?? []) {
+    const stepPayload = stepById.get(Number(row.step_id));
+    if (!stepPayload) continue;
+    const performerKey = String(row.performer_id ?? "").trim();
+    if (!performerKey) continue;
+    const performerPayload = createEmptyStoragePerformer();
+    performerPayload.note = String(row.note ?? "");
+    if (String(row.preparation_timing ?? "").trim()) {
+      performerPayload.preparationTiming = String(row.preparation_timing).trim();
+    }
+    stepPayload.performers[performerKey] = performerPayload;
+    stepPerformerById.set(Number(row.id), performerPayload);
+  }
+
+  const actionById = new Map();
+  for (const row of actionRows?.results ?? []) {
+    const performerPayload = stepPerformerById.get(Number(row.step_performer_id));
+    if (!performerPayload) continue;
+    const slot = String(row.slot ?? "").trim();
+    if (!slot) continue;
+    const term = normalizeStoredTerm(row.lexicon_id, row.lexicon_name);
+    const timing = String(row.timing ?? "").trim();
+    if (slot === "main_guard") {
+      performerPayload.mainGuard = term;
+      actionById.set(Number(row.id), { slot, ref: performerPayload.mainGuard });
+      continue;
+    }
+    if (slot === "base_posture") {
+      performerPayload.basePosture = term;
+      actionById.set(Number(row.id), { slot, ref: performerPayload.basePosture });
+      continue;
+    }
+    if (slot === "preparation" || slot === "attack" || slot === "defense" || slot === "movement") {
+      const action = term
+        ? { ...term, attributes: [] }
+        : { lexicon_id: null, name: "", attributes: [] };
+      if (slot === "preparation" && timing) action.timing = timing;
+      performerPayload[slot] = action;
+      actionById.set(Number(row.id), { slot, ref: action });
+      continue;
+    }
+    if (slot === "attack_target" && performerPayload.attack) {
+      performerPayload.attack.target = term;
+      actionById.set(Number(row.id), { slot, ref: performerPayload.attack.target });
+      continue;
+    }
+    if (slot === "preparation_target" && performerPayload.preparation) {
+      performerPayload.preparation.target = term;
+      actionById.set(Number(row.id), { slot, ref: performerPayload.preparation.target });
+      continue;
+    }
+    if (slot === "defense_position" && performerPayload.defense) {
+      performerPayload.defense.position = term ? { ...term, attributes: [] } : null;
+      actionById.set(Number(row.id), { slot, ref: performerPayload.defense.position });
+      continue;
+    }
+    if (slot === "preparation_position" && performerPayload.preparation) {
+      performerPayload.preparation.position = term ? { ...term, attributes: [] } : null;
+      actionById.set(Number(row.id), { slot, ref: performerPayload.preparation.position });
+      continue;
+    }
+  }
+
+  for (const row of attributeRows?.results ?? []) {
+    const actionInfo = actionById.get(Number(row.step_action_id));
+    if (!actionInfo) continue;
+    const term = normalizeStoredTerm(row.lexicon_id, row.lexicon_name);
+    if (!term) continue;
+    const scope = String(row.attribute_scope ?? "").trim();
+    if (scope === "position" && actionInfo.ref && Array.isArray(actionInfo.ref.attributes)) {
+      actionInfo.ref.attributes.push(term);
+      continue;
+    }
+    if (actionInfo.ref && Array.isArray(actionInfo.ref.attributes)) {
+      actionInfo.ref.attributes.push(term);
+    }
+  }
+
+  return sequenceMap;
+}
+
+async function saveStructuredStepsForSequence(env, sequenceId, sequence, performers, now) {
+  const steps = Array.isArray(sequence?.steps) ? sequence.steps : [];
+  for (let stepIndex = 0; stepIndex < steps.length; stepIndex += 1) {
+    const step = steps[stepIndex] ?? {};
+    const stepUid = String(step?.id ?? "").trim() || crypto.randomUUID();
+    const lexiconKey = String(step?.lexicon ?? "").trim() || LEGACY_STEP_LEXICON_KEY;
+    const insertedStep = await env.DB
+      .prepare(
+        `INSERT INTO sequence_steps (sequence_id, step_uid, position, lexicon_key, created_at, updated_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?5)
+         RETURNING id`,
+      )
+      .bind(sequenceId, stepUid, stepIndex, lexiconKey, now)
+      .first();
+    const stepRowId = Number(insertedStep?.id);
+    if (!Number.isFinite(stepRowId)) continue;
+
+    const stepPerformers = Array.isArray(step?.performers) ? step.performers : [];
+    for (let performerIndex = 0; performerIndex < performers.length; performerIndex += 1) {
+      const performerIdentity = performers[performerIndex];
+      const performerId = String(performerIdentity?.id ?? "").trim();
+      if (!performerId) continue;
+      const performer = stepPerformers[performerIndex] ?? createStepPerformerModel();
+      const preparationTiming = String(
+        performer?.preparation?.timing ?? performer?.preparationTiming ?? "",
+      ).trim();
+      const insertedPerformer = await env.DB
+        .prepare(
+          `INSERT INTO step_performers (
+             step_id, performer_id, action_type, note, preparation_timing, created_at, updated_at
+           ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?6)
+           RETURNING id`,
+        )
+        .bind(
+          stepRowId,
+          performerId,
+          deriveActionTypeFromPerformer(performer),
+          String(performer?.note ?? ""),
+          preparationTiming || null,
+          now,
+        )
+        .first();
+      const stepPerformerId = Number(insertedPerformer?.id);
+      if (!Number.isFinite(stepPerformerId)) continue;
+
+      const actionRefs = [];
+      const actionSlots = [
+        ["main_guard", performer?.mainGuard, null],
+        ["base_posture", performer?.basePosture, null],
+        ["preparation", performer?.preparation, preparationTiming || null],
+        ["attack", performer?.attack, null],
+        ["defense", performer?.defense, null],
+        ["movement", performer?.movement, null],
+      ];
+      for (const [slot, rawValue, timing] of actionSlots) {
+        if (!rawValue || typeof rawValue !== "object") continue;
+        const lexiconId = String(rawValue?.lexicon_id ?? "").trim();
+        const lexiconName = String(rawValue?.name ?? "").trim();
+        if (!lexiconId && !lexiconName) continue;
+        const insertedAction = await env.DB
+          .prepare(
+            `INSERT INTO step_actions (
+               step_performer_id, slot, timing, lexicon_id, lexicon_name, lexicon_category, position, created_at, updated_at
+             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, 0, ?7, ?7)
+             RETURNING id`,
+          )
+          .bind(
+            stepPerformerId,
+            slot,
+            timing,
+            lexiconId || null,
+            lexiconName || null,
+            categoryForActionSlot(slot),
+            now,
+          )
+          .first();
+        const actionId = Number(insertedAction?.id);
+        if (!Number.isFinite(actionId)) continue;
+        actionRefs.push({ actionId, slot, value: rawValue });
+      }
+
+      for (const actionRef of actionRefs) {
+        const rawValue = actionRef.value;
+        if (!rawValue || typeof rawValue !== "object") continue;
+        const attrs = Array.isArray(rawValue?.attributes) ? rawValue.attributes : [];
+        for (let attrIndex = 0; attrIndex < attrs.length; attrIndex += 1) {
+          const attr = attrs[attrIndex] ?? {};
+          const lexiconId = String(attr?.lexicon_id ?? "").trim();
+          const lexiconName = String(attr?.name ?? "").trim();
+          if (!lexiconId && !lexiconName) continue;
+          await env.DB
+            .prepare(
+              `INSERT INTO step_action_attributes (
+                 step_action_id, attribute_scope, lexicon_id, lexicon_name, lexicon_category, position, created_at, updated_at
+               ) VALUES (?1, 'action', ?2, ?3, ?4, ?5, ?6, ?6)`,
+            )
+            .bind(
+              actionRef.actionId,
+              lexiconId || null,
+              lexiconName || null,
+              categoryForAttributeSlot(actionRef.slot, "action"),
+              attrIndex,
+              now,
+            )
+            .run();
+        }
+
+        if (
+          (actionRef.slot === "attack" || actionRef.slot === "preparation") &&
+          rawValue.target &&
+          typeof rawValue.target === "object"
+        ) {
+          const targetLexiconId = String(rawValue.target?.lexicon_id ?? "").trim();
+          const targetLexiconName = String(rawValue.target?.name ?? "").trim();
+          if (targetLexiconId || targetLexiconName) {
+            await env.DB
+              .prepare(
+                `INSERT INTO step_actions (
+                   step_performer_id, slot, timing, lexicon_id, lexicon_name, lexicon_category, position, created_at, updated_at
+                 ) VALUES (?1, ?2, NULL, ?3, ?4, 'target_zones', 0, ?5, ?5)`,
+              )
+              .bind(
+                stepPerformerId,
+                actionRef.slot === "attack" ? "attack_target" : "preparation_target",
+                targetLexiconId || null,
+                targetLexiconName || null,
+                now,
+              )
+              .run();
+          }
+        }
+
+        if (
+          (actionRef.slot === "defense" || actionRef.slot === "preparation") &&
+          rawValue.position &&
+          typeof rawValue.position === "object"
+        ) {
+          const positionLexiconId = String(rawValue.position?.lexicon_id ?? "").trim();
+          const positionLexiconName = String(rawValue.position?.name ?? "").trim();
+          if (positionLexiconId || positionLexiconName) {
+            const insertedPosition = await env.DB
+              .prepare(
+                `INSERT INTO step_actions (
+                   step_performer_id, slot, timing, lexicon_id, lexicon_name, lexicon_category, position, created_at, updated_at
+                 ) VALUES (?1, ?2, NULL, ?3, ?4, 'positions', 0, ?5, ?5)
+                 RETURNING id`,
+              )
+              .bind(
+                stepPerformerId,
+                actionRef.slot === "defense"
+                  ? "defense_position"
+                  : "preparation_position",
+                positionLexiconId || null,
+                positionLexiconName || null,
+                now,
+              )
+              .first();
+            const positionActionId = Number(insertedPosition?.id);
+            const positionAttrs = Array.isArray(rawValue.position?.attributes)
+              ? rawValue.position.attributes
+              : [];
+            if (Number.isFinite(positionActionId)) {
+              for (let posAttrIndex = 0; posAttrIndex < positionAttrs.length; posAttrIndex += 1) {
+                const posAttr = positionAttrs[posAttrIndex] ?? {};
+                const lexiconId = String(posAttr?.lexicon_id ?? "").trim();
+                const lexiconName = String(posAttr?.name ?? "").trim();
+                if (!lexiconId && !lexiconName) continue;
+                await env.DB
+                  .prepare(
+                    `INSERT INTO step_action_attributes (
+                       step_action_id, attribute_scope, lexicon_id, lexicon_name, lexicon_category, position, created_at, updated_at
+                     ) VALUES (?1, 'position', ?2, ?3, 'position_complements', ?4, ?5, ?5)`,
+                  )
+                  .bind(
+                    positionActionId,
+                    lexiconId || null,
+                    lexiconName || null,
+                    posAttrIndex,
+                    now,
+                  )
+                  .run();
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 /**
  * Reads a full performance state including performers, draft form and sequences.
- * It transparently supports both legacy and v2 sequence payloads.
+ * Step content is sourced only from structured step tables.
  */
 export async function getPerformanceState(
   env,
@@ -132,85 +571,58 @@ export async function getPerformanceState(
 
   const sequenceRows = await env.DB
     .prepare(
-      `SELECT payload FROM performance_sequences
+      `SELECT id, payload FROM performance_sequences
        WHERE performance_id = ?1
        ORDER BY position`,
     )
     .bind(performance.id)
     .all();
+  const structuredStepsBySequence = await loadStructuredStepsBySequence(
+    env,
+    performance.id,
+  );
 
   const performerIdToIndexMap = buildPerformerIdToIndexMap(performers);
 
   const sequences = sequenceRows?.results?.map((row, index) => {
     try {
       const payload = JSON.parse(row.payload);
-      if (payload?.steps) {
-        const metadata =
-          payload?.metadata && typeof payload.metadata === "object"
-            ? payload.metadata
-            : payload;
-        const lexiconKey = resolveStepLexiconKey(metadata.lexicon, {
-          fallbackLexicon: LEGACY_STEP_LEXICON_KEY,
-        });
-        const performerOrder = normalizeStoragePerformerOrder(
-          metadata,
-          performers,
-          performerIdToIndexMap,
-        );
-        const hiddenPerformerIndexes = resolveHiddenPerformerIndexesFromMetadata(
-          metadata,
-          performers,
-          performerIdToIndexMap,
-        );
-        const stepsRaw = Array.isArray(payload.steps) ? payload.steps : [];
-        return createSequenceModel({
-          id: payload.id,
-          name: payload.name,
-          index,
-          hiddenPerformerIndexes,
-          performerCount: performers.length,
-          steps: stepsRaw.map((stepPayload) => {
-            const hasStoragePerformersObject =
-              stepPayload?.performers &&
-              !Array.isArray(stepPayload.performers) &&
-              typeof stepPayload.performers === "object";
-            if (hasStoragePerformersObject) {
-              const legacyStep = convertStorageStepToLegacyStep(stepPayload, {
-                lexiconKey,
-                performerOrder,
-                lexiconNameById,
-              });
-              return createStepModel(legacyStep, {
-                fallbackLexicon: LEGACY_STEP_LEXICON_KEY,
-                performerCount: performers.length,
-              });
-            }
-            const hydratedStep = lexiconNameById
-              ? hydrateStepLabelsFromLexiconRefs(stepPayload, lexiconNameById)
-              : stepPayload;
-            return createStepModel(hydratedStep, {
-              fallbackLexicon: LEGACY_STEP_LEXICON_KEY,
-              performerCount: performers.length,
-            });
-          }),
-        });
-      }
-      if (payload?.performers) {
-        const hydratedPayload = lexiconNameById
-          ? hydrateStepLabelsFromLexiconRefs(payload, lexiconNameById)
+      const metadata =
+        payload?.metadata && typeof payload.metadata === "object"
+          ? payload.metadata
           : payload;
-        return createSequenceModel({
-          index,
-          hiddenPerformerIndexes: [],
-          performerCount: performers.length,
-          steps: [
-            createStepModel(hydratedPayload, {
-              fallbackLexicon: LEGACY_STEP_LEXICON_KEY,
-            }),
-          ],
-        });
-      }
-      return null;
+      const lexiconKey = resolveStepLexiconKey(metadata?.lexicon, {
+        fallbackLexicon: LEGACY_STEP_LEXICON_KEY,
+      });
+      const performerOrder = normalizeStoragePerformerOrder(
+        metadata,
+        performers,
+        performerIdToIndexMap,
+      );
+      const hiddenPerformerIndexes = resolveHiddenPerformerIndexesFromMetadata(
+        metadata,
+        performers,
+        performerIdToIndexMap,
+      );
+      const structuredSteps = structuredStepsBySequence.get(Number(row.id)) ?? [];
+      return createSequenceModel({
+        id: payload?.id,
+        name: payload?.name,
+        index,
+        hiddenPerformerIndexes,
+        performerCount: performers.length,
+        steps: structuredSteps.map((stepPayload) => {
+          const legacyStep = convertStorageStepToLegacyStep(stepPayload, {
+            lexiconKey,
+            performerOrder,
+            lexiconNameById,
+          });
+          return createStepModel(legacyStep, {
+            fallbackLexicon: LEGACY_STEP_LEXICON_KEY,
+            performerCount: performers.length,
+          });
+        }),
+      });
     } catch {
       return null;
     }
@@ -354,9 +766,10 @@ async function detectLegacyLexiconByPerformance(env, performanceIds) {
     const rows = await runDbWithRetry(() =>
       env.DB
         .prepare(
-          `SELECT performance_id, payload
-           FROM performance_sequences
-           WHERE performance_id IN (${placeholders})`,
+          `SELECT ps.performance_id, ss.lexicon_key
+           FROM performance_sequences ps
+           LEFT JOIN sequence_steps ss ON ss.sequence_id = ps.id
+           WHERE ps.performance_id IN (${placeholders})`,
         )
         .bind(...chunk)
         .all(),
@@ -369,40 +782,17 @@ async function detectLegacyLexiconByPerformance(env, performanceIds) {
     const performanceId = Number(row?.performance_id);
     if (!Number.isFinite(performanceId)) continue;
     if (!grouped.has(performanceId)) grouped.set(performanceId, []);
-    grouped.get(performanceId).push(row?.payload);
+    grouped.get(performanceId).push(String(row?.lexicon_key ?? ""));
   }
 
   for (const performanceId of ids) {
-    const payloads = grouped.get(performanceId) ?? [];
+    const lexiconKeys = grouped.get(performanceId) ?? [];
     let hasLegacy = false;
-    for (const rawPayload of payloads) {
+    for (const key of lexiconKeys) {
       if (hasLegacy) break;
-      try {
-        const payload = JSON.parse(rawPayload);
-        const metadataLexicon = resolveStepLexiconKey(payload?.metadata?.lexicon, {
-          fallbackLexicon: "",
-        });
-        if (metadataLexicon) {
-          if (metadataLexicon === LEGACY_STEP_LEXICON_KEY) hasLegacy = true;
-          continue;
-        }
-
-        const steps = Array.isArray(payload?.steps)
-          ? payload.steps
-          : payload?.performers
-            ? [payload]
-            : [];
-        for (const step of steps) {
-          const lexicon = resolveStepLexiconKey(step?.lexicon, {
-            fallbackLexicon: LEGACY_STEP_LEXICON_KEY,
-          });
-          if (lexicon === LEGACY_STEP_LEXICON_KEY) {
-            hasLegacy = true;
-            break;
-          }
-        }
-      } catch {
-        // ignore parse errors
+      const lexicon = resolveStepLexiconKey(key, { fallbackLexicon: "" });
+      if (lexicon === LEGACY_STEP_LEXICON_KEY) {
+        hasLegacy = true;
       }
     }
     if (hasLegacy) map.set(performanceId, true);
@@ -589,7 +979,12 @@ export async function listShareUsersAll(env, userId) {
  * Persists the whole front state snapshot.
  * If explicit sequences are provided, existing sequences are replaced atomically.
  */
-export async function saveState(env, userId, state, isSuperAdmin = false) {
+export async function saveState(
+  env,
+  userId,
+  state,
+  isSuperAdmin = false,
+) {
   await ensureSchema(env);
   const now = new Date().toISOString();
   const performanceName =
@@ -614,13 +1009,14 @@ export async function saveState(env, userId, state, isSuperAdmin = false) {
       ? state.phrases
       : null;
   const requestedId = Number(state.performanceId);
+  const hasRequestedPerformanceId = Number.isFinite(requestedId);
   const expectedUpdatedAt =
     typeof state.performanceUpdatedAt === "string" &&
     state.performanceUpdatedAt.trim()
       ? state.performanceUpdatedAt.trim()
       : null;
 
-  let performanceId = Number.isFinite(requestedId) ? requestedId : null;
+  let performanceId = hasRequestedPerformanceId ? requestedId : null;
   let shareRole = null;
   let existingPerformance = null;
   if (performanceId) {
@@ -636,30 +1032,19 @@ export async function saveState(env, userId, state, isSuperAdmin = false) {
       .first();
     existingPerformance = exists;
     if (!exists?.id) {
-      performanceId = null;
+      return {
+        performanceId: requestedId,
+        invalidPerformanceId: true,
+      };
     } else {
       shareRole = exists.share_role;
     }
   }
 
   if (!performanceId) {
-    const inserted = await env.DB
-      .prepare(
-        `INSERT INTO performances (user_id, name, description, participants, form_draft, type, created_at, updated_at, archived)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?7, 0)
-         RETURNING id`,
-      )
-      .bind(
-        userId,
-        performanceName,
-        performanceDescription,
-        JSON.stringify(normalizedPerformers),
-        draft ? JSON.stringify(draft) : null,
-        performanceType,
-        now,
-      )
-      .first();
-    performanceId = inserted?.id;
+    return {
+      creationRejected: true,
+    };
   } else {
     const isDemo = Boolean(existingPerformance?.is_demo);
     if (isDemo && !isSuperAdmin) {
@@ -737,9 +1122,57 @@ export async function saveState(env, userId, state, isSuperAdmin = false) {
   if (performanceId && hasExplicitSequencesPayload) {
     const nextCount = Array.isArray(sequences) ? sequences.length : 0;
     const allowEmptySequences = state?.allowEmptySequences === true;
+    const allowSequenceShrinkToTwo = state?.allowSequenceShrinkToTwo === true;
+    const allowStepShrinkToTwo = state?.allowStepShrinkToTwo === true;
     const shouldReplaceSequences =
       Array.isArray(sequences) &&
       (nextCount > 0 || allowEmptySequences);
+
+    if (shouldReplaceSequences) {
+      const currentCount = await getCurrentSequenceCount(env, performanceId);
+      if (currentCount > 2 && nextCount === 2 && !allowSequenceShrinkToTwo) {
+        return {
+          performanceId,
+          guardrail: {
+            type: "sequence_shrink_to_two",
+            currentCount,
+            nextCount,
+            requiresFlag: "allowSequenceShrinkToTwo",
+          },
+          performanceUpdatedAt: existingPerformance?.updated_at ?? null,
+        };
+      }
+
+      if (!allowStepShrinkToTwo && nextCount > 0) {
+        const currentStepCounts = await getCurrentStepCountsBySequencePosition(
+          env,
+          performanceId,
+        );
+        const blockedSequences = [];
+        for (let index = 0; index < nextCount; index += 1) {
+          const previousStepCount = Number(currentStepCounts.get(index) ?? 0);
+          const incomingStepCount = getIncomingStepCount(sequences[index]);
+          if (previousStepCount > 2 && incomingStepCount === 2) {
+            blockedSequences.push({
+              position: index,
+              previousStepCount,
+              incomingStepCount,
+            });
+          }
+        }
+        if (blockedSequences.length > 0) {
+          return {
+            performanceId,
+            guardrail: {
+              type: "sequence_step_shrink_to_two",
+              blockedSequences,
+              requiresFlag: "allowStepShrinkToTwo",
+            },
+            performanceUpdatedAt: existingPerformance?.updated_at ?? null,
+          };
+        }
+      }
+    }
 
     if (shouldReplaceSequences) {
       await env.DB
@@ -753,25 +1186,31 @@ export async function saveState(env, userId, state, isSuperAdmin = false) {
         performanceType === "classic"
           ? await getClassicV2LexiconReferenceIndex(env)
           : null;
-      const inserts = sequences.map((sequence, index) =>
-        env.DB
+      for (let index = 0; index < sequences.length; index += 1) {
+        const sequence = sequences[index];
+        const payload = buildSequencePayload(sequence, normalizedPerformers, {
+          createStepModel,
+          lexiconReferenceIndex,
+        });
+        const insertedSequence = await env.DB
           .prepare(
             `INSERT INTO performance_sequences (performance_id, position, payload, created_at)
-           VALUES (?1, ?2, ?3, ?4)`,
+             VALUES (?1, ?2, ?3, ?4)
+             RETURNING id`,
           )
-          .bind(
-            performanceId,
-            index,
-            JSON.stringify(
-              buildSequencePayload(sequence, normalizedPerformers, {
-                createStepModel,
-                lexiconReferenceIndex,
-              }),
-            ),
+          .bind(performanceId, index, JSON.stringify(payload), now)
+          .first();
+        const sequenceId = Number(insertedSequence?.id);
+        if (Number.isFinite(sequenceId)) {
+          await saveStructuredStepsForSequence(
+            env,
+            sequenceId,
+            sequence,
+            normalizedPerformers,
             now,
-          ),
-      );
-      await env.DB.batch(inserts);
+          );
+        }
+      }
     }
   }
 

@@ -48,6 +48,10 @@ const FRONT_ENV =
 export default function App() {
   const [page, setPage] = useState("home");
   const [isMenuCollapsed, setIsMenuCollapsed] = useState(true);
+  const isPerformancePage =
+    page === "performance-create" ||
+    page === "performance-create-sabre" ||
+    page === "performance-reader";
   const bootstrap = useAppBootstrap({
     apiBase: API_BASE,
     tokenKey: TOKEN_KEY,
@@ -74,7 +78,7 @@ export default function App() {
   } = bootstrap;
   const { performances } = services;
   const performanceState = usePerformanceStateManager({
-    isSaveEnabled: Boolean(authUser),
+    isSaveEnabled: Boolean(authUser) && isPerformancePage,
     saveState: (state) => performances.saveState(state),
   });
   const {

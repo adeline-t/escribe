@@ -1,4 +1,25 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
+
+function stableStringify(value) {
+  if (value === null || typeof value !== "object") {
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => stableStringify(item)).join(",")}]`;
+  }
+  const keys = Object.keys(value).sort();
+  return `{${keys
+    .map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`)
+    .join(",")}}`;
+}
+
+function normalizeStateForSnapshot(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+  const next = { ...value };
+  // Server-managed timestamp: changing it after each save must not trigger a new save loop.
+  delete next.performanceUpdatedAt;
+  return next;
+}
 
 export function useDebouncedStateSave({
   enabled,
@@ -12,9 +33,32 @@ export function useDebouncedStateSave({
   const inFlightRef = useRef(false);
   const pendingStateRef = useRef(null);
   const versionByPerformanceRef = useRef(new Map());
+  const lastSavedSnapshotRef = useRef("");
+  const lastScheduledSnapshotRef = useRef("");
+  const enabledRef = useRef(Boolean(enabled));
   const onSaveRef = useRef(onSave);
   const onSavedRef = useRef(onSaved);
   const onErrorRef = useRef(onError);
+
+  const extractUpdatedAt = useCallback((value) => {
+    if (typeof value !== "string") return null;
+    const token = value.trim();
+    return token || null;
+  }, []);
+
+  const markSnapshotAsSaved = useCallback(
+    (nextState) => {
+      const snapshot = stableStringify(normalizeStateForSnapshot(nextState));
+      lastSavedSnapshotRef.current = snapshot;
+      lastScheduledSnapshotRef.current = snapshot;
+      const performanceId = Number(nextState?.performanceId);
+      const updatedAt = extractUpdatedAt(nextState?.performanceUpdatedAt);
+      if (Number.isFinite(performanceId) && updatedAt) {
+        versionByPerformanceRef.current.set(performanceId, updatedAt);
+      }
+    },
+    [extractUpdatedAt],
+  );
 
   useEffect(() => {
     onSaveRef.current = onSave;
@@ -22,9 +66,26 @@ export function useDebouncedStateSave({
     onErrorRef.current = onError;
   }, [onSave, onSaved, onError]);
 
+  useEffect(() => {
+    enabledRef.current = Boolean(enabled);
+    if (!enabledRef.current) {
+      pendingStateRef.current = null;
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    }
+  }, [enabled]);
+
   function flushSave(nextState) {
+    if (!enabledRef.current) return;
     const saveFn = onSaveRef.current;
     if (typeof saveFn !== "function") return;
+    const snapshot = stableStringify(normalizeStateForSnapshot(nextState));
+    if (snapshot && snapshot === lastSavedSnapshotRef.current) {
+      return;
+    }
+    lastScheduledSnapshotRef.current = snapshot;
     const performanceId = Number(nextState?.performanceId);
     const savedVersion = Number.isFinite(performanceId)
       ? versionByPerformanceRef.current.get(performanceId)
@@ -41,14 +102,11 @@ export function useDebouncedStateSave({
     Promise.resolve(saveFn(stateToSave))
       .then((result) => {
         const resultId = Number(result?.performanceId);
-        const updatedAt =
-          typeof result?.performanceUpdatedAt === "string" &&
-          result.performanceUpdatedAt.trim()
-            ? result.performanceUpdatedAt.trim()
-            : null;
+        const updatedAt = extractUpdatedAt(result?.performanceUpdatedAt);
         if (Number.isFinite(resultId) && updatedAt) {
           versionByPerformanceRef.current.set(resultId, updatedAt);
         }
+        lastSavedSnapshotRef.current = snapshot;
         const onSavedFn = onSavedRef.current;
         if (typeof onSavedFn === "function") {
           onSavedFn(result);
@@ -62,6 +120,7 @@ export function useDebouncedStateSave({
       })
       .finally(() => {
         inFlightRef.current = false;
+        if (!enabledRef.current) return;
         const pendingState = pendingStateRef.current;
         if (pendingState) {
           pendingStateRef.current = null;
@@ -72,6 +131,14 @@ export function useDebouncedStateSave({
 
   useEffect(() => {
     if (!enabled || typeof onSave !== "function") return undefined;
+    const snapshot = stableStringify(normalizeStateForSnapshot(state));
+    if (
+      snapshot &&
+      (snapshot === lastSavedSnapshotRef.current ||
+        snapshot === lastScheduledSnapshotRef.current)
+    ) {
+      return undefined;
+    }
     if (timerRef.current) {
       clearTimeout(timerRef.current);
     }
@@ -92,4 +159,6 @@ export function useDebouncedStateSave({
       }
     };
   }, [enabled, state, delay, onSave]);
+
+  return { markSnapshotAsSaved };
 }

@@ -41,6 +41,9 @@ export async function handleState(request, env) {
       return jsonResponse({ error: "invalid_state" }, 400, corsHeaders);
     }
     const requestedPerformanceId = Number(state.performanceId);
+    if (!Number.isFinite(requestedPerformanceId) || requestedPerformanceId <= 0) {
+      return jsonResponse({ error: "performance_id_required" }, 400, corsHeaders);
+    }
     const hasExplicitSequencesPayload =
       Array.isArray(state?.sequences) || Array.isArray(state?.phrases);
     const incomingSequences = Array.isArray(state?.sequences)
@@ -54,7 +57,33 @@ export async function handleState(request, env) {
 
     const isSuperAdmin = requireRole(session, ["superadmin"]);
     const saveResult = await saveState(env, session.user.id, state, isSuperAdmin);
+    if (saveResult?.creationRejected) {
+      return jsonResponse({ error: "performance_id_required" }, 400, corsHeaders);
+    }
+    if (saveResult?.invalidPerformanceId) {
+      return jsonResponse({ error: "invalid_performance_id" }, 404, corsHeaders);
+    }
     const performanceId = Number(saveResult?.performanceId);
+    if (saveResult?.guardrail) {
+      await logAudit(env, "state.save.blocked", session.user.id, performanceId, {
+        requestedPerformanceId: Number.isFinite(requestedPerformanceId)
+          ? requestedPerformanceId
+          : null,
+        hasExplicitSequencesPayload,
+        incomingSequenceCount,
+        guardrail: saveResult.guardrail,
+      });
+      return jsonResponse(
+        {
+          error: "state_guardrail",
+          guardrail: saveResult.guardrail,
+          performanceId: Number.isFinite(performanceId) ? performanceId : null,
+          performanceUpdatedAt: saveResult?.performanceUpdatedAt ?? null,
+        },
+        409,
+        corsHeaders,
+      );
+    }
     if (saveResult?.conflict) {
       return jsonResponse(
         {

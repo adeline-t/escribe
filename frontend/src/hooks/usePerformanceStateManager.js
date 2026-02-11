@@ -62,6 +62,29 @@ export function usePerformanceStateManager({ isSaveEnabled, saveState } = {}) {
     [sequences, activeSequenceId],
   );
 
+  const persistableState = useMemo(
+    () => ({
+      performanceId,
+      performanceName,
+      performanceDescription,
+      performanceUpdatedAt,
+      performanceType,
+      performers,
+      sequences,
+      form,
+    }),
+    [
+      performanceId,
+      performanceName,
+      performanceDescription,
+      performanceUpdatedAt,
+      performanceType,
+      performers,
+      sequences,
+      form,
+    ],
+  );
+
   function resetInteractionState({ resetLexicon = true } = {}) {
     // Reset only the editing context (does not touch persisted performance data).
     setEditingStepId(null);
@@ -76,16 +99,28 @@ export function usePerformanceStateManager({ isSaveEnabled, saveState } = {}) {
   function applyNormalizedPerformanceState(normalized, { fallbackPerformanceId = null } = {}) {
     // Hydrate local state from a normalized payload returned by the API.
     if (!normalized) return;
+    const nextPerformanceId = normalized.performanceId ?? fallbackPerformanceId ?? null;
+    const nextSequences = normalized.sequences ?? [];
     setPerformers(normalized.performers);
-    setSequences(normalized.sequences ?? []);
+    setSequences(nextSequences);
     setForm(normalized.form);
-    setPerformanceId(normalized.performanceId ?? fallbackPerformanceId ?? null);
+    setPerformanceId(nextPerformanceId);
     setPerformanceName(normalized.performanceName ?? DEFAULT_PERFORMANCE_NAME);
     setPerformanceDescription(normalized.performanceDescription ?? "");
     setPerformanceUpdatedAt(normalized.performanceUpdatedAt ?? null);
     setPerformanceType(normalizePerformanceType(normalized.performanceType));
     setPerformanceShareRole(normalized.performanceShareRole ?? DEFAULT_PERFORMANCE_SHARE_ROLE);
-    setActiveSequenceId(normalized.sequences?.[0]?.id ?? null);
+    setActiveSequenceId(nextSequences[0]?.id ?? null);
+    markSnapshotAsSaved({
+      performanceId: nextPerformanceId,
+      performanceName: normalized.performanceName ?? DEFAULT_PERFORMANCE_NAME,
+      performanceDescription: normalized.performanceDescription ?? "",
+      performanceUpdatedAt: normalized.performanceUpdatedAt ?? null,
+      performanceType: normalizePerformanceType(normalized.performanceType),
+      performers: normalized.performers,
+      sequences: nextSequences,
+      form: normalized.form,
+    });
     resetInteractionState({ resetLexicon: true });
   }
 
@@ -117,7 +152,18 @@ export function usePerformanceStateManager({ isSaveEnabled, saveState } = {}) {
     setPerformers(resolvedPerformers);
     setSequences([initialSequence]);
     setActiveSequenceId(initialSequence.id);
-    setForm(buildEmptyForm(resolvedPerformers));
+    const emptyForm = buildEmptyForm(resolvedPerformers);
+    setForm(emptyForm);
+    markSnapshotAsSaved({
+      performanceId: id ?? null,
+      performanceName: name ?? DEFAULT_PERFORMANCE_NAME,
+      performanceDescription: description ?? "",
+      performanceUpdatedAt: null,
+      performanceType: normalizePerformanceType(type),
+      performers: resolvedPerformers,
+      sequences: [initialSequence],
+      form: emptyForm,
+    });
     resetInteractionState({ resetLexicon: true });
   }
 
@@ -125,22 +171,20 @@ export function usePerformanceStateManager({ isSaveEnabled, saveState } = {}) {
     setIsHydrated(Boolean(value));
   }
 
-  useDebouncedStateSave({
-    enabled: isHydrated && Boolean(isSaveEnabled) && typeof saveState === "function",
-    state: {
-      performanceId,
-      performanceName,
-      performanceDescription,
-      performanceUpdatedAt,
-      performanceType,
-      performers,
-      sequences,
-      form,
-    },
+  const { markSnapshotAsSaved } = useDebouncedStateSave({
+    enabled:
+      isHydrated &&
+      Boolean(isSaveEnabled) &&
+      typeof saveState === "function" &&
+      Number.isFinite(Number(performanceId)),
+    state: persistableState,
     delay: 400,
     // Automatic persistence of the performance draft.
     onSave: (state) => {
       const hasExistingPerformance = Number.isFinite(Number(state?.performanceId));
+      if (!hasExistingPerformance) {
+        return { skipped: true, reason: "missing_performance_id" };
+      }
       const hasEmptySequences =
         Array.isArray(state?.sequences) && state.sequences.length === 0;
       // Guardrail: avoid wiping existing sequences when local state is temporarily empty.

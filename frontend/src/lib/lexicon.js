@@ -187,6 +187,20 @@ function getLexiconLabel(value) {
   return value.name ?? value.nom ?? value.label ?? "";
 }
 
+function getLexiconDescription(value) {
+  if (!value || typeof value !== "object") return "";
+  const direct = String(value.description ?? value.definition ?? "").trim();
+  if (direct) return direct;
+  if (Array.isArray(value.details)) {
+    const joined = value.details
+      .map((item) => String(item ?? "").trim())
+      .filter(Boolean)
+      .join(" ");
+    return joined.trim();
+  }
+  return "";
+}
+
 function normalizeLexiconNodeId(node) {
   return String(node?.id ?? node?.lexicon_id ?? "").trim();
 }
@@ -250,6 +264,7 @@ function flattenClassicV2RecursiveLexicon(data) {
       bucketEntries[targetBucket].push({
         lexicon_id: nodeId || `legacy:${targetBucket}:${key}`,
         name: label,
+        description: getLexiconDescription(node),
       });
       return;
     }
@@ -317,6 +332,7 @@ function flattenSabreRecursiveLexicon(data) {
       bucketEntries[targetBucket].push({
         lexicon_id: nodeId || `legacy:${targetBucket}:${key}`,
         name: label,
+        description: getLexiconDescription(node),
       });
       return;
     }
@@ -530,13 +546,15 @@ function normalizeTermEntry(value, bucket = "term") {
     if (!name) return null;
     const explicitId = String(value.lexicon_id ?? value.id ?? "").trim();
     const id = explicitId || `legacy:${bucket}:${normalizeTokenForLookup(name)}`;
-    return { id, label: name };
+    const description = getLexiconDescription(value);
+    return { id, label: name, description };
   }
   const name = typeof value === "string" ? value.trim() : "";
   if (!name) return null;
   return {
     id: `legacy:${bucket}:${normalizeTokenForLookup(name)}`,
     label: name,
+    description: "",
   };
 }
 
@@ -566,9 +584,10 @@ function buildLexiconLookupByType(entriesByType) {
     for (const entry of entries ?? []) {
       const id = String(entry?.id ?? "").trim();
       const label = String(entry?.label ?? "").trim();
+      const description = String(entry?.description ?? "").trim();
       if (!id || !label) continue;
       if (!termById[id]) {
-        termById[id] = { id, label, type };
+        termById[id] = { id, label, type, description };
       }
       const key = normalizeTokenForLookup(label);
       if (key && !labelMap[key]) {

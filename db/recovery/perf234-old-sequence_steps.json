@@ -1,0 +1,375 @@
+[
+  {
+    "results": [
+      {
+        "id": 5026,
+        "sequence_id": 9372,
+        "step_uid": "dcb32c3d-65a3-48c2-a272-202934033ca9",
+        "position": 0,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5027,
+        "sequence_id": 9372,
+        "step_uid": "bb9b49e4-b79d-4dab-ad5e-dab2e6509a15",
+        "position": 1,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5028,
+        "sequence_id": 9372,
+        "step_uid": "606da25f-8d9b-437c-b247-87532c9cda01",
+        "position": 2,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5029,
+        "sequence_id": 9372,
+        "step_uid": "8a216633-5fe5-4f18-90bf-dd2d69892f6e",
+        "position": 3,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5030,
+        "sequence_id": 9372,
+        "step_uid": "4165a409-a1d9-45dc-a7e8-b276071184db",
+        "position": 4,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5031,
+        "sequence_id": 9372,
+        "step_uid": "6086d07e-51db-427e-9fad-4ece31f8e1ca",
+        "position": 5,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5032,
+        "sequence_id": 9373,
+        "step_uid": "bf0afb4c-4805-432c-9c54-7aa8dcd51e66",
+        "position": 0,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5033,
+        "sequence_id": 9373,
+        "step_uid": "badae848-7f30-45d3-831e-b41cc1eab7de",
+        "position": 1,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5034,
+        "sequence_id": 9373,
+        "step_uid": "bd6b7eda-3f7c-4d90-adbf-95060a7640b1",
+        "position": 2,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5035,
+        "sequence_id": 9373,
+        "step_uid": "039ef5f4-9087-4863-8727-d6dbe1ad0bc4",
+        "position": 3,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5036,
+        "sequence_id": 9373,
+        "step_uid": "e634d87c-8496-4b3b-9a78-eff696e9d066",
+        "position": 4,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5037,
+        "sequence_id": 9374,
+        "step_uid": "add3ed80-5899-4c20-a898-cac4e4f6cc7c",
+        "position": 0,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5038,
+        "sequence_id": 9374,
+        "step_uid": "fbbb8a9b-cc4a-40d7-aed4-abc84482f37a",
+        "position": 1,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5039,
+        "sequence_id": 9374,
+        "step_uid": "aacf9d1d-0697-4d6b-87d8-ee3e46d34cc9",
+        "position": 2,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5040,
+        "sequence_id": 9374,
+        "step_uid": "37a51e4b-8e25-4881-b07b-d15a6887bf6e",
+        "position": 3,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5041,
+        "sequence_id": 9374,
+        "step_uid": "0a2c9ccd-c75d-4f26-bca0-2f160bb73af1",
+        "position": 4,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5042,
+        "sequence_id": 9375,
+        "step_uid": "8b4ca31d-2544-426f-86b4-69347b51b82f",
+        "position": 0,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5043,
+        "sequence_id": 9375,
+        "step_uid": "7f21cb96-fc56-407a-82c2-ed8da1954e52",
+        "position": 1,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5044,
+        "sequence_id": 9375,
+        "step_uid": "94ddcb0e-0597-48d2-b6f3-30bedaf34692",
+        "position": 2,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5045,
+        "sequence_id": 9375,
+        "step_uid": "1b2f3873-bed4-4054-ad76-11aae994ad23",
+        "position": 3,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5046,
+        "sequence_id": 9375,
+        "step_uid": "853bfc84-f98d-4f8f-b1a3-01f4d8e079cc",
+        "position": 4,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5047,
+        "sequence_id": 9375,
+        "step_uid": "77e83103-ea4d-45a5-8b53-55e3f8402167",
+        "position": 5,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5048,
+        "sequence_id": 9375,
+        "step_uid": "8cf819e2-4929-419c-9619-cf7d77b55214",
+        "position": 6,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5049,
+        "sequence_id": 9375,
+        "step_uid": "5dcce504-0481-4543-b4d0-838e429cbb2b",
+        "position": 7,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5050,
+        "sequence_id": 9375,
+        "step_uid": "61073b1b-c110-4836-8f42-766ff0bd0451",
+        "position": 8,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5051,
+        "sequence_id": 9375,
+        "step_uid": "f215d463-10c4-4c3c-b485-72eaf8db714b",
+        "position": 9,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5052,
+        "sequence_id": 9376,
+        "step_uid": "eada66f7-2e5c-4589-bde8-b7b67875db2e",
+        "position": 0,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5053,
+        "sequence_id": 9376,
+        "step_uid": "1d4dc5bd-cf5c-4e02-b91b-f4bf55d40f37",
+        "position": 1,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5054,
+        "sequence_id": 9376,
+        "step_uid": "200b162f-8bab-4b67-8911-056429070aaa",
+        "position": 2,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5055,
+        "sequence_id": 9376,
+        "step_uid": "def1c919-922a-4105-942d-0f2be71e9505",
+        "position": 3,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5056,
+        "sequence_id": 9376,
+        "step_uid": "818cebc3-4a99-4fb1-a5e9-f43d3c7d5eb1",
+        "position": 4,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5057,
+        "sequence_id": 9376,
+        "step_uid": "c3d0471a-c2ab-467e-a770-9ea74df3b5f2",
+        "position": 5,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5058,
+        "sequence_id": 9376,
+        "step_uid": "9ec94eb2-401b-4c3c-a53f-29f00e3e5445",
+        "position": 6,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5059,
+        "sequence_id": 9377,
+        "step_uid": "120ed76b-f701-4ea0-ae57-8947d7937eb1",
+        "position": 0,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5060,
+        "sequence_id": 9377,
+        "step_uid": "d1d05779-197f-4b82-8f4a-67e89828c1cc",
+        "position": 1,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5061,
+        "sequence_id": 9377,
+        "step_uid": "8c319796-aa84-457a-92be-bb190dcbaf81",
+        "position": 2,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5062,
+        "sequence_id": 9377,
+        "step_uid": "6d791f46-2ba3-4d9c-a641-b2bac5b9de99",
+        "position": 3,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5063,
+        "sequence_id": 9377,
+        "step_uid": "5620d8af-555a-469f-84e4-f3639af1a9e3",
+        "position": 4,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      },
+      {
+        "id": 5064,
+        "sequence_id": 9377,
+        "step_uid": "9080d180-d1b0-48ca-b39f-d98767889ddc",
+        "position": 5,
+        "lexicon_key": "classic-v2",
+        "created_at": "2026-02-11T19:23:37.105Z",
+        "updated_at": "2026-02-11T19:23:37.105Z"
+      }
+    ],
+    "success": true,
+    "meta": {
+      "served_by": "v3-prod",
+      "served_by_region": "WEUR",
+      "served_by_colo": "CDG",
+      "served_by_primary": true,
+      "timings": {
+        "sql_duration_ms": 0.4749
+      },
+      "duration": 0.4749,
+      "changes": 0,
+      "last_row_id": 0,
+      "changed_db": false,
+      "size_after": 11210752,
+      "rows_read": 90,
+      "rows_written": 0,
+      "total_attempts": 1
+    }
+  }
+]
